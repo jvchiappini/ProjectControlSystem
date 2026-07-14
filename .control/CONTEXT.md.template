@@ -4,34 +4,33 @@ actualizado_por: agente
 version_schema: 1
 ---
 
-# Memoria de contexto (mantenida por el agente)
+# Context memory (maintained by the agent)
 
-Este archivo lo escribe y reescribe el agente — no el usuario. Es la
-memoria de trabajo que sobrevive a compactaciones de chat y a chats
-nuevos. Se REESCRIBE cada sesión relevante, no se va acumulando sin
-límite como el log de `sessions/`. Máximo sugerido: ~120 líneas — si
-crece más, hay que promover lo estable a `PROJECT.md`,
-`architecture/<dominio>.md` o `decisions/` y podar esto.
+This file is written and rewritten by the agent — not by the user. It is
+the working memory that survives chat compactions and new chats. It is
+OVERWRITTEN each relevant session, not accumulated without limit like the
+`sessions/` log. Suggested maximum: ~120 lines — if it grows beyond,
+promote stable content to `PROJECT.md`, `architecture/<domain>.md`, or
+`decisions/` and prune this file.
 
-## Qué es este proyecto, en la práctica
-(no repetir `PROJECT.md` palabra por palabra — acá va lo que el agente
-aprendió trabajando que no es obvio solo leyendo la descripción
-formal: cómo está armado en la práctica, qué partes son nuevas y
-cuáles legacy, qué tan estable es cada parte)
+## What this project is, in practice
+(do not repeat `PROJECT.md` word for word — this is what the agent has
+learned by working that is not obvious from the formal description: how
+the project is actually structured, which parts are new and which are
+legacy, how stable each part is)
 
-## Convenciones tácitas detectadas
-(cosas que el equipo/código hace consistentemente pero que no están
-escritas en ningún lado formal: convenciones de nombres, patrones
-repetidos, decisiones implícitas)
+## Tacit conventions detected
+(things the team/code does consistently but that are not written down
+formally: naming conventions, repeated patterns, implicit decisions)
 
-## Cosas raras a tener en cuenta (gotchas)
-(trampas conocidas: "el módulo X parece hacer Y pero en realidad Z",
-dependencias no obvias, partes frágiles)
+## Things to watch out for (gotchas)
+(known traps: "module X looks like it does Y but actually does Z",
+non-obvious dependencies, fragile parts)
 
-## Estado percibido
-(1-2 líneas: salud general del proyecto tal como la ve el agente ahora
-mismo — no es el estado formal de `ROADMAP.md`, es una lectura rápida)
+## Perceived status
+(1-2 lines: overall health of the project as the agent sees it right
+now — not the formal status from `ROADMAP.md`, but a quick read)
 
-## Última sesión relevante
-(id de sesión + 1 línea, para saber dónde mirar si hace falta más
-detalle — no copiar el contenido de la sesión acá)
+## Last relevant session
+(session ID + 1 line, to know where to look if more detail is needed —
+do not copy the session content here)

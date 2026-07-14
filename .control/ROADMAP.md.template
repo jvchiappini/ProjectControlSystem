@@ -1,14 +1,14 @@
 # Roadmap
 
-Fases de alto nivel. No listar tareas individuales acá — eso vive en
-`tasks/`. Esto es la vista de "en qué etapa estamos", 3-5 fases máximo.
+High-level phases. Do not list individual tasks here — those live in
+`tasks/`. This is the "what stage are we at" view, 3-5 phases max.
 
-## Fase 1: <nombre>
-Estado: no iniciada | en curso | completa
-(1-2 líneas de qué implica esta fase)
+## Phase 1: <name>
+Status: not started | in progress | complete
+(1-2 lines describing what this phase involves)
 
-## Fase 2: <nombre>
-Estado: no iniciada
+## Phase 2: <name>
+Status: not started
 
-## Fase 3: <nombre>
-Estado: no iniciada
+## Phase 3: <name>
+Status: not started

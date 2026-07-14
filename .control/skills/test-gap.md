@@ -1,18 +1,26 @@
 # Skill: test-gap
 
-Disparador: `pctl task-move <id> done` (o su equivalente en frontend) sin que la tarea sea tipo `docs` o `chore`.
+Trigger: `pctl task-move <id> done` (or its frontend equivalent)
+without the task being type `docs` or `chore`.
 
-## Procedimiento
+## Procedure
 
-1. **Verificar tipo de tarea** — si es `docs` o `chore`, saltar el chequeo.
-2. **Buscar tests existentes** — revisar si hay archivos de test para los mismos archivos que tocó la tarea (convencion: `test_*.py`, `*.test.ts`, `*.spec.ts`, `__tests__/`, etc).
-3. **Si hay tests** — verificar que al menos un test nuevo cubre el cambio. `git diff --stat` ayuda a ver si se tocaron archivos de test.
-4. **Si no hay tests** — preguntar al usuario antes de permitir el `task-move done`:
-   > "Esta tarea no tiene tests. ¿Crear subtarea de testing en backlog o proceder sin tests?"
-5. **Si el usuario opta por tests** — crear tarea tipo `chore` en backlog con titulo "Tests para [titulo de tarea original]" y `depende_de` apuntando a la tarea original.
+1. **Verify task type** — if it is `docs` or `chore`, skip the check.
+2. **Look for existing tests** — check if there are test files for the
+   same files the task touched (convention: `test_*.py`, `*.test.ts`,
+   `*.spec.ts`, `__tests__/`, etc).
+3. **If tests exist** — verify that at least one new test covers the
+   change. `git diff --stat` helps see if test files were touched.
+4. **If no tests exist** — ask the user before allowing `task-move done`:
+   > "This task has no tests. Create a testing subtask in backlog or
+   > proceed without tests?"
+5. **If the user opts for tests** — create a `chore` task in backlog
+   with title "Tests for [original task title]" and `depende_de`
+   pointing to the original task.
 
 ## Output
 
-- Si hay tests: permiso para mover a `done`.
-- Si no hay tests y usuario accede: tarea de testing creada en backlog.
-- Si no hay tests y usuario no accede: se permite el move igual pero se loguea en la sesion: "T-XXXX pasó a done sin tests".
+- If tests exist: permission to move to `done`.
+- If no tests and user agrees: testing task created in backlog.
+- If no tests and user does not agree: move is still allowed but it is
+  logged in the session: "T-XXXX moved to done without tests".

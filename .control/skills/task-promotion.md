@@ -3,7 +3,7 @@ id: SK-0002
 nombre: task-promotion
 tipo: skill
 estado: activa
-disparador: "una tarea cambia de estado (se empieza a trabajar, se bloquea, se completa, se despriorizadad)"
+disparador: "a task changes state (work starts, blocked, completed, deprioritized)"
 ubicacion: skills/task-promotion.md
 creado_por: usuario
 version: 1
@@ -11,33 +11,34 @@ version: 1
 
 # Skill: task-promotion
 
-Cuándo se dispara: cualquier cambio de estado de una tarea existente.
+Trigger: any state change of an existing task.
 
-## Procedimiento
+## Procedure
 
-1. Nunca cambiar el campo `estado` editando el frontmatter a mano.
-   Siempre usar `pctl task-move <id> <nuevo_estado>`.
-2. Antes de mover a `in_progress`: confirmar que la tarea tiene
-   contexto y criterios de aceptación razonables (si no los tiene,
-   aplicar primero `task-intake.md`).
-3. Antes de mover a `blocked`: tener listo el motivo concreto,
-   `pctl task-move <id> blocked --motivo "..."` — el comando falla si
-   no se da motivo, así que no hay forma de bloquear sin explicar por
-   qué.
-4. Antes de mover a `done`: verificar que todos los checkboxes de
-   "Criterios de aceptación" del cuerpo estén marcados. Si legítimamente
-   se completa con algo pendiente (alcance reducido, decisión
-   consciente), usar `--force "motivo"` — nunca marcar checkboxes
-   falsamente solo para que pase la validación.
-5. Después de cualquier movimiento, correr `pctl reindex` (normalmente
-   automático dentro de `task-move`, pero confirmar si se editó algo
-   más a mano en el mismo turno).
-6. Registrar el evento en la sesión activa:
-   `pctl session-log <sid> "T-XXXX: <estado_anterior> -> <estado_nuevo>"`.
+1. Never change the `estado` field by editing the frontmatter by hand.
+   Always use `pctl task-move <id> <new_state>`.
+2. Before moving to `in_progress`: confirm the task has context and
+   reasonable acceptance criteria (if not, apply `task-intake.md`
+   first).
+3. Before moving to `blocked`: have the concrete reason ready,
+   `pctl task-move <id> blocked --motivo "..."` — the command fails
+   without a reason, so there is no way to block without explaining
+   why.
+4. Before moving to `done`: verify all "Criterios de aceptación"
+   checkboxes in the body are checked. If legitimately completed with
+   something pending (reduced scope, conscious decision), use
+   `--force "reason"` — never falsely check boxes just to pass
+   validation.
+5. After any move, run `pctl reindex` (normally automatic within
+   `task-move`, but confirm if anything was edited manually in the
+   same turn).
+6. Log the event in the active session:
+   `pctl session-log <sid> "T-XXXX: <old_state> -> <new_state>"`.
 
-## Reapertura de tareas completadas
+## Reopening completed tasks
 
-Mover de `done` a `in_progress` es válido (bug encontrado después,
-requisito cambió). `pctl` anota automáticamente fecha y motivo si se
-pasa `--motivo`. Siempre dar motivo en este caso aunque el comando no
-lo exija — ayuda a quien lea el historial después.
+Moving from `done` to `in_progress` is valid (bug found later,
+requirements changed). `pctl` automatically annotates date and reason
+if `--motivo` is passed. Always provide a reason in this case even if
+the command does not require it — it helps anyone reading the history
+later.

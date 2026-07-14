@@ -3,7 +3,7 @@ id: SK-0012
 nombre: context-maintenance
 tipo: skill
 estado: activa
-disparador: "inicio de toda sesion (lectura) y cierre de toda sesion relevante (escritura)"
+disparador: "start of every session (reading) and close of every relevant session (writing)"
 ubicacion: skills/context-maintenance.md
 creado_por: usuario
 version: 1
@@ -11,56 +11,56 @@ version: 1
 
 # Skill: context-maintenance
 
-Cuándo se dispara: SIEMPRE al iniciar sesión (lectura) y al cerrar
-cualquier sesión donde se aprendió algo no obvio sobre el proyecto
-(escritura). Existe porque el chat se compacta o se abre uno nuevo, y
-`CONTEXT.md` es lo único diseñado para sobrevivir a eso sin obligar a
-releer todas las sesiones pasadas.
+Trigger: ALWAYS at session start (reading) and when closing any session
+where something non-obvious was learned about the project (writing).
+It exists because the chat gets compacted or a new one opens, and
+`CONTEXT.md` is the only thing designed to survive that without forcing
+a re-read of all past sessions.
 
-## Diferencia con otros archivos (no confundir)
+## Difference from other files (do not confuse)
 
-- `PROJECT.md` / `GOALS.md`: identidad y visión, los escribe el
-  usuario, cambian poco.
-- `sessions/*.md`: bitácora append-only, un archivo por sesión, nunca
-  se reescribe, crece indefinidamente.
-- `CONTEXT.md`: memoria de trabajo del agente, UN solo archivo que se
-  **reescribe completo** cada vez (no se apendea), tamaño acotado
-  (~120 líneas). Es lo primero que se lee después de `SYSTEM.md`.
+- `PROJECT.md` / `GOALS.md`: identity and vision, written by the user,
+  rarely changes.
+- `sessions/*.md`: append-only log, one file per session, never
+  rewritten, grows indefinitely.
+- `CONTEXT.md`: agent working memory, a SINGLE file that is
+  **rewritten entirely** each time (not appended), bounded size
+  (~120 lines). It is the first thing read after `SYSTEM.md`.
 
-## Al iniciar sesión
+## At session start
 
-1. Leer `CONTEXT.md` completo (es corto por diseño). Si no existe
-   todavía, es normal en un proyecto nuevo o recién iniciado — crear
-   uno la primera vez que se aprenda algo que valga la pena recordar.
-2. Tratar su contenido como punto de partida, no como verdad
-   absoluta — si algo ahí contradice lo que se observa ahora en el
-   código, señalarlo y corregirlo al cerrar la sesión.
+1. Read `CONTEXT.md` in full (short by design). If it does not exist
+   yet, that is normal for a new or just-started project — create one
+   the first time something worth remembering is learned.
+2. Treat its content as a starting point, not absolute truth — if
+   something there contradicts what is now observed in the code, flag
+   it and correct it at session close.
 
-## Al cerrar sesión (parte de `session-close.md`)
+## At session close (part of `session-close.md`)
 
-1. Preguntarse: ¿aprendí algo en esta sesión que la próxima sesión (o
-   un chat nuevo, o el mismo agente sin memoria de esta conversación)
-   necesitaría saber y que NO está ya en `PROJECT.md`, `architecture/`
-   o `flows/`? Si la respuesta es no, no hace falta tocar
-   `CONTEXT.md`.
-2. Si sí: reescribir el archivo completo (no agregar al final) con
-   `pctl context-write --file <tmp>` (mejor generar el contenido en un
-   archivo temporal y pasarlo con `--file` para evitar problemas de
-   escapado en la shell). Mantener las secciones fijas del template.
-3. Correr `pctl context-check`. Si avisa que se pasó del presupuesto,
-   PROMOVER lo que ya es estable y confirmado a su lugar definitivo
-   (`PROJECT.md` si es identidad del proyecto,
-   `architecture/<dominio>.md` si es de un módulo específico,
-   `decisions/` si es una decisión con trade-offs) y podar
-   `CONTEXT.md` a lo que sigue siendo memoria de trabajo genuina.
-4. Actualizar la sección "Última sesión relevante" con el id de sesión
-   y una línea, no el contenido completo del log.
+1. Ask yourself: did I learn anything in this session that the next
+   session (or a new chat, or the same agent without memory of this
+   conversation) would need to know and that is NOT already in
+   `PROJECT.md`, `architecture/` or `flows/`? If the answer is no,
+   no need to touch `CONTEXT.md`.
+2. If yes: rewrite the entire file (do not append) with
+   `pctl context-write --file <tmp>` (best to generate the content in
+   a temporary file and pass it with `--file` to avoid shell escaping
+   issues). Keep the fixed sections from the template.
+3. Run `pctl context-check`. If it warns about exceeding the budget,
+   PROMOTE what is already stable and confirmed to its permanent place
+   (`PROJECT.md` if it is project identity,
+   `architecture/<domain>.md` if it belongs to a specific module,
+   `decisions/` if it is a decision with trade-offs) and prune
+   `CONTEXT.md` to what remains genuine working memory.
+4. Update the "Last relevant session" section with the session ID and
+   one line, not the full log content.
 
-## Qué NO hacer
+## What NOT to do
 
-- No convertir esto en un segundo `sessions/` — si empieza a crecer sin
-  límite, es que se está apendeando en vez de reescribiendo, o que no
-  se está podando lo que ya se promovió a otro lado.
-- No duplicar contenido que ya vive en `PROJECT.md`, `architecture/` o
-  `flows/` — `CONTEXT.md` es para lo que todavía no tiene un lugar
-  formal o es demasiado efímero para merecerlo.
+- Do not turn this into a second `sessions/` — if it starts growing
+  without limit, it means you are appending instead of rewriting, or
+  not pruning what was already promoted elsewhere.
+- Do not duplicate content that already lives in `PROJECT.md`,
+  `architecture/` or `flows/` — `CONTEXT.md` is for what does not yet
+  have a formal place or is too ephemeral to deserve one.

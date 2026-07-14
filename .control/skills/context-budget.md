@@ -3,7 +3,7 @@ id: SK-0008
 nombre: context-budget
 tipo: skill
 estado: activa
-disparador: "inicio de cualquier sesion en un proyecto con muchos dominios/tareas acumuladas"
+disparador: "start of any session in a project with many accumulated domains/tasks"
 ubicacion: skills/context-budget.md
 creado_por: usuario
 version: 1
@@ -11,41 +11,38 @@ version: 1
 
 # Skill: context-budget
 
-Cuándo se dispara: siempre al iniciar sesión, más crítico cuanto más
-grande es el proyecto.
+Trigger: always at session start, more critical the larger the project.
 
-## Regla de carga (ver `SYSTEM.md` sección 6)
+## Load order rule (see `SYSTEM.md` section 6)
 
-Orden de carga por defecto, sin excepción:
+Default load order, without exception:
 
-1. `PROJECT.md` + `GOALS.md` completos (cortos por diseño — si
-   crecieron mucho, es señal de que hay que podarlos, no de que hay
-   que dejar de leerlos).
-2. `tasks/IN_PROGRESS.md` — es un índice de una línea por tarea, no
-   las tareas completas.
-3. `architecture/_index.md` — mapa de dominios, una línea cada uno.
-4. NADA MÁS todavía. Recién con el pedido del usuario en este turno,
-   cargar:
-   - el/los archivo(s) de tarea específicos (`pctl task-show <id>`)
-   - el `.md` de arquitectura del dominio relevante, si existe
-   - archivos de código puntuales vía `archivo:línea`, nunca el
-     archivo completo si la referencia ya apunta a un rango acotado
+1. `PROJECT.md` + `GOALS.md` in full (short by design — if they grew
+   a lot, it is a sign they need pruning, not that they should stop
+   being read).
+2. `tasks/IN_PROGRESS.md` — an index at one line per task, not the
+   full tasks.
+3. `architecture/_index.md` — domain map, one line each.
+4. NOTHING ELSE yet. Only after the user's request in this turn, load:
+   - the specific task file(s) (`pctl task-show <id>`)
+   - the architecture `.md` of the relevant domain, if it exists
+   - specific code files via `file:line`, never the full file if the
+     reference already points to a bounded range
 
-## Señales de que se está violando el presupuesto
+## Signs the budget is being violated
 
-- Cargar `tasks/BACKLOG.md` completo cuando el usuario preguntó por
-  una sola tarea — usar `pctl task-list --estado backlog` con filtro,
-  o `pctl task-show <id>` directo si ya se conoce el ID.
-- Abrir todos los `.md` de `architecture/` "para tener contexto
-  general" — el índice ya da ese contexto general, en una línea por
-  dominio.
-- Releer sesiones viejas completas — el resumen de cada sesión
-  (`resumen:` en el frontmatter) suele alcanzar; solo abrir el cuerpo
-  completo de una sesión si se necesita el detalle de eventos.
+- Loading `tasks/BACKLOG.md` entirely when the user asked about a
+  single task — use `pctl task-list --estado backlog` with a filter,
+  or `pctl task-show <id>` directly if the ID is already known.
+- Opening all `.md` files in `architecture/` "for general context" —
+  the index already provides that general context, one line per domain.
+- Re-reading old sessions in full — the summary of each session
+  (`resumen:` in the frontmatter) usually suffices; only open a full
+  session body if the event detail is needed.
 
-## Cuándo SÍ vale la pena cargar más
+## When it IS worth loading more
 
-Si el usuario pide explícitamente una visión general ("dame un resumen
-completo del proyecto", "quiero ver todo lo pendiente"), ahí sí se
-justifica recorrer más — pero incluso entonces, preferir los índices
-generados antes que abrir archivo por archivo.
+If the user explicitly asks for an overview ("give me a complete
+project summary", "I want to see everything pending"), then it is
+justified to traverse more — but even then, prefer the generated
+indexes over opening files one by one.

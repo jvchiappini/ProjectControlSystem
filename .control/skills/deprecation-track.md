@@ -1,15 +1,23 @@
 # Skill: deprecation-track
 
-Disparador: se marca algo como obsoleto (funcion, endpoint, modulo), o se crea un ADR con `reemplaza` no vacio.
+Trigger: something is marked as obsolete (function, endpoint, module),
+or an ADR is created with non-empty `reemplaza`.
 
-## Procedimiento
+## Procedure
 
-1. **Buscar referencias en documentacion** — `pctl search "<nombre del componente>"` en todo `.control/` para encontrar menciones en tasks, flows, decisions, architecture.
-2. **Actualizar flujos** — si algun flujo menciona el componente, marcarlo como `desactualizado` con `pctl flow-touch <id> desactualizado`.
-3. **Marcar en CONTEXT.md** — agregar una linea en la seccion de `## Cambios recientes` indicando que se depreco y que lo reemplaza.
-4. **Checkear tareas abiertas** — si hay tareas `in_progress` o `backlog` que referencian el componente, agregar nota en su cuerpo.
-5. **ADR completo** — asegurar que el ADR que documenta el reemplazo tenga en `## Consecuencias` una lista de todo lo que hay que migrar.
+1. **Search documentation references** — `pctl search "<component name>"`
+   across all `.control/` to find mentions in tasks, flows, decisions,
+   architecture.
+2. **Update flows** — if any flow mentions the component, mark it as
+   `desactualizado` with `pctl flow-touch <id> desactualizado`.
+3. **Mark in CONTEXT.md** — add a line in the `## Cambios recientes`
+   section indicating what was deprecated and what replaces it.
+4. **Check open tasks** — if there are `in_progress` or `backlog` tasks
+   referencing the component, add a note in their body.
+5. **Complete ADR** — ensure the ADR documenting the replacement has in
+   `## Consecuencias` a list of everything that needs to be migrated.
 
 ## Output
 
-Checklist en el cuerpo del ADR con items verificables. Cada item es un archivo o flujo que quedo actualizado.
+Checklist in the ADR body with verifiable items. Each item is a file
+or flow that was left updated.

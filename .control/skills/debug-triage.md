@@ -1,20 +1,28 @@
 # Skill: debug-triage
 
-Disparador: el usuario reporta un bug sin root cause clara, o pide ayuda para debuggear.
+Trigger: user reports a bug without a clear root cause, or asks for
+debugging help.
 
-## Procedimiento
+## Procedure
 
-1. **Crear tarea bug** con `pctl task-intake "<reporte>"` — esto parsea el texto crudo y sugiere tipo/prioridad/dominio.
-2. **Reproducir el bug** — pedir pasos concretos al usuario si no los dio.
-3. **Aislar variables** — identificar si es ambiental (OS, browser, data especifica) o universal.
-4. **Buscar cambios recientes** — `git log --oneline -10` para ver que se tocó antes de que apareciera.
-5. **Documentar hallazgo** — agregar al cuerpo de la tarea en `## Notas del agente` con referencias `archivo:linea` a las lineas sospechosas.
-6. **Si cruza dominios** — verificar `flows/_index.md` para ver si hay un flujo documentado que cubra el comportamiento afectado.
+1. **Create bug task** with `pctl task-intake "<report>"` — this parses
+   the raw text and suggests type/priority/domain.
+2. **Reproduce the bug** — ask for concrete steps from the user if
+   they did not provide them.
+3. **Isolate variables** — identify if it is environmental (OS,
+   browser, specific data) or universal.
+4. **Check recent changes** — `git log --oneline -10` to see what was
+   touched before the bug appeared.
+5. **Document findings** — add to the task body in `## Notas del agente`
+   with `file:line` references to the suspicious lines.
+6. **If it crosses domains** — check `flows/_index.md` for a documented
+   flow covering the affected behavior.
 
 ## Output
 
-La tarea debe quedar con:
-- Contexto claro del problema
-- Al menos una hipotesis de causa raiz
-- Referencias a las lineas de codigo involucradas
-- Si no se pudo determinar causa, dejar documentado que se probo y que falta
+The task must end up with:
+- Clear context of the problem
+- At least one root cause hypothesis
+- References to the involved code lines
+- If the cause could not be determined, document what was tried and
+  what is missing

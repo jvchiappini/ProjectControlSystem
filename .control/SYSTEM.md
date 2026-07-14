@@ -1,169 +1,234 @@
-# SYSTEM.md — reglas mandatorias del proyecto
+# SYSTEM.md — mandatory project rules
 
-Este archivo se carga SIEMPRE, en cualquier sesión, con cualquier agente
-(Claude, GPT, Cursor, Copilot, un humano leyendo a mano, etc). Es el
-contrato invariable del proyecto. Nunca se ignora, aunque el usuario no
-lo mencione explícitamente.
+This file is loaded ALWAYS, in every session, by every agent (Claude,
+GPT, Cursor, Copilot, a human reading manually, etc). It is the
+invariant contract of the project. Never ignore it, even if the user
+does not mention it explicitly.
 
-## 0. Fuente de verdad
+## 0. Source of truth
 
-El sistema de archivos dentro de `.control/` es la ÚNICA fuente de
-verdad del estado del proyecto. Ningún agente debe confiar en su propia
-memoria de conversación para saber qué existe, qué está pendiente o qué
-se decidió — siempre relee `.control/` al empezar una sesión.
+The filesystem inside `.control/` is the ONLY source of truth for the
+project state. No agent should rely on its own conversation memory for
+knowing what exists, what is pending, or what was decided — always
+re-read `.control/` at the start of a session.
 
-## 1. Herramienta de control (`pctl`)
+## 1. Control tool (`pctl`)
 
-Si el entorno tiene ejecución de código (bash/python disponible):
+If the environment has code execution (bash/python available):
 
-- TODA operación sobre tareas, sesiones e índices se hace vía
-  `python .control/scripts/pctl.py <comando>`. Ver `pctl.py --help`.
-- Los archivos `tasks/BACKLOG.md`, `tasks/IN_PROGRESS.md`, `tasks/DONE.md`
-  y `architecture/_index.md` son **generados**. Nunca se editan a mano.
-  Se regeneran con `pctl reindex`.
-- Lo único que se edita directamente con un editor de texto es:
-  - el cuerpo narrativo de un archivo de tarea (`tasks/**/T-XXXX.md`)
+- EVERY operation on tasks, sessions, and indexes goes through
+  `python .control/scripts/pctl.py <command>`. See `pctl.py --help`.
+- The files `tasks/BACKLOG.md`, `tasks/IN_PROGRESS.md`, `tasks/DONE.md`
+  and `architecture/_index.md` are **generated**. Never edit them by hand.
+  Regenerate with `pctl reindex`.
+- The only things edited directly with a text editor are:
+  - the narrative body of a task file (`tasks/**/T-XXXX.md`)
   - `PROJECT.md`, `GOALS.md`, `ROADMAP.md`
-  - `architecture/<dominio>.md` (solo el dominio que se está tocando)
+  - `architecture/<domain>.md` (only the domain being touched)
   - `decisions/D-XXXX.md`
 
-Si el entorno NO tiene ejecución de código (agente de solo-chat), se
-edita el markdown directamente respetando exactamente el schema de
-frontmatter definido en `scripts/lib/schema.md`, para que `pctl` pueda
-seguir leyéndolo después sin romperse.
+If the environment has NO code execution (chat-only agent), edit the
+markdown directly, respecting the exact frontmatter schema defined in
+`scripts/lib/schema.md`, so `pctl` can still read it afterward without
+breaking.
 
-## 2. Documentación perezosa (regla obligatoria)
+## 2. Lazy documentation (mandatory rule)
 
-- El agente documenta **solo** el dominio relacionado con la tarea
-  actual. Nunca crea ni expande documentación de dominios que no fueron
-  pedidos, aunque los detecte explorando el código.
-- Si al explorar el repo aparece un dominio nuevo sin documentar, el
-  agente SOLO agrega una fila a `architecture/_index.md` (vía
-  `pctl arch touch <dominio> --estado sin_documentar`). No escribe
-  contenido ahí.
-- Antes de documentar, el agente debe tener claro un único dominio de
-  destino. Si la tarea es ambigua entre dos dominios, pregunta al
-  usuario en vez de documentar ambos (ver skill `domain-scoping.md`).
+- The agent documents **only** the domain related to the current task.
+  Never create or expand documentation for domains that were not
+  requested, even if you discover them while exploring the code.
+- If a new undocumented domain appears while exploring the repo, the
+  agent ONLY adds a row to `architecture/_index.md` (via
+  `pctl arch touch <domain> --estado sin_documentar`). Do not write
+  content there.
+- Before documenting, the agent must be clear about a single target
+  domain. If the task is ambiguous between two domains, ask the user
+  instead of documenting both (see skill `domain-scoping.md`).
 
-## 3. Cero código dentro de markdown
+## 3. Zero code inside markdown
 
-- Ningún archivo dentro de `.control/` contiene bloques de código real
-  (funciones, clases, snippets ejecutables copiados del proyecto).
-- Toda referencia a código usa la forma `ruta/archivo:línea` o
-  `ruta/archivo:línea_inicio-línea_fin`. Ejemplo correcto:
-  "La validación de stock vive en `src/products/stock.py:42-58`."
-  Ejemplo prohibido: pegar esas líneas dentro del `.md`.
-- Excepciones permitidas: diagramas Mermaid (`.mmd`), y comandos de
-  shell cortos de uso de `pctl` como ejemplo de instrucción (no de
-  lógica de negocio).
+- No file inside `.control/` contains real code blocks (functions,
+  classes, executable snippets copied from the project).
+- All code references use the form `path/file:line` or
+  `path/file:start_line-end_line`. Correct example:
+  "Stock validation lives in `src/products/stock.py:42-58`."
+  Forbidden example: pasting those lines inside the `.md`.
+- Allowed exceptions: Mermaid diagrams (`.mmd`), and short shell
+  commands for `pctl` usage as instruction examples (not business
+  logic).
 
-## 4. Máquina de estados de tareas
+## 4. Task state machine
 
-Transiciones válidas únicamente:
+Valid transitions only:
 
 ```
 backlog <-> in_progress <-> blocked
 in_progress -> done
 in_progress -> backlog
-done -> in_progress   (reabrir; pctl anota motivo y fecha automáticamente)
+done -> in_progress   (reopen; pctl logs reason and date automatically)
 ```
 
-`backlog -> done` directo está PROHIBIDO — siempre debe pasar por
-`in_progress`, aunque sea un instante, para no perder registro de que
-algo se hizo. `in_progress -> blocked` exige motivo (`--motivo "..."`).
-`in_progress -> done` exige que los checkboxes de "Criterios de
-aceptación" estén todos marcados, salvo `--force "motivo"` (queda
-logueado). Todo cambio de estado genera una línea en el log de sesión
-activo — no hay cambios de estado silenciosos.
+`backlog -> done` directly is PROHIBITED — must always go through
+`in_progress`, even if just for a moment, to avoid losing the record
+that something was done. `in_progress -> blocked` requires reason
+(`--reason "..."`). `in_progress -> done` requires all "Acceptance
+criteria" checkboxes to be checked, unless `--force "reason"` is used
+(it gets logged). Every state change generates a line in the active
+session log — no silent state changes.
 
-## 4.1 Flujos (obligatorio para comportamientos que cruzan dominios)
+### 4.1 Task dependencies
 
-Un dominio (`architecture/<dominio>.md`) documenta un módulo. Un
-**flujo** (`flows/F-XXXX.md`) documenta un comportamiento observable
-de principio a fin que cruza dominios. Esto aplica a CUALQUIER
-sistema con interacción entre módulos, no solo videojuegos: el ciclo
-de vida de una request en una API, un flujo de autenticación, un
-pipeline de datos, un checkout de ecommerce, un procesamiento de
-eventos, o — sí — también la secuencia input → lógica → animación de
-un videojuego. La señal para crear uno es siempre la misma: "para
-entender/tocar esto, ¿tengo que leer más de un dominio completo?".
+If a task has `depende_de` entries, moving it to `in_progress` requires
+all listed tasks to be in `done` state first (unless `--force` is used).
+This prevents work from starting on tasks whose prerequisites are not
+completed. See skill `task-promotion.md`.
 
-- Antes de modificar cualquier comportamiento que involucre más de un
-  dominio, el agente DEBE revisar `flows/_index.md` primero. Si el
-  comportamiento ya tiene un flujo documentado, ese flujo es el punto
-  de entrada — el agente lee ESE archivo (con sus referencias exactas
-  `archivo:línea`), no los dominios completos que toca.
-- Si no existe un flujo para un comportamiento que se está creando o
-  modificando de forma significativa, el agente crea uno con
-  `pctl flow-new` (ver skill `flow-mapping.md`).
-- Los flujos también respetan la regla de cero código embebido: solo
-  pasos numerados con referencias `archivo:línea` y, opcionalmente, un
-  diagrama de secuencia Mermaid en `diagrams/flows/`.
-- Estado `desactualizado` en un flujo es una señal de alerta visible en
-  `pctl status` — nunca se ignora silenciosamente.
+## 5. Flows (mandatory for behaviors that cross domains)
 
-## 4.2 Memoria de contexto del agente (`CONTEXT.md`, obligatoria)
+A domain (`architecture/<domain>.md`) documents a module. A **flow**
+(`flows/F-XXXX.md`) documents an observable end-to-end behavior that
+crosses domains. This applies to ANY system with module interaction,
+not just games: the lifecycle of an API request, an authentication flow,
+a data pipeline, an ecommerce checkout, event processing, or yes — also
+the input → logic → animation sequence of a game. The signal to create
+one is always the same: "to understand/touch this, do I need to read
+more than one full domain?".
 
-`PROJECT.md`/`GOALS.md` los escribe el usuario y cambian poco.
-`sessions/*.md` es una bitácora que solo crece. `CONTEXT.md` es
-distinto: lo escribe y reescribe el propio agente, es un único archivo
-que se sobrescribe completo (no se apendea), con un presupuesto de
-tamaño (~120 líneas), y existe específicamente para sobrevivir a
-compactaciones de chat y a chats nuevos sin depender de releer todo el
-historial de sesiones.
+- Before modifying any behavior involving more than one domain, the
+  agent MUST check `flows/_index.md` first. If the behavior already has
+  a documented flow, that flow is the entry point — the agent reads THAT
+  file (with its exact `file:line` references), not the full domains it
+  touches.
+- If no flow exists for a behavior being created or significantly
+  modified, the agent creates one with `pctl flow-new` (see skill
+  `flow-mapping.md`).
+- Flows also respect the zero-code rule: only numbered steps with
+  `file:line` references and, optionally, a Mermaid sequence diagram in
+  `diagrams/flows/`.
+- A `desactualizado` (outdated) status on a flow is an alert visible in
+  `pctl status` — never ignore it silently.
 
-- Se lee siempre al iniciar sesión, justo después de `SYSTEM.md` y
-  antes que cualquier otra cosa (ver skill `context-maintenance.md`).
-- Se reescribe al cerrar cualquier sesión donde se aprendió algo no
-  obvio que la próxima sesión necesitaría saber y que no tiene todavía
-  un lugar formal (`PROJECT.md`, `architecture/`, `flows/`,
+## 6. Agent context memory (`CONTEXT.md`, mandatory)
+
+`PROJECT.md`/`GOALS.md` are written by the user and change rarely.
+`sessions/*.md` is an append-only log. `CONTEXT.md` is different: the
+agent writes and rewrites it, it is a single file that is fully
+overwritten (not appended), with a size budget (~120 lines), and exists
+specifically to survive chat compactions and new chats without having to
+re-read the entire session history.
+
+- Read it always at session start, right after `SYSTEM.md` and before
+  anything else (see skill `context-maintenance.md`).
+- Rewrite it when closing any session where something non-obvious was
+  learned that the next session would need to know and that does not yet
+  have a formal place (`PROJECT.md`, `architecture/`, `flows/`,
   `decisions/`).
-- Si crece más allá del presupuesto (`pctl context-check` lo avisa),
-  lo estable se promueve a su lugar definitivo y el archivo se poda.
+- If it grows beyond the budget (`pctl context-check` warns), promote
+  the stable content to its permanent place and prune the file.
 
-## 5. Auto-evolución controlada
+## 7. Documenting architecture & decisions
 
-El agente puede detectar patrones repetidos (2+ veces) que convendría
-automatizar y proponer un script o skill nuevo con la skill meta
-`skill-authoring.md`. Reglas:
+- When a domain is touched during a task, reflect the changes in
+  `architecture/<domain>.md`. Update structure, references, and status
+  via `pctl arch-touch` (see skill `architecture-update.md`).
+- If the change involves a non-trivial decision (alternatives were
+  considered, trade-offs were made), create an ADR in `decisions/`
+  (see skill `decision-record.md`).
+- When code that was previously referenced by `file:line` in any
+  `.control/` file is moved or renamed, update all references and mark
+  affected flows as outdated (see skill `doc-drift-check.md`).
+- After editing any `.md` file in `.control/`, review it for conciseness
+  and clarity (see skill `doc-concise.md`).
 
-- Todo lo nuevo se escribe en `skills/proposed/` o
-  `scripts/lib/proposed/`, nunca directo en `active/` ni en `lib/`.
-- El agente NUNCA promueve una skill o script por sí mismo. Solo
-  `pctl skill promote SK-XXXX` activa algo, y requiere confirmación
-  explícita del usuario en el turno actual.
-- Toda skill/script nuevo se registra en `skills/_index.md` con estado
-  `propuesta` hasta ser promovido.
+## 8. Controlled self-evolution
 
-## 6. Presupuesto de contexto
+The agent may detect repeated patterns (2+ occurrences) that would
+benefit from a new script or skill and propose it via the meta-skill
+`skill-authoring.md`. Rules:
 
-En proyectos grandes, el agente NUNCA carga todo `.control/` de una
-vez. Al iniciar sesión carga, en este orden, como máximo:
+- Everything new is written into `skills/proposed/` or
+  `scripts/lib/proposed/`, never directly into `active/` or `lib/`.
+- The agent NEVER promotes a skill or script by itself. Only
+  `pctl skill-promote SK-XXXX` activates something, and it requires
+  explicit user confirmation in the current turn.
+- Every new skill/script is registered in `skills/_index.md` with state
+  `propuesta` (proposed) until promoted.
+- Skills proposed by the agent can later be promoted to active (see
+  skill `skill-authoring.md`).
 
-1. `SYSTEM.md` (este archivo)
-2. `CONTEXT.md` (memoria de trabajo del agente, ver sección 4.2)
-3. `PROJECT.md` y `GOALS.md` completos (son cortos por diseño)
-4. `tasks/IN_PROGRESS.md` (índice, no las tareas completas)
-5. `architecture/_index.md` (mapa, 1 línea por dominio)
-6. `flows/_index.md` (mapa, 1 línea por flujo)
-7. Solo el/los archivo(s) de tarea, dominio y/o flujo relevantes a lo
-   que el usuario pidió en este turno
+## 9. Context budget
 
-Ver skill `context-budget.md` para el detalle.
+In large projects, the agent NEVER loads the entire `.control/` at once.
+At session start, load in this order, at most:
 
-## 7. Cierre de sesión (obligatorio, sin excepción)
+1. `SYSTEM.md` (this file)
+2. `CONTEXT.md` (agent working memory, see section 6)
+3. `PROJECT.md` and `GOALS.md` in full (they are short by design)
+4. `tasks/IN_PROGRESS.md` (index, not the full tasks)
+5. `architecture/_index.md` (map, 1 line per domain)
+6. `flows/_index.md` (map, 1 line per flow)
+7. Only the task, domain, and/or flow files relevant to what the user
+   asked for in this turn
 
-Antes de terminar cualquier sesión de trabajo, el agente ejecuta el
-checklist de `skills/session-close.md`: cerrar el log de sesión,
-confirmar que los índices están regenerados (`pctl reindex`),
-actualizar `CONTEXT.md` si se aprendió algo que la próxima sesión
-necesite saber (`skills/context-maintenance.md`), y verificar que
-ninguna referencia `archivo:línea` tocada en la sesión quedó
-desactualizada (`pctl doc-check-refs`).
+See skill `context-budget.md` for details.
 
-## 8. Idioma y tono
+## 10. Session close (mandatory, no exceptions)
 
-Todo el contenido de `.control/` se escribe en el mismo idioma que usa
-el usuario en la conversación, salvo nombres de campos de frontmatter
-y comandos de `pctl`, que son fijos en inglés/español técnico según el
-schema (no se traducen).
+Before ending any work session, the agent executes the checklist in
+`skills/session-close.md`: close the session log, confirm indexes are
+regenerated (`pctl reindex`), update `CONTEXT.md` if something was
+learned that the next session needs (see `skills/context-maintenance.md`),
+and verify that no `file:line` reference touched during the session was
+left outdated (`pctl doc-check-refs`).
+
+## 11. Code review
+
+Before committing any code (`pctl git-commit --yes`), or when the user
+explicitly asks for review, run through the checklist in
+`skills/code-review.md`: no secrets, no dead code, errors handled,
+follows project conventions, no out-of-scope changes, no sensitive data
+in logs, documentation references updated.
+
+## 12. Goal alignment
+
+At the start of a large task or whenever the scope seems to be drifting,
+review `skills/goal-check.md` to ensure the work still aligns with
+project goals and success criteria.
+
+## 13. Available skills reference
+
+The following skills are registered in `skills/_index.md` (all active).
+Refer to them when the corresponding trigger occurs:
+
+| Skill | Trigger | File |
+|---|---|---|
+| `task-intake` | User creates raw todo without details | `skills/task-intake.md` |
+| `task-promotion` | Task state changes | `skills/task-promotion.md` |
+| `architecture-update` | Design change in a domain | `skills/architecture-update.md` |
+| `decision-record` | Non-trivial technical decision | `skills/decision-record.md` |
+| `session-close` | End of any work session | `skills/session-close.md` |
+| `goal-check` | Start of large task or scope drift | `skills/goal-check.md` |
+| `skill-authoring` | Pattern repeated 2+ times | `skills/skill-authoring.md` |
+| `context-budget` | Session start in large project | `skills/context-budget.md` |
+| `domain-scoping` | Before documenting or creating task | `skills/domain-scoping.md` |
+| `doc-drift-check` | Session close or refactor of referenced code | `skills/doc-drift-check.md` |
+| `flow-mapping` | Behavior that crosses domains | `skills/flow-mapping.md` |
+| `context-maintenance` | Session start/close | `skills/context-maintenance.md` |
+| `code-review` | Before git-commit or when user asks | `skills/code-review.md` |
+| `debug-triage` | User reports bug without root cause | `skills/debug-triage.md` |
+| `refactor-plan` | Refactor task or 2+ duplication | `skills/refactor-plan.md` |
+| `deprecation-track` | Something marked obsolete | `skills/deprecation-track.md` |
+| `test-gap` | Task moved to done without tests | `skills/test-gap.md` |
+| `onboarding` | Project with no prior sessions | `skills/onboarding.md` |
+| `doc-concise` | Post-edit of any `.md` in `.control/` | `skills/doc-concise.md` |
+
+## 14. Language
+
+All content inside `.control/` (rules, prompts, templates, skills,
+documentation) is written in English. Frontmatter field names and `pctl`
+commands are fixed and not translated.
+
+The conversation with the user is conducted in the user's language. If
+the user writes in Spanish, respond in Spanish. If the user writes in
+English, respond in English. Never switch the `.control/` content to
+the user's language — it stays in English regardless.

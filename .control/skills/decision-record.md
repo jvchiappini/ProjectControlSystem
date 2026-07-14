@@ -3,7 +3,7 @@ id: SK-0004
 nombre: decision-record
 tipo: skill
 estado: activa
-disparador: "se tomo una decision de diseno con alternativas descartadas, o que sera dificil de revertir"
+disparador: "a design decision was made with discarded alternatives, or one that will be hard to revert"
 ubicacion: skills/decision-record.md
 creado_por: usuario
 version: 1
@@ -11,41 +11,40 @@ version: 1
 
 # Skill: decision-record
 
-Cuándo se dispara: se eligió un enfoque técnico entre varios posibles
-(librería, patrón, estructura de datos, protocolo, etc), especialmente
-si es costoso de revertir o si alguien podría razonablemente preguntar
-"¿por qué se hizo así y no de otra forma?".
+Trigger: a technical approach was chosen among several possibilities
+(library, pattern, data structure, protocol, etc), especially if it
+is costly to revert or if someone could reasonably ask "why was it
+done this way and not another?".
 
-No crear un ADR para decisiones triviales o fácilmente reversibles
-(nombre de una variable, orden de dos pasos independientes). La señal
-es: si en 3 meses alguien preguntará "¿por qué?", amerita ADR.
+Do not create an ADR for trivial or easily reversible decisions
+(variable name, order of two independent steps). The signal is: if in
+3 months someone will ask "why?", it warrants an ADR.
 
-## Procedimiento
+## Procedure
 
-1. Determinar el próximo ID: revisar el último `D-XXXX` en
-   `decisions/`. No hay comando `pctl` dedicado todavía — si esto se
-   vuelve frecuente, proponer automatizarlo vía
-   `skill-authoring.md`.
-2. Crear `decisions/D-XXXX.md` con frontmatter:
+1. Determine the next ID: check the last `D-XXXX` in `decisions/`.
+   There is no dedicated `pctl` command yet — if this becomes frequent,
+   propose automating it via `skill-authoring.md`.
+2. Create `decisions/D-XXXX.md` with frontmatter:
    ```
-   id, titulo, fecha, estado (aceptada de entrada salvo que se
-   discuta primero), reemplaza, version_schema
+   id, titulo, fecha, estado (aceptada by default unless discussed
+   first), reemplaza, version_schema
    ```
-3. Cuerpo con exactamente estas tres secciones:
-   - `## Contexto` — qué problema forzó la decisión, en pocas líneas.
-   - `## Decisión` — qué se eligió, en una afirmación clara.
-   - `## Consecuencias` — qué se gana, qué se pierde, qué queda
-     pendiente de revisar más adelante.
-4. Enlazar el ADR desde el `.md` de arquitectura del dominio afectado,
-   en la sección "Decisiones relevantes" — solo el ID y el título, no
-   dupliques el contenido ahí.
-5. Si esta decisión reemplaza una anterior: marcar la nueva con
-   `reemplaza: [D-000X]` y cambiar el `estado` de la vieja a
-   `reemplazada` (editar su frontmatter).
+3. Body with exactly these three sections:
+   - `## Contexto` — what problem forced the decision, in a few lines.
+   - `## Decisión` — what was chosen, in a clear statement.
+   - `## Consecuencias` — what is gained, what is lost, what remains
+     to be reviewed later.
+4. Link the ADR from the architecture `.md` of the affected domain,
+   in the "Decisiones relevantes" section — only the ID and title, do
+   not duplicate the content there.
+5. If this decision replaces a previous one: mark the new one with
+   `reemplaza: [D-000X]` and change the old one's `estado` to
+   `reemplazada` (edit its frontmatter).
 
-## Qué NO hacer
+## What NOT to do
 
-- No incluir código de ejemplo de las alternativas evaluadas — describir
-  el trade-off en prosa.
-- No crear un ADR por cada commit; agrupar decisiones relacionadas de
-  la misma sesión en un solo documento si tiene sentido.
+- Do not include example code from the evaluated alternatives — describe
+  the trade-off in prose.
+- Do not create an ADR per commit; group related decisions from the
+  same session into a single document if it makes sense.

@@ -3,7 +3,7 @@ id: SK-0001
 nombre: task-intake
 tipo: skill
 estado: activa
-disparador: "el usuario crea un todo crudo (titulo suelto, sin detalle) desde el frontend o en el chat"
+disparador: "user creates a raw todo (bare title, no details) from the frontend or in chat"
 ubicacion: skills/task-intake.md
 creado_por: usuario
 version: 1
@@ -11,39 +11,37 @@ version: 1
 
 # Skill: task-intake
 
-Cuándo se dispara: el usuario agrega un ítem nuevo al backlog con solo
-un título (desde el frontend tipo kanban, o escribiéndolo en el chat)
-y todavía no tiene contexto, criterios de aceptación ni prioridad
-bien definida.
+Trigger: the user adds a new item to the backlog with only a title
+(from the kanban frontend, or by writing it in chat) and it still has
+no context, acceptance criteria, or well-defined priority.
 
-## Procedimiento
+## Procedure
 
-1. Si la tarea ya existe (creada por el usuario sin `pctl`, directo en
-   markdown), léela con `pctl task-show <id>`. Si no existe todavía,
-   créala con `pctl task-new "<titulo>"`.
-2. No inventes alcance que el usuario no dio. Si falta información
-   crítica para escribir criterios de aceptación razonables, pregunta
-   — no asumas.
-3. Enriquece el cuerpo del archivo (edición directa del `.md`, esto no
-   pasa por `pctl`):
-   - `## Contexto`: 2-4 líneas de por qué existe esta tarea y qué
-     dominio toca.
-   - `## Criterios de aceptación`: checkboxes concretos y verificables.
-   - Si detectas dependencias con otra tarea existente, agrégalas al
-     campo `depende_de` del frontmatter (edición manual del campo, no
-     hay comando `pctl` para esto todavía — ver `skill-authoring.md`
-     si se repite mucho y conviene automatizarlo).
-4. Ajusta `--prioridad` y `--tipo` si el valor por defecto no es
-   correcto, usando `pctl task-move` no aplica aquí — la prioridad se
-   edita directo en el frontmatter ya que no es un cambio de estado.
-5. No cambies el estado de la tarea en este paso. `task-intake` solo
-   enriquece; la promoción a `in_progress` es responsabilidad de
+1. If the task already exists (created by the user without `pctl`,
+   directly in markdown), read it with `pctl task-show <id>`. If it
+   does not exist yet, create it with `pctl task-new "<title>"`.
+2. Do not invent scope the user did not give. If critical information
+   is missing to write reasonable acceptance criteria, ask — do not
+   assume.
+3. Enrich the file body (direct `.md` edit, this does not go through
+   `pctl`):
+   - `## Contexto`: 2-4 lines of why this task exists and which domain
+     it touches.
+   - `## Criterios de aceptación`: concrete, verifiable checkboxes.
+   - If you detect dependencies with another existing task, add them to
+     the `depende_de` field in the frontmatter (manual field edit —
+     there is no `pctl` command for this yet; see `skill-authoring.md`
+     if it repeats often enough to warrant automation).
+4. Adjust `--prioridad` and `--tipo` if the default is not correct,
+   using direct frontmatter edit since it is not a state change.
+5. Do not change the task state at this step. `task-intake` only
+   enriches; promotion to `in_progress` is the responsibility of
    `task-promotion.md`.
 
-## Qué NO hacer
+## What NOT to do
 
-- No documentar arquitectura en este paso (eso es
-  `architecture-update.md`, y solo cuando se empieza a trabajar la
-  tarea, no al crearla).
-- No pegar código de ejemplo dentro del contexto — si hace falta
-  referenciar código existente, usar `archivo:línea`.
+- Do not document architecture at this step (that is
+  `architecture-update.md`, and only when work starts on the task, not
+  when it is created).
+- Do not paste example code inside the context — if existing code
+  needs referencing, use `file:line`.

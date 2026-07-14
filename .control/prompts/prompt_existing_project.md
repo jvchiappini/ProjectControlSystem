@@ -1,42 +1,41 @@
-# Prompt inicial — proyecto existente
+# Initial prompt — existing project
 
-Usar este prompt al empezar una sesión sobre un proyecto que YA tiene
-`.control/` inicializado (es decir, ya existe `.control/PROJECT.md`).
+Use this prompt when starting a session on a project that ALREADY has
+`.control/` initialized (i.e., `.control/PROJECT.md` already exists).
 
 ---
 
-Este proyecto ya tiene un sistema de control en `.control/`. Antes de
-hacer cualquier otra cosa:
+This project already has a control system in `.control/`. Before doing
+anything else:
 
-1. Lee `.control/SYSTEM.md` completo — son las reglas mandatorias.
-2. Lee `.control/CONTEXT.md` si existe — es la memoria de trabajo que
-   el agente fue construyendo en sesiones anteriores. Es más rápido y
-   más confiable que releer sesiones viejas.
-3. Lee `.control/PROJECT.md` y `.control/GOALS.md` completos.
-4. Ejecuta `python .control/scripts/pctl.py status` para ver el
-   resumen de tareas y flujos desactualizados (o lee
-   `.control/tasks/IN_PROGRESS.md` si no hay ejecución de código
-   disponible).
-5. Lee `.control/architecture/_index.md` (solo el mapa) y
-   `.control/flows/_index.md` (solo el mapa) — no abras cada dominio o
-   flujo todavía.
+1. Read `.control/SYSTEM.md` in full — these are the mandatory rules.
+2. Read `.control/CONTEXT.md` if it exists — it is the working memory
+   that the agent has been building across previous sessions. It is
+   faster and more reliable than re-reading old sessions.
+3. Read `.control/PROJECT.md` and `.control/GOALS.md` in full.
+4. Run `python .control/scripts/pctl.py status` to see the task summary
+   and any outdated flows (or read `.control/tasks/IN_PROGRESS.md` if
+   no code execution is available).
+5. Read `.control/architecture/_index.md` (map only) and
+   `.control/flows/_index.md` (map only) — do not open each domain or
+   flow yet.
 
-Con eso, resume en 3-5 líneas para el usuario: en qué está el proyecto,
-qué hay en curso, y qué parece lo más urgente. Luego pregunta o
-confirma con qué se sigue — no asumas.
+With that, summarize in 3-5 lines for the user: where the project
+stands, what's in progress, and what seems most urgent. Then ask or
+confirm what to work on next — do not assume.
 
-Cuando el usuario indique en qué dominio/tema va a trabajar:
+When the user indicates which domain/topic they will work on:
 
-- Si el comportamiento a tocar cruza más de un dominio (input->lógica,
-  request->respuesta, evento->efecto, etc), revisa primero
-  `.control/flows/_index.md` — si ya existe un flujo documentado, ese
-  es el punto de entrada, no los dominios completos.
-- Abre SOLO el archivo de arquitectura de ese dominio
-  (`.control/architecture/<dominio>.md`) si existe. Si no existe, no lo
-  crees todavía — créalo solo si el trabajo termina generando algo que
-  vale la pena documentar (ver `skills/domain-scoping.md`).
-- Abre SOLO las tareas relevantes a ese dominio, no todo el backlog.
+- If the behavior to touch crosses more than one domain (input->logic,
+  request->response, event->effect, etc.), check
+  `.control/flows/_index.md` first — if a flow already exists, that
+  is the entry point, not the full domains.
+- Open ONLY the architecture file for that domain
+  (`.control/architecture/<domain>.md`) if it exists. If it does not
+  exist, do not create it yet — create it only if the work ends up
+  generating something worth documenting (see `skills/domain-scoping.md`).
+- Open ONLY the tasks relevant to that domain, not the entire backlog.
 
-Al terminar la sesión, sigue el checklist de
-`.control/skills/session-close.md` sin excepción — incluye reescribir
-`CONTEXT.md` si corresponde.
+At the end of the session, follow the checklist in
+`.control/skills/session-close.md` without exception — including
+rewriting `CONTEXT.md` if applicable.

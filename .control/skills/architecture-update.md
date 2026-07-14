@@ -3,7 +3,7 @@ id: SK-0003
 nombre: architecture-update
 tipo: skill
 estado: activa
-disparador: "se hizo un cambio de diseño/estructura en un dominio y hay que reflejarlo en la documentacion"
+disparador: "a design/structure change was made in a domain and needs to be reflected in documentation"
 ubicacion: skills/architecture-update.md
 creado_por: usuario
 version: 1
@@ -11,46 +11,45 @@ version: 1
 
 # Skill: architecture-update
 
-Cuándo se dispara: al terminar (o durante) el trabajo de una tarea que
-tocó el diseño de un dominio — no cada vez que se escribe una línea de
-código, solo cuando cambia algo que otra persona/agente necesitaría
-saber para entender el sistema.
+Trigger: upon finishing (or during) work on a task that touched a
+domain's design — not every time a line of code is written, only when
+something changes that another person/agent would need to know to
+understand the system.
 
-## Regla previa (ver `domain-scoping.md`)
+## Prior rule (see `domain-scoping.md`)
 
-Antes de escribir, confirma que el dominio de destino es exactamente
-uno. Si la tarea tocó dos dominios a la vez, actualiza cada `.md` por
-separado, cada uno con su propio alcance — no mezcles ambos en un
-solo archivo.
+Before writing, confirm the target domain is exactly one. If the task
+touched two domains at once, update each `.md` separately, each with
+its own scope — do not mix both in a single file.
 
-## Procedimiento
+## Procedure
 
-1. Si `architecture/<dominio>.md` no existe todavía:
-   `pctl arch-touch <dominio> --estado parcial --crear-archivo`. Esto
-   crea el archivo con la plantilla estándar y actualiza el índice.
-2. Editar el archivo directamente (no hay comando `pctl` para el
-   contenido, solo para el registro en el índice). Mantener siempre
-   las secciones fijas: `## Proposito`, `## Componentes clave`,
-   `## Diagrama`, `## Decisiones relevantes`, `## Estado de
-   documentacion`.
-3. En "Componentes clave", cada línea es
-   `Nombre — qué hace, dónde vive: archivo:línea-línea`. Nunca pegar
-   el código real (ver `SYSTEM.md` sección 3).
-4. Si el cambio amerita un diagrama nuevo o modificado, el `.mmd` va
-   en `diagrams/<dominio>.mmd` y se referencia desde la sección
-   `## Diagrama` — el diagrama vive aparte, nunca embebido como
-   bloque de código dentro del `.md`.
-5. Si la decisión detrás del cambio es no trivial (hubo alternativas
-   descartadas, trade-offs), no la expliques largo acá — crea un ADR
-   con `decision-record.md` y solo enlázalo en "Decisiones relevantes".
-6. Al terminar, actualizar el estado real con
-   `pctl arch-touch <dominio> --estado <parcial|documentado>` (esto
-   también actualiza la fecha en el índice).
+1. If `architecture/<domain>.md` does not exist yet:
+   `pctl arch-touch <domain> --estado parcial --crear-archivo`. This
+   creates the file with the standard template and updates the index.
+2. Edit the file directly (no `pctl` command for content, only for
+   index registration). Always keep the fixed sections:
+   `## Proposito`, `## Componentes clave`, `## Diagrama`,
+   `## Decisiones relevantes`, `## Estado de documentacion`.
+3. In "Componentes clave", each line is
+   `Name — what it does, where it lives: file:line-line`. Never paste
+   the actual code (see `SYSTEM.md` section 3).
+4. If the change warrants a new or modified diagram, the `.mmd` goes in
+   `diagrams/<domain>.mmd` and is referenced from the `## Diagrama`
+   section — the diagram lives separately, never embedded as a code
+   block inside the `.md`.
+5. If the decision behind the change is non-trivial (there were
+   discarded alternatives, trade-offs), do not explain it at length
+   here — create an ADR with `decision-record.md` and just link it in
+   "Decisiones relevantes".
+6. When finished, update the actual state with
+   `pctl arch-touch <domain> --estado <parcial|documentado>` (this
+   also updates the date in the index).
 
-## Qué NO hacer
+## What NOT to do
 
-- No tocar `architecture/_index.md` a mano — es generado.
-- No documentar dominios que no fueron parte de la tarea actual,
-  aunque los hayas visto de pasada explorando el código. Para esos,
-  a lo sumo `pctl arch-touch <dominio_visto> --estado sin_documentar`
-  (sin `--crear-archivo`), solo para dejar constancia de que existe.
+- Do not touch `architecture/_index.md` by hand — it is generated.
+- Do not document domains that were not part of the current task, even
+  if you saw them while exploring the code. For those, at most
+  `pctl arch-touch <seen_domain> --estado sin_documentar` (without
+  `--crear-archivo`), just to register that it exists.

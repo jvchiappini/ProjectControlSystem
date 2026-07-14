@@ -3,7 +3,7 @@ id: SK-0011
 nombre: flow-mapping
 tipo: skill
 estado: activa
-disparador: "se implementa o modifica un comportamiento/interaccion que involucra mas de un dominio, o el usuario pregunta 'que pasa cuando...'"
+disparador: "a behavior/interaction involving more than one domain is implemented or modified, or the user asks 'what happens when...'"
 ubicacion: skills/flow-mapping.md
 creado_por: usuario
 version: 1
@@ -11,65 +11,63 @@ version: 1
 
 # Skill: flow-mapping
 
-Cuándo se dispara: cualquier comportamiento observable de principio a
-fin que involucra más de un dominio — típico en videojuegos (input →
-lógica de juego → animación → audio) pero aplica a cualquier sistema
-con interacciones entre módulos (checkout que toca carrito + pagos +
-notificaciones).
+Trigger: any observable end-to-end behavior that involves more than
+one domain — typical in video games (input → game logic → animation →
+audio) but applies to any system with module interactions (checkout
+touching cart + payments + notifications).
 
-## Por qué existe (diferencia con `architecture-update.md`)
+## Why it exists (difference from `architecture-update.md`)
 
-`architecture/<dominio>.md` documenta un módulo por dentro. Un
-**flujo** documenta un comportamiento de punta a punta, sin importar
-cuántos módulos toque. Sin esto, entender "qué pasa cuando el jugador
-presiona atacar" obliga a leer completos los dominios de input,
-combate y animación — exactamente el costo de tokens que este sistema
-existe para evitar.
+`architecture/<domain>.md` documents a module from the inside. A
+**flow** documents an end-to-end behavior, regardless of how many
+modules it touches. Without this, understanding "what happens when the
+player presses attack" forces reading full input, combat, and
+animation domains — exactly the token cost this system exists to avoid.
 
-## Antes de tocar código: revisar si ya existe un flujo
+## Before touching code: check if a flow already exists
 
-1. Leer `flows/_index.md` (una línea por flujo, liviano). Si el
-   comportamiento que se va a tocar ya tiene un flujo documentado,
-   abrir SOLO ese archivo (`pctl flow-show <id>`) — es la forma más
-   rápida de saber exactamente qué archivo y qué línea tocar, sin leer
-   el resto del código.
-2. Si el flujo existe pero su estado es `desactualizado`, corregirlo
-   como parte de esta misma tarea antes de confiar en sus pasos.
+1. Read `flows/_index.md` (one line per flow, lightweight). If the
+   behavior to be touched already has a documented flow, open ONLY
+   that file (`pctl flow-show <id>`) — it is the fastest way to know
+   exactly which file and which line to touch, without reading the
+   rest of the code.
+2. If the flow exists but its state is `desactualizado`, correct it as
+   part of this same task before trusting its steps.
 
-## Crear un flujo nuevo
+## Creating a new flow
 
-Se dispara cuando: se implementa una interacción nueva que cruza
-dominios, o el agente nota que explicó "qué pasa cuando X" más de una
-vez sin tener un flujo que lo respalde.
+Triggered when: a new cross-domain interaction is implemented, or the
+agent notices it explained "what happens when X" more than once
+without a flow to back it up.
 
-1. `pctl flow-new "<nombre descriptivo>" --dominios <a,b,c> --disparador "<que lo activa>"`
-2. Completar `## Pasos` con una lista numerada, cada paso como una
-   afirmación corta + referencia exacta `archivo:línea-línea`. Nunca
-   pegar el código — el valor del flujo es la ruta, no una copia.
-3. Si el flujo tiene una secuencia temporal clara (A llama a B que
-   dispara C), agregar un diagrama de secuencia Mermaid en
-   `diagrams/flows/<id>.mmd` y referenciarlo en `## Diagrama`.
-4. Marcar `estado: vigente` con `pctl flow-touch <id> vigente` una vez
-   verificado que los pasos son correctos (nace en `borrador`).
-5. NO listar los dominios como si fueran documentación de arquitectura
-   completa — en `## Dominios relacionados` solo van los nombres, el
-   detalle de cada dominio sigue viviendo en su propio
-   `architecture/<dominio>.md`.
+1. `pctl flow-new "<descriptive name>" --dominios <a,b,c> --disparador "<what triggers it>"`
+2. Complete `## Pasos` with a numbered list, each step as a short
+   statement + exact `file:line-line` reference. Never paste the
+   code — the value of the flow is the path, not a copy.
+3. If the flow has a clear temporal sequence (A calls B which triggers
+   C), add a Mermaid sequence diagram in `diagrams/flows/<id>.mmd` and
+   reference it in `## Diagrama`.
+4. Mark `estado: vigente` with `pctl flow-touch <id> vigente` once
+   the steps are verified correct (it starts as `borrador`).
+5. Do NOT list the domains as if they were full architecture
+   documentation — in `## Dominios relacionados` only the names go,
+   the detail of each domain still lives in its own
+   `architecture/<domain>.md`.
 
-## Mantenimiento
+## Maintenance
 
-- Si un refactor cambia archivos referenciados por un flujo vigente,
-  actualizar los pasos en la misma sesión (parte de
-  `doc-drift-check.md`) o, si no hay tiempo, marcar
-  `pctl flow-touch <id> desactualizado` para que quede visible en
-  `pctl status` y nadie confíe en pasos rotos.
-- Un flujo con más de ~8-10 pasos probablemente debería dividirse en
-  dos flujos más específicos (ej: "ataque cuerpo a cuerpo" y "ataque a
-  distancia" en vez de un único "sistema de combate").
+- If a refactor changes files referenced by a vigente flow, update the
+  steps in the same session (part of `doc-drift-check.md`) or, if
+  there is no time, mark
+  `pctl flow-touch <id> desactualizado` so it is visible in
+  `pctl status` and nobody trusts broken steps.
+- A flow with more than ~8-10 steps should probably be split into two
+  more specific flows (e.g., "melee attack" and "ranged attack" instead
+  of a single "combat system").
 
-## Qué NO hacer
+## What NOT to do
 
-- No crear un flujo para algo que vive enteramente en un solo dominio
-  — eso ya lo cubre `architecture/<dominio>.md`.
-- No duplicar contenido de arquitectura de dominio dentro del flujo;
-  el flujo es la ruta de ejecución, no una segunda copia del diseño.
+- Do not create a flow for something that lives entirely in a single
+  domain — that is already covered by `architecture/<domain>.md`.
+- Do not duplicate domain architecture content inside the flow; the
+  flow is the execution path, not a second copy of the design.

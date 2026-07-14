@@ -1,9 +1,10 @@
-# Schema — contrato de frontmatter
+# Schema — frontmatter contract
 
-Referencia exacta que implementa `validate.py`. Si un agente edita
-markdown a mano (sin `pctl`), debe respetar esto al carácter.
+Exact reference that `validate.py` implements. If an agent edits
+markdown by hand (without `pctl`), it must match this character by
+character.
 
-## Tarea (tasks/**/T-XXXX.md o T-PREFIJO-XXXX.md)
+## Task (tasks/**/T-XXXX.md or T-PREFIX-XXXX.md)
 
 ```
 id: T-0045
@@ -15,12 +16,12 @@ creado_por: usuario | agente
 asignado_a: usuario | agente | ambos
 creado: YYYY-MM-DD
 actualizado: YYYY-MM-DD
-depende_de: []              # lista de ids
-bloqueado_por: null          # string, obligatorio si estado=blocked
+depende_de: []              # list of IDs
+bloqueado_por: null          # string, required if estado=blocked
 version_schema: 1
 ```
 
-## Sesión (sessions/*.md)
+## Session (sessions/*.md)
 
 ```
 id: S-YYYY-MM-DD-NNN
@@ -31,7 +32,7 @@ resumen: string
 version_schema: 1
 ```
 
-## Decisión / ADR (decisions/D-XXXX.md)
+## Decision / ADR (decisions/D-XXXX.md)
 
 ```
 id: D-0012
@@ -42,7 +43,7 @@ reemplaza: []
 version_schema: 1
 ```
 
-## Skill/Script (skills/_index.md, una fila por entrada)
+## Skill/Script (skills/_index.md, one row per entry)
 
 ```
 id: SK-0007
@@ -55,35 +56,35 @@ creado_por: usuario | agente
 version: 1
 ```
 
-## Flujo (flows/F-XXXX.md)
+## Flow (flows/F-XXXX.md)
 
 ```
 id: F-0001
 nombre: string
 estado: borrador | vigente | desactualizado
-dominios: []                 # lista de nombres de dominio que cruza
-disparador: string            # que activa este comportamiento
+dominios: []                 # list of domain names the flow crosses
+disparador: string            # what triggers this behavior
 creado: YYYY-MM-DD
 actualizado: YYYY-MM-DD
 version_schema: 1
 ```
-Cuerpo con secciones fijas: `## Resumen`, `## Pasos` (numerados, cada
-uno con referencia `archivo:línea`), `## Diagrama`,
+Body with fixed sections: `## Resumen`, `## Pasos` (numbered, each
+with a `file:line` reference), `## Diagrama`,
 `## Dominios relacionados`, `## Notas de mantenimiento`.
 
-## Memoria de contexto (CONTEXT.md, único archivo en la raíz de .control/)
+## Context memory (CONTEXT.md, single file at `.control/` root)
 
 ```
 actualizado: YYYY-MM-DD
 actualizado_por: agente | usuario
 version_schema: 1
 ```
-Cuerpo libre pero con secciones fijas sugeridas por el template
-(`CONTEXT.md.template`). Se reescribe completo, nunca se apendea.
-Presupuesto de tamaño: ~120 líneas de cuerpo (`pctl context-check`).
+Free-form body but with suggested fixed sections from the template
+(`CONTEXT.md.template`). Rewritten entirely, never appended. Size
+budget: ~120 body lines (`pctl context-check`).
 
-## Máquina de estados de tareas
+## Task state machine
 
-Ver `.control/SYSTEM.md` sección 4. `validate.py` y `tasks.py` la
-implementan como una tabla de transiciones permitidas — no editar esa
-tabla sin actualizar `SYSTEM.md` también.
+See `.control/SYSTEM.md` section 4. `validate.py` and `tasks.py`
+implement it as a table of allowed transitions — do not edit that
+table without updating `SYSTEM.md` as well.

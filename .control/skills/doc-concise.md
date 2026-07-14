@@ -1,32 +1,42 @@
 # Skill: doc-concise
 
-Disparador: post-edicion de cualquier `.md` dentro de `.control/` (architecture, flows, decisions, tasks), o al ejecutar `pctl doc-update`.
+Trigger: post-edit of any `.md` inside `.control/` (architecture,
+flows, decisions, tasks), or when executing `pctl doc-update`.
 
-## Regla
+## Rule
 
-No hay límite fijo de líneas. La validación es de **densidad de referencias**:
+There is no fixed line limit. Validation is based on **reference
+density**:
 
-> Una seccion en un `.md` de `.control/` no deberia tener mas de 3 parrafos consecutivos sin al menos una referencia `archivo:linea`.
+> A section in a `.md` file inside `.control/` should not have more
+> than 3 consecutive paragraphs without at least one `file:line`
+> reference.
 
-Si una seccion es pura prosa sin apuntar a codigo, es candidata a poda.
+If a section is pure prose without pointing to code, it is a candidate
+for pruning.
 
-## Procedimiento
+## Procedure
 
-1. Despues de escribir o modificar cualquier `.md` en `.control/`, parsear secciones.
-2. Por cada seccion, contar parrafos (separados por doble salto de linea).
-3. Si hay 3+ parrafos seguidos sin ninguna `archivo:linea`, marcar la seccion.
-4. Para cada seccion marcada, sugerir poda: convertir prosa en referencias, o mover el contenido a un flujo si describe comportamiento que cruza dominios.
-5. No podar automaticamente — solo marcar y sugerir. La decision final es del usuario.
+1. After writing or modifying any `.md` in `.control/`, parse sections.
+2. For each section, count paragraphs (separated by double newline).
+3. If there are 3+ consecutive paragraphs without any `file:line`,
+   flag the section.
+4. For each flagged section, suggest pruning: turn prose into
+   references, or move the content to a flow if it describes
+   cross-domain behavior.
+5. Do not prune automatically — only flag and suggest. The final
+   decision is the user's.
 
 ## Output
 
-Lista de secciones candidatas a poda, con la sugerencia concreta de que hacer (convertir a referencia, mover a flujo, o eliminar).
+List of candidate sections for pruning, with a concrete suggestion of
+what to do (convert to reference, move to flow, or delete).
 
-## Ejemplo
+## Example
 
 ```
-architecture/stock.md — seccion "Detalle de implementacion":
-  4 parrafos sin referencias.
-  Sugerencia: reemplazar con referencias a `src/stock/validator.py:10-45`
-  y `src/stock/reserve.py:22-30`.
+architecture/stock.md — section "Detalle de implementacion":
+  4 paragraphs without references.
+  Suggestion: replace with references to `src/stock/validator.py:10-45`
+  and `src/stock/reserve.py:22-30`.
 ```

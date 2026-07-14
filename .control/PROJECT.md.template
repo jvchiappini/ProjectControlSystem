@@ -1,17 +1,17 @@
-# Proyecto: <nombre>
+# Project: <name>
 
-## Descripción
-(una frase: qué es este proyecto)
+## Description
+(one sentence: what this project is)
 
-## Tipo
-(web app / API / librería / mobile / etc)
+## Type
+(web app / API / library / mobile / etc)
 
-## Stack principal
-(lenguajes, frameworks, infra relevante)
+## Main stack
+(languages, frameworks, relevant infrastructure)
 
-## Convención de IDs
-(simple: T-0001, T-0002... | monorepo: T-PREFIJO-0001 por dominio)
+## ID convention
+(simple: T-0001, T-0002... | monorepo: T-PREFIX-0001 per domain)
 
-## Estado general
-(en desarrollo / mantenimiento / pausado — 1 línea, se actualiza cada
-tanto, no en cada sesión)
+## General status
+(under development / maintenance / paused — 1 line, updated occasionally,
+not every session)
