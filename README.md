@@ -66,6 +66,29 @@ cambio hecho por un agente vía `pctl`, y viceversa.
    `prompts/prompt_new_project.md`.
 3. Verificar que `python3` esté disponible: `python3 .control/scripts/pctl.py status`.
 
+## Integración con opencode
+
+Si usás opencode como agente, no necesitas configurar nada manualmente.
+El archivo `opencode.json` en la raíz ya le dice a opencode que cargue
+`.control/SYSTEM.md` automáticamente al inicio de cada sesión (vía el
+campo `instructions`).
+
+El flujo es:
+
+1. opencode arranca y lee `opencode.json` → carga `.control/SYSTEM.md`
+   como instrucción inicial.
+2. `SYSTEM.md` (sección 9, `context-budget.md`) ordena al agente leer
+   `CONTEXT.md`, `PROJECT.md`, `GOALS.md`, y los índices ligeros.
+3. El agente detecta si es un proyecto nuevo (sin sesiones prevías) o
+   existente, y carga el prompt correspondiente desde `prompts/`.
+4. Al cerrar sesión, `session-close.md` + `context-maintenance.md`
+   aseguran que `CONTEXT.md` se reescriba con lo aprendido, listo para
+   la próxima sesión.
+
+El resultado: podés cerrar opencode, volver a abrirlo al día siguiente,
+y el agente retoma exactamente donde lo dejaste — sin tener que
+explicarle el proyecto de nuevo.
+
 ## Los tres prompts
 
 - **`.control/SYSTEM.md`** — mandatorio, se carga siempre, en cualquier
@@ -75,9 +98,9 @@ cambio hecho por un agente vía `pctl`, y viceversa.
 - **`.control/prompts/prompt_new_project.md`** — prompt inicial cuando
   el proyecto NO tiene `.control/` todavía.
 
-Configura tu agente (Claude Code, Cursor, un custom system prompt,
-etc) para cargar `SYSTEM.md` siempre, y el prompt correspondiente
-según si detecta `.control/PROJECT.md` o no.
+Para otros agentes (Claude Code, Cursor, ChatGPT, etc), configurá el
+system prompt para que cargue `.control/SYSTEM.md` siempre, y el prompt
+correspondiente según si detecta `.control/PROJECT.md` o no.
 
 ## El CLI: `pctl`
 
