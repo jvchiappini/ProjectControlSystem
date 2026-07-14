@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Control Panel</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div id="app">
+
+  <div id="rail">
+    <div class="brand">Control Panel</div>
+    <div class="nav-item active" data-view="tablero">Tablero <span class="count" id="nav-count-tablero"></span></div>
+    <div class="nav-item" data-view="arquitectura">Arquitectura <span class="count" id="nav-count-arquitectura"></span></div>
+    <div class="nav-item" data-view="flujos">Flujos <span class="count" id="nav-count-flujos"></span></div>
+    <div class="nav-item" data-view="sesiones">Sesiones <span class="count" id="nav-count-sesiones"></span></div>
+    <div class="nav-item" data-view="decisiones">Decisiones <span class="count" id="nav-count-decisiones"></span></div>
+    <div class="nav-item" data-view="skills">Skills <span class="count" id="nav-count-skills"></span></div>
+    <div class="nav-item" data-view="contexto">Contexto</div>
+    <div class="footer-actions">
+      <button class="btn ghost" id="btn-reindex" style="width:100%;margin-bottom:6px;">Reindexar</button>
+      <button class="btn ghost" id="btn-validate" style="width:100%;">Validar</button>
+    </div>
+  </div>
+
+  <div id="main-col" style="flex:1;display:flex;flex-direction:column;min-width:0;">
+    <div id="topbar">
+      <span id="project-name">(sin conectar)</span>
+      <span class="spacer"></span>
+      <span class="pill" id="pill-backlog">backlog 0</span>
+      <span class="pill" id="pill-progress">en curso 0</span>
+      <span class="pill warn" id="pill-blocked" style="display:none;">bloqueadas 0</span>
+      <span class="pill" id="pill-done">completas 0</span>
+    </div>
+
+    <div id="main">
+
+      <div class="view active" id="view-tablero"></div>
+
+      <div class="view" id="view-arquitectura">
+        <div class="canvas-wrap" id="canvas-arquitectura"></div>
+      </div>
+
+      <div class="view" id="view-flujos">
+        <div class="canvas-wrap" id="canvas-flujos"></div>
+      </div>
+
+      <div class="view" id="view-sesiones"><div class="simple-list" id="list-sesiones"></div></div>
+      <div class="view" id="view-decisiones"><div class="simple-list" id="list-decisiones"></div></div>
+      <div class="view" id="view-skills"><div class="simple-list" id="list-skills"></div></div>
+
+      <div class="view" id="view-contexto">
+        <div class="meta" id="contexto-meta"></div>
+        <div id="contexto-rendered" class="rendered-md"></div>
+        <div style="margin-top:14px;">
+          <button class="btn ghost" id="btn-edit-contexto">Editar</button>
+        </div>
+        <div id="contexto-editor" style="display:none;margin-top:10px;">
+          <textarea class="field" id="contexto-textarea" style="min-height:320px;font-family:var(--mono);font-size:12px;"></textarea>
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <button class="btn primary" id="btn-save-contexto">Guardar</button>
+            <button class="btn ghost" id="btn-cancel-contexto">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="drawer-backdrop"></div>
+<div id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div class="id" id="drawer-id"></div>
+      <h2 id="drawer-title"></h2>
+    </div>
+    <span class="close-x" id="drawer-close">&times;</span>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-foot" id="drawer-foot"></div>
+</div>
+
+<div id="modal-backdrop">
+  <div id="modal"></div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

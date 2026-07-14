@@ -1,0 +1,37 @@
+---
+actualizado: 2000-01-01
+actualizado_por: agente
+version_schema: 1
+---
+
+# Memoria de contexto (mantenida por el agente)
+
+Este archivo lo escribe y reescribe el agente — no el usuario. Es la
+memoria de trabajo que sobrevive a compactaciones de chat y a chats
+nuevos. Se REESCRIBE cada sesión relevante, no se va acumulando sin
+límite como el log de `sessions/`. Máximo sugerido: ~120 líneas — si
+crece más, hay que promover lo estable a `PROJECT.md`,
+`architecture/<dominio>.md` o `decisions/` y podar esto.
+
+## Qué es este proyecto, en la práctica
+(no repetir `PROJECT.md` palabra por palabra — acá va lo que el agente
+aprendió trabajando que no es obvio solo leyendo la descripción
+formal: cómo está armado en la práctica, qué partes son nuevas y
+cuáles legacy, qué tan estable es cada parte)
+
+## Convenciones tácitas detectadas
+(cosas que el equipo/código hace consistentemente pero que no están
+escritas en ningún lado formal: convenciones de nombres, patrones
+repetidos, decisiones implícitas)
+
+## Cosas raras a tener en cuenta (gotchas)
+(trampas conocidas: "el módulo X parece hacer Y pero en realidad Z",
+dependencias no obvias, partes frágiles)
+
+## Estado percibido
+(1-2 líneas: salud general del proyecto tal como la ve el agente ahora
+mismo — no es el estado formal de `ROADMAP.md`, es una lectura rápida)
+
+## Última sesión relevante
+(id de sesión + 1 línea, para saber dónde mirar si hace falta más
+detalle — no copiar el contenido de la sesión acá)
