@@ -333,6 +333,7 @@ function switchView(name) {
   if (name === 'sesiones') renderSessions();
   if (name === 'decisiones') renderDecisions();
   if (name === 'skills') renderSkills();
+  if (name === 'docs') renderDocs();
   if (name === 'grafo') renderGrafo();
   if (name === 'contexto') renderContexto();
 }
@@ -399,6 +400,7 @@ function renderTopbar() {
   document.getElementById('nav-count-decisiones').textContent = d.decisions.length;
   const proposedSkills = d.skills.filter(s => s.estado === 'propuesta').length;
   document.getElementById('nav-count-skills').textContent = proposedSkills ? `${proposedSkills} nuevas` : '';
+  document.getElementById('nav-count-docs').textContent = d.docs.length || '';
 }
 
 document.getElementById('btn-reindex').onclick = async () => {
@@ -950,6 +952,88 @@ function renderSkills() {
     }
     root.appendChild(row);
   });
+}
+
+/* ================================================================
+   DOCUMENTACION TECNICA
+   ================================================================ */
+function renderDocs() {
+  const root = document.getElementById('list-docs'); root.innerHTML = '';
+  const items = STATE.data.docs;
+  if (!items.length) {
+    root.innerHTML = '<div class="empty-hint">Todavía no hay documentación técnica. Creá una con <kbd>pctl doc-new</kbd> o desde acá abajo.</div>';
+    renderDocsAddButton(root);
+    return;
+  }
+  const sorted = [...items].sort((a, b) => a.id.localeCompare(b.id));
+  sorted.forEach(d => {
+    const row = document.createElement('div'); row.className = 'list-row';
+    const tags = (d.tags || []).join(', ');
+    row.innerHTML = `
+      <span class="id">${escapeHtml(d.id)}</span>
+      <span class="titulo">${escapeHtml(d.titulo)}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--ink-faint);width:60px;">${escapeHtml(d.categoria)}</span>
+      <span class="estado-tag ${d.estado}">${d.estado}</span>
+      <span class="fecha">${d.actualizado || ''}</span>`;
+    row.onclick = () => openDocDrawer(d);
+    root.appendChild(row);
+  });
+  renderDocsAddButton(root);
+}
+
+function renderDocsAddButton(root) {
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-card-btn'; addBtn.textContent = '+ nuevo documento';
+  addBtn.onclick = openNewDocModal;
+  root.appendChild(addBtn);
+}
+
+async function openDocDrawer(d) {
+  const r = await API.get(`/api/docs/${d.id}`);
+  const bodyText = r.body || '';
+  const bodyHtml = `
+    <div class="badges">
+      <span class="badge">${escapeHtml(d.categoria)}</span>
+      <span class="estado-tag ${d.estado}">${d.estado}</span>
+    </div>
+    <div class="section-label">Contenido</div>
+    <div class="rendered-md">${renderMarkdown(bodyText.replace(/^---[\s\S]*?---\n/, ''))}</div>`;
+
+  const estados = ['draft', 'published', 'outdated', 'deprecated'];
+  const buttons = estados.filter(e => e !== d.estado).map(e => ({
+    label: `Marcar ${e}`, cls: e === 'published' ? 'primary' : 'ghost',
+    onClick: async () => {
+      await API.post(`/api/docs/${d.id}/touch`, { estado: e });
+      STATE.data.docs = await API.get('/api/docs');
+      closeDrawer(); renderDocs();
+    },
+  }));
+
+  openDrawer({ id: d.id, title: d.titulo, bodyHtml, footButtons: buttons });
+}
+
+function openNewDocModal() {
+  const cats = ['guides', 'api', 'database', 'reference', 'tutorials'];
+  const catOptions = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  openModal(`
+    <h3>Nuevo documento técnico</h3>
+    <div class="field-group"><label>Título</label><input class="field" id="m-titulo"></div>
+    <div class="field-group"><label>Categoría</label><select class="field" id="m-categoria">${catOptions}</select></div>
+    <div class="field-group"><label>Tags (separados por coma, opcional)</label><input class="field" id="m-tags" placeholder="ej: auth, api, guia"></div>
+    <div class="actions">
+      <button class="btn ghost" id="m-cancel">Cancelar</button>
+      <button class="btn primary" id="m-save">Crear</button>
+    </div>`);
+  document.getElementById('m-cancel').onclick = closeModal;
+  document.getElementById('m-save').onclick = async () => {
+    const titulo = document.getElementById('m-titulo').value.trim();
+    if (!titulo) return;
+    const categoria = document.getElementById('m-categoria').value;
+    const tags = document.getElementById('m-tags').value.trim();
+    await API.post('/api/docs', { titulo, categoria, tags: tags || null });
+    STATE.data.docs = await API.get('/api/docs');
+    closeModal(); renderDocs();
+  };
 }
 
 /* ================================================================

@@ -26,7 +26,7 @@ SERVER_VERSION = "2025-07-14-b"
 
 sys.path.insert(0, str(CONTROL_DIR / "scripts"))
 from lib import (
-    arch, atomic, context, decisions, doctor, event_log, flows, graph,
+    arch, atomic, context, decisions, doctor, docs, event_log, flows, graph,
     indexes, migrate, paths, search, sessions, skills_registry, tasks, validate,
 )
 from lib.lock import FileLock
@@ -142,6 +142,10 @@ def _skills_payload():
     return skills_registry.list_skills()
 
 
+def _docs_payload():
+    return docs.list_docs()
+
+
 def _positions():
     pfile = paths.POSITIONS_JSON
     if pfile.exists():
@@ -166,6 +170,7 @@ def bootstrap():
         "sessions": _sessions_payload(),
         "decisions": _decisions_payload(),
         "skills": _skills_payload(),
+        "docs": _docs_payload(),
         "positions": _positions(),
     }
 
@@ -287,6 +292,14 @@ class Handler(BaseHTTPRequestHandler):
             if p.startswith("/api/decisions/"):
                 did = p.split("/")[-1]
                 return self._send_json({"body": decisions.show(did)})
+            if p == "/api/docs":
+                return self._send_json(_docs_payload())
+            if p.startswith("/api/docs/"):
+                doc_id = p[len("/api/docs/"):].strip("/")
+                content = docs.show_doc(doc_id)
+                if content:
+                    return self._send_json({"body": content})
+                return self._send_error_json(f"doc no encontrado: {doc_id}", 404)
             if p == "/api/skills":
                 return self._send_json(_skills_payload())
             if p.startswith("/api/skills/"):
@@ -435,14 +448,29 @@ class Handler(BaseHTTPRequestHandler):
                 _save_positions(pos)
                 event_log.log("position-updated", f"{seccion}/{payload['id']}")
                 return self._send_json({"ok": True})
+            if re.match(r"^/api/docs/[\w-]+/touch$", p):
+                doc_id = p.split("/")[3]
+                d = docs.touch_estado(doc_id, payload["estado"])
+                return self._send_json(d)
+            if p == "/api/docs":
+                did, fpath = docs.new_doc(
+                    titulo=payload["titulo"],
+                    categoria=payload["categoria"],
+                    tags=payload.get("tags"),
+                )
+                return self._send_json({"id": did, "archivo": str(fpath)})
             if p == "/api/reindex":
                 indexes.reindex()
                 flows.reindex()
+                roadmaps.reindex()
+                docs.reindex()
                 event_log.log("reindex", None, {"tipo": "full"})
                 return self._send_json({"counts": "ok"})
             if p == "/api/reindex/force":
                 indexes.rebuild_index_from_files()
                 flows.reindex()
+                roadmaps.reindex()
+                docs.reindex()
                 event_log.log("reindex", None, {"tipo": "force"})
                 return self._send_json({"ok": True})
             if p == "/api/migrate":
