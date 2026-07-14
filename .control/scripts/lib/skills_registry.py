@@ -88,8 +88,12 @@ def propose(nombre, tipo, disparador, ubicacion, creado_por="agente"):
         n = _next_id(rows)
         sid = f"SK-{n:04d}"
 
-        if ubicacion and (paths.SKILLS_DIR / ubicacion).exists():
-            fpath = paths.SKILLS_DIR / ubicacion
+        if ubicacion:
+            candidate = paths.CONTROL_ROOT / ubicacion
+            if not candidate.exists():
+                candidate = paths.SKILLS_DIR / ubicacion.replace("skills/", "", 1)
+            if candidate.exists():
+                fpath = candidate
         else:
             fname = f"{sid}.md" if not ubicacion else ubicacion
             fpath = paths.SKILLS_DIR / fname
@@ -152,8 +156,10 @@ def promote(sid, mover_desde_proposed=True):
 
                 if mover_desde_proposed and "proposed/" in r["ubicacion"]:
                     old_rel = r["ubicacion"]
-                    old_file = paths.CONTROL_ROOT / old_rel if not (paths.SKILLS_DIR / old_rel).exists() else paths.SKILLS_DIR / old_rel
-                    new_name = old_rel.replace("proposed/", "").replace("skills/", "") if old_rel.startswith("skills/proposed/") else old_rel.replace("proposed/", "")
+                    old_file = paths.CONTROL_ROOT / old_rel
+                    if not old_file.exists():
+                        old_file = paths.SKILLS_DIR / old_rel.replace("skills/", "", 1)
+                    new_name = old_rel.split("/")[-1]
                     new_file = paths.SKILLS_DIR / new_name
                     if old_file.exists():
                         old_file.rename(new_file)
@@ -173,9 +179,9 @@ def _update_skill_file_state(sid, new_state, ubicacion=None):
     for r in rows:
         if r["id"] == sid:
             loc = ubicacion or r["ubicacion"]
-            fpath = paths.CONTROL_ROOT / loc if not (paths.SKILLS_DIR / loc.replace("skills/", "")).exists() else paths.SKILLS_DIR / loc.replace("skills/", "")
+            fpath = paths.CONTROL_ROOT / loc
             if not fpath.exists():
-                fpath = paths.SKILLS_DIR / loc
+                fpath = paths.SKILLS_DIR / loc.replace("skills/", "", 1)
             if fpath.exists():
                 data, body = fm.parse(fpath.read_text(encoding="utf-8"))
                 data["estado"] = new_state
@@ -184,11 +190,17 @@ def _update_skill_file_state(sid, new_state, ubicacion=None):
 
 
 def get_content(sid):
-    """Devuelve (frontmatter, body) de una skill."""
+    """Devuelve (frontmatter, body) de una skill.
+
+    `ubicacion` se almacena como 'skills/nombre.md' (relativo a CONTROL_ROOT).
+    """
     rows = _read_rows()
     for r in rows:
         if r["id"] == sid:
-            fpath = paths.SKILLS_DIR / r["ubicacion"]
+            loc = r["ubicacion"]
+            fpath = paths.CONTROL_ROOT / loc
+            if not fpath.exists():
+                fpath = paths.SKILLS_DIR / loc.replace("skills/", "", 1)
             if fpath.exists():
                 return fm.parse(fpath.read_text(encoding="utf-8"))
             return r, None
