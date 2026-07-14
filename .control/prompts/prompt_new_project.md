@@ -32,6 +32,10 @@ any code or documentation:
      they are created when a cross-domain behavior appears)
    - Folder structure: `tasks/`, `architecture/`, `flows/`,
      `diagrams/`, `sessions/`, `decisions/`, `skills/`, `scripts/`
+   - If the user works with opencode: create `opencode.json` at the
+     project root with `instructions: [".control/SYSTEM.md"]` so
+     opencode loads the control rules automatically at every session
+     start. See `.control/../opencode.json` in this repo for reference.
 
 3. Do NOT create domain documentation or flows that do not exist yet.
    Do NOT create tasks until the user asks for concrete work.

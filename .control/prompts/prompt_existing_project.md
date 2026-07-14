@@ -19,6 +19,10 @@ anything else:
 5. Read `.control/architecture/_index.md` (map only) and
    `.control/flows/_index.md` (map only) — do not open each domain or
    flow yet.
+6. If the project uses opencode and `opencode.json` does not exist at
+   the root, suggest creating it with
+   `instructions: [".control/SYSTEM.md"]` to automate loading the
+   control system on every session start.
 
 With that, summarize in 3-5 lines for the user: where the project
 stands, what's in progress, and what seems most urgent. Then ask or
