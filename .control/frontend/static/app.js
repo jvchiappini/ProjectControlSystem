@@ -88,6 +88,7 @@ function switchView(name) {
   if (name === 'sesiones') renderSessions();
   if (name === 'decisiones') renderDecisions();
   if (name === 'skills') renderSkills();
+  if (name === 'grafo') renderGrafo();
   if (name === 'contexto') renderContexto();
 }
 
@@ -707,6 +708,81 @@ function renderSkills() {
       row.appendChild(btn);
     }
     root.appendChild(row);
+  });
+}
+
+/* ================================================================
+   GRAFO DE RELACIONES
+   ================================================================ */
+function renderGrafo() {
+  const input = document.getElementById('grafo-input');
+  const tree = document.getElementById('grafo-tree');
+  tree.innerHTML = '<div class="empty-hint">Ingresá un ID (tarea, flujo, decisión o dominio) y presioná "Grafo"</div>';
+
+  document.getElementById('grafo-btn').onclick = async () => {
+    const eid = input.value.trim();
+    if (!eid) return;
+    tree.innerHTML = '<div class="empty-hint">cargando...</div>';
+    const r = await API.get(`/api/graph/${eid}`);
+    if (r.error) { tree.innerHTML = `<div class="empty-hint">${escapeHtml(r.error)}</div>`; return; }
+    renderGrafoTree(tree, r, 0);
+  };
+
+  input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('grafo-btn').click(); };
+}
+
+function renderGrafoTree(container, r, depth) {
+  const e = r.entity;
+  if (!e) { container.innerHTML = '<div class="empty-hint">sin datos</div>'; return; }
+
+  let html = `<div class="grafo-root">
+    <span class="id">${escapeHtml(e.id)}</span>
+    <span class="tipo">${escapeHtml(e.tipo)}</span>
+    <span class="titulo">${escapeHtml(e.titulo)}</span>
+  </div>`;
+
+  if (r.directo && r.directo.length) {
+    html += '<div class="grafo-section">→ Relaciones directas</div>';
+    r.directo.forEach(link => {
+      html += `<div class="grafo-link" data-id="${escapeHtml(link.id)}">
+        <span class="rel">${escapeHtml(link.rel)}</span>
+        <span class="id">${escapeHtml(link.id)}</span>
+      </div>`;
+    });
+  }
+
+  if (r.inverso && r.inverso.length) {
+    html += '<div class="grafo-section">← Relaciones inversas</div>';
+    r.inverso.forEach(link => {
+      html += `<div class="grafo-link" data-id="${escapeHtml(link.id)}">
+        <span class="rel">${escapeHtml(link.rel)}</span>
+        <span class="id">${escapeHtml(link.id)}</span>
+      </div>`;
+    });
+  }
+
+  if (!r.directo.length && !r.inverso.length) {
+    html += '<div class="empty-hint">sin relaciones registradas</div>';
+  }
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.grafo-link').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', async () => {
+      const id = el.dataset.id;
+      const r2 = await API.get(`/api/graph/${id}`);
+      if (r2.error) { return; }
+      const sub = document.createElement('div');
+      sub.className = 'grafo-subtree';
+      renderGrafoTree(sub, r2, depth + 1);
+      const existing = el.nextElementSibling;
+      if (existing && existing.classList.contains('grafo-subtree')) {
+        existing.remove();
+      } else {
+        el.parentNode.insertBefore(sub, el.nextSibling);
+      }
+    });
   });
 }
 

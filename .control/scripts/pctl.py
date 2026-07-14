@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import arch, context, decisions, flows, indexes, paths, sessions, skills_registry, tasks, validate  # noqa: E402
+from lib import agent, arch, context, decisions, doc, flows, git, graph, indexes, paths, search, sessions, skills_registry, tasks, validate  # noqa: E402
 
 
 def cmd_task_new(args):
@@ -200,6 +200,119 @@ def cmd_skill_list(args):
         print(" | ".join(r))
 
 
+# ── git ──
+def cmd_git_branch(args):
+    print(git.branch_name(args.id))
+
+
+def cmd_git_commit(args):
+    if not args.yes:
+        print("Propuesta de commit:\n")
+        print(git.commit(args.id))
+        print(f"\n---\n{git.status_line()}\n")
+        print(f"Commits recientes:\n{git.recent_commits()}")
+        print("\nEjecuta 'pctl git-commit <id> --yes' para confirmar.")
+        return
+    msg = git.commit(args.id, yes=True, push=args.push)
+    print(f"commiteado:\n{msg}")
+
+
+def cmd_git_detect_drift(args):
+    errors = git.detect_drift()
+    if not errors:
+        print("sin drift detectado")
+        return
+    for e in errors:
+        print(f"DRIFT: {e}")
+    if not args.quiet:
+        print("\nEjecuta 'pctl git-commit <id>' cuando estes listo para commitear.")
+
+
+def cmd_git_pr(args):
+    if not args.yes:
+        print(git.create_pr(args.id))
+        print("\nEjecuta 'pctl git-pr <id> --yes' para crear el PR.")
+        return
+    result = git.create_pr(args.id, yes=True)
+    print(result)
+
+
+# ── search ──
+def cmd_search(args):
+    results = search.search(args.query)
+    if not results:
+        print("sin resultados")
+        return
+    for fpath, n, line in results:
+        print(f"{fpath}:{n}: {line}")
+
+
+# ── graph ──
+def cmd_graph(args):
+    print(graph.tree(args.id, max_depth=args.depth))
+
+
+# ── session-summarize ──
+def cmd_session_summarize(args):
+    s = sessions.summarize(args.id)
+    print(f"Sesión: {s['id']} ({s['fecha']})")
+    print(f"Resumen: {s['resumen']}")
+    if s["tareas"]:
+        print(f"Tareas: {', '.join(s['tareas'])}")
+    if s["acciones"]:
+        print(f"\nAcciones destacadas:")
+        for a in s["acciones"]:
+            print(f"  {a}")
+    if s["referencias"]:
+        print(f"\nReferencias:")
+        for r in s["referencias"]:
+            print(f"  {r}")
+    if not s["acciones"] and not s["referencias"]:
+        print("(sin acciones ni referencias extraibles del log)")
+
+
+# ── agent ──
+def cmd_context_init(args):
+    print(agent.context_init())
+
+
+def cmd_session_continue(args):
+    print(agent.session_continue())
+
+
+def cmd_task_intake(args):
+    texto = " ".join(args.texto) if isinstance(args.texto, list) else args.texto
+    r = agent.task_intake(texto)
+    print(f"creada {r['id']} como {r['tipo']} [{r['prioridad']}]")
+    if r['dominio']:
+        print(f"dominio detectado: {r['dominio']}")
+    if r['similares']:
+        print(f"\nsimilares en backlog:")
+        for sid, stit in r['similares']:
+            print(f"  {sid} — {stit}")
+    print(f"\narchivo: {r['archivo']}")
+
+
+# ── doc ──
+def cmd_doc_update(args):
+    r = doc.update(args.dominio)
+    print(f"dominio: {args.dominio}")
+    if r.get("nuevas"):
+        print(f"\nreferencias nuevas agregadas ({len(r['nuevas'])}):")
+        for ref in r["nuevas"]:
+            print(f"  {ref}")
+    if r.get("flujos_marcados"):
+        print(f"\nflujos marcados como desactualizados:")
+        for fid in r["flujos_marcados"]:
+            print(f"  {fid}")
+    print(f"\n{r.get('message', 'ok')}")
+
+
+def cmd_ref_add(args):
+    ref = doc.ref_add(args.ref, task_id=args.task, dominio=args.dominio)
+    print(f"referencia agregada: {ref}")
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="pctl")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -327,6 +440,64 @@ def build_parser():
     sk_list = sub.add_parser("skill-list", help="listar skills/scripts registrados")
     sk_list.add_argument("--estado", default=None, choices=["propuesta", "activa", "deprecada"])
     sk_list.set_defaults(func=cmd_skill_list)
+
+    # ── git ──
+    gb = sub.add_parser("git-branch", help="sugerir nombre de branch para tarea")
+    gb.add_argument("id")
+    gb.set_defaults(func=cmd_git_branch)
+
+    gc = sub.add_parser("git-commit", help="mostrar o ejecutar commit (siempre pregunta)")
+    gc.add_argument("id")
+    gc.add_argument("--yes", action="store_true", help="ejecutar el commit (si no, solo muestra preview)")
+    gc.add_argument("--push", action="store_true", help="push despues del commit")
+    gc.set_defaults(func=cmd_git_commit)
+
+    gd = sub.add_parser("git-detect-drift", help="detectar referencias rotas por cambios sin commit")
+    gd.add_argument("--quiet", action="store_true", help="solo salida silenciosa para scripting")
+    gd.set_defaults(func=cmd_git_detect_drift)
+
+    gp = sub.add_parser("git-pr", help="crear PR en GitHub")
+    gp.add_argument("id")
+    gp.add_argument("--yes", action="store_true", help="ejecutar (si no, solo muestra preview)")
+    gp.set_defaults(func=cmd_git_pr)
+
+    # ── search ──
+    sc = sub.add_parser("search", help="buscar en todo .control/")
+    sc.add_argument("query")
+    sc.set_defaults(func=cmd_search)
+
+    # ── graph ──
+    gr = sub.add_parser("graph", help="arbol de relaciones de un item")
+    gr.add_argument("id")
+    gr.add_argument("--depth", type=int, default=3, help="profundidad maxima (default 3)")
+    gr.set_defaults(func=cmd_graph)
+
+    # ── session-summarize ──
+    ss = sub.add_parser("session-summarize", help="extraer acciones y refs de una sesion")
+    ss.add_argument("id")
+    ss.set_defaults(func=cmd_session_summarize)
+
+    # ── agent ──
+    ci = sub.add_parser("context-init", help="resumen compacto para iniciar sesion de agente")
+    ci.set_defaults(func=cmd_context_init)
+
+    sc = sub.add_parser("session-continue", help="reanudar ultima sesion")
+    sc.set_defaults(func=cmd_session_continue)
+
+    ti = sub.add_parser("task-intake", help="crear tarea estructurada desde texto crudo")
+    ti.add_argument("texto", nargs="+")
+    ti.set_defaults(func=cmd_task_intake)
+
+    # ── doc ──
+    du = sub.add_parser("doc-update", help="actualizar doc de dominio desde git diff")
+    du.add_argument("dominio")
+    du.set_defaults(func=cmd_doc_update)
+
+    ra = sub.add_parser("ref-add", help="agregar referencia estructurada")
+    ra.add_argument("ref", help="archivo:linea o archivo:inicio-fin")
+    ra.add_argument("--task", default=None, help="ID de tarea destino")
+    ra.add_argument("--dominio", default=None, help="dominio destino")
+    ra.set_defaults(func=cmd_ref_add)
 
     return p
 

@@ -16,6 +16,7 @@
     <div class="nav-item" data-view="sesiones">Sesiones <span class="count" id="nav-count-sesiones"></span></div>
     <div class="nav-item" data-view="decisiones">Decisiones <span class="count" id="nav-count-decisiones"></span></div>
     <div class="nav-item" data-view="skills">Skills <span class="count" id="nav-count-skills"></span></div>
+    <div class="nav-item" data-view="grafo">Grafo</div>
     <div class="nav-item" data-view="contexto">Contexto</div>
     <div class="footer-actions">
       <button class="btn ghost" id="btn-reindex" style="width:100%;margin-bottom:6px;">Reindexar</button>
@@ -48,6 +49,14 @@
       <div class="view" id="view-sesiones"><div class="simple-list" id="list-sesiones"></div></div>
       <div class="view" id="view-decisiones"><div class="simple-list" id="list-decisiones"></div></div>
       <div class="view" id="view-skills"><div class="simple-list" id="list-skills"></div></div>
+
+      <div class="view" id="view-grafo">
+        <div class="grafo-search">
+          <input class="field" id="grafo-input" placeholder="ID: T-0012, F-0003, D-0001, stock">
+          <button class="btn primary" id="grafo-btn">Grafo</button>
+        </div>
+        <div id="grafo-tree"></div>
+      </div>
 
       <div class="view" id="view-contexto">
         <div class="meta" id="contexto-meta"></div>

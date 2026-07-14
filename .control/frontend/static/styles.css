@@ -247,3 +247,19 @@ textarea.field { min-height: 80px; resize: vertical; font-family: var(--sans); }
 #view-contexto .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin-bottom: 12px; }
 
 .empty-hint { color: var(--ink-faint); font-size: 12px; padding: 20px; text-align: center; }
+
+/* ---------- grafo ---------- */
+#view-grafo { padding: 16px; overflow-y: auto; }
+.grafo-search { display: flex; gap: 8px; margin-bottom: 16px; }
+.grafo-search .field { flex: 1; font-family: var(--mono); }
+#grafo-tree { font-family: var(--mono); font-size: 13px; }
+.grafo-root { padding: 10px 12px; background: var(--paper-raised); border: 1px solid var(--line-strong); border-radius: var(--radius); margin-bottom: 12px; display: flex; gap: 10px; align-items: baseline; }
+.grafo-root .id { color: var(--ink-faint); font-size: 11px; }
+.grafo-root .tipo { background: var(--accent-neutral-bg); padding: 1px 5px; border-radius: 2px; font-size: 10px; text-transform: uppercase; }
+.grafo-root .titulo { font-weight: 500; }
+.grafo-section { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); margin: 10px 0 4px; }
+.grafo-link { padding: 6px 10px; background: var(--paper-raised); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 4px; display: flex; gap: 10px; align-items: baseline; }
+.grafo-link:hover { border-color: var(--ink-soft); }
+.grafo-link .rel { font-size: 10px; color: var(--ink-faint); background: var(--accent-neutral-bg); padding: 1px 4px; border-radius: 2px; }
+.grafo-link .id { font-size: 12px; }
+.grafo-subtree { margin: 4px 0 6px 20px; padding-left: 10px; border-left: 2px solid var(--line); }

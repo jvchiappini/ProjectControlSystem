@@ -24,7 +24,7 @@ STATIC_DIR = FRONTEND_DIR / "static"
 POSITIONS_FILE = FRONTEND_DIR / "positions.json"
 
 sys.path.insert(0, str(CONTROL_DIR / "scripts"))
-from lib import arch, context, decisions, flows, indexes, paths, sessions, skills_registry, tasks, validate  # noqa: E402
+from lib import arch, context, decisions, flows, git, graph, indexes, paths, search, sessions, skills_registry, tasks, validate  # noqa: E402
 
 MIME = {
     ".html": "text/html; charset=utf-8",
@@ -217,6 +217,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send_json(_skills_payload())
             if p == "/api/positions":
                 return self._send_json(_positions())
+            if p == "/api/search":
+                q = (qs.get("q") or [""])[0]
+                return self._send_json({"results": search.search(q)})
+            if re.match(r"^/api/graph/[\w-]+$", p):
+                eid = p.split("/")[-1]
+                return self._send_json(graph.relations(eid))
             if p.startswith("/diagrams/"):
                 return self._serve_diagram(p[len("/diagrams/"):])
             return self._serve_static(p)
@@ -309,6 +315,11 @@ class Handler(BaseHTTPRequestHandler):
                 counts = indexes.reindex()
                 flows.reindex()
                 return self._send_json({"counts": counts})
+            if p == "/api/search":
+                return self._send_json({"results": search.search(payload.get("q", ""))})
+            if re.match(r"^/api/graph/[\w-]+$", p):
+                eid = p.split("/")[-1]
+                return self._send_json(graph.relations(eid))
             return self._send_error_json("ruta no encontrada", 404)
         except (KeyError, ValueError) as e:
             return self._send_error_json(e, 400)

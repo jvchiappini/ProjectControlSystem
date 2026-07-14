@@ -128,6 +128,12 @@ def show_task(tid):
     return fpath.read_text(encoding="utf-8")
 
 
+def get_data(tid):
+    """Devuelve solo el frontmatter de una tarea."""
+    fpath, data = _find_task_file(tid)
+    return data
+
+
 def set_body(tid, new_body):
     fpath, data = _find_task_file(tid)
     data["actualizado"] = _today()
