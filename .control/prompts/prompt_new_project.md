@@ -33,9 +33,11 @@ any code or documentation:
    - Folder structure: `tasks/`, `architecture/`, `flows/`,
      `diagrams/`, `sessions/`, `decisions/`, `skills/`, `scripts/`
    - If the user works with opencode: create `opencode.json` at the
-     project root with `instructions: [".control/SYSTEM.md"]` so
-     opencode loads the control rules automatically at every session
-     start. See `.control/../opencode.json` in this repo for reference.
+     project root with `instructions: [".control/SYSTEM.md"]` and
+     `default_agent: "project-control"`, and create
+     `.opencode/agents/project-control.md` (the agent prompt that
+     teaches the workflow). See this repo's `opencode.json` and
+     `.opencode/agents/` for reference.
 
 3. Do NOT create domain documentation or flows that do not exist yet.
    Do NOT create tasks until the user asks for concrete work.
