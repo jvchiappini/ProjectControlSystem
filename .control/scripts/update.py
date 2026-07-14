@@ -73,8 +73,11 @@ USER_DATA_GLOBS = [
     "scripts/lib/proposed/**/*",
 ]
 
+CHANGELOG_FILE = CONTROL_ROOT / "CHANGELOG.md"
+
 BACKUP_EXCLUDE_NAMES = {".backups", "__pycache__", ".tasks_index.json",
-                        ".events.ndjson", ".positions.json", ".control.lock"}
+                        ".events.ndjson", ".positions.json", ".control.lock",
+                        "CHANGELOG.md"}
 
 
 # ---------------------------------------------------------------------------
@@ -255,6 +258,42 @@ def _run_migrations(start_version):
                 _log(f"Migration {from_v}->{to_v} FAILED: {e}")
                 raise
     return ran
+
+
+def _append_changelog(new_version, migrations_ran, log_lines, deprecations=None):
+    header = f"## v{new_version} ({datetime.date.today().isoformat()})"
+    parts = [header, ""]
+    if migrations_ran:
+        parts.append("### Migrations")
+        for from_v, to_v, desc in migrations_ran:
+            parts.append(f"- `{from_v}→{to_v}`: {desc}")
+        parts.append("")
+    if deprecations:
+        parts.append("### Deprecations")
+        for d in deprecations:
+            parts.append(f"- {d}")
+        parts.append("")
+    if log_lines:
+        parts.append("### Changes since last update")
+        for line in log_lines.strip().splitlines():
+            parts.append(f"- {line}")
+        parts.append("")
+    entry = "\n".join(parts)
+
+    if CHANGELOG_FILE.exists():
+        current = CHANGELOG_FILE.read_text(encoding="utf-8")
+        # Insert after the first line (title) so newest stays on top
+        lines = current.splitlines()
+        if lines and lines[0].startswith("# "):
+            body = "\n".join(lines[1:]).strip()
+            new_content = lines[0] + "\n\n" + entry + "\n" + body + "\n"
+        else:
+            new_content = entry + "\n" + current
+    else:
+        new_content = "# ProjectControl Changelog\n\n" + entry + "\n"
+
+    CHANGELOG_FILE.write_text(new_content, encoding="utf-8")
+    _log(f"Changelog updated -> v{new_version}")
 
 
 # ---- Define migrations ----
@@ -476,6 +515,7 @@ def main():
     # place; they become inert. A future migration can clean them up if needed.
 
     # --- Run built-in migrations ---
+    ran = []
     if not dry_run and not errors:
         old_schema = _current_schema()
         try:
@@ -485,6 +525,16 @@ def main():
         except Exception:
             _log("Migrations failed. Check backup and repair manually.")
             # Don't exit — the update itself succeeded
+
+    # --- Update local changelog ---
+    if not dry_run and not errors:
+        new_version = _current_schema()
+        if updated or ran or log_lines:
+            _append_changelog(
+                new_version=new_version,
+                migrations_ran=ran,
+                log_lines=log_lines,
+            )
 
     # --- Report ---
     _report(
