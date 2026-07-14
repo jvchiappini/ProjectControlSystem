@@ -1,10 +1,10 @@
 import datetime
 
-from . import fm, paths
+from . import atomic, fm, paths
 
 CONTEXT_MD = paths.CONTROL_ROOT / "CONTEXT.md"
 CONTEXT_KEY_ORDER = ["actualizado", "actualizado_por", "version_schema"]
-MAX_BODY_LINES = 120  # presupuesto de tamano: pasado esto, hay que podar
+MAX_BODY_LINES = 120
 
 
 def _today():
@@ -23,13 +23,10 @@ def write(body, actualizado_por="agente"):
         "actualizado_por": actualizado_por,
         "version_schema": 1,
     }
-    CONTEXT_MD.write_text(fm.dump(data, body, CONTEXT_KEY_ORDER), encoding="utf-8")
+    atomic.write_with_backup(CONTEXT_MD, fm.dump(data, body, CONTEXT_KEY_ORDER))
 
 
 def check_budget():
-    """Devuelve None si esta dentro del presupuesto, o un string de aviso
-    si el cuerpo crecio demasiado y conviene podar/promover contenido a
-    PROJECT.md, ARCHITECTURE o DECISIONS."""
     if not CONTEXT_MD.exists():
         return None
     _, body = fm.parse(CONTEXT_MD.read_text(encoding="utf-8"))

@@ -1,7 +1,9 @@
 import datetime
 import re
 
-from . import fm, paths
+from . import atomic, fm, paths, event_log
+from .lock import FileLock
+from .indexes import reindex as _reindex_tasks
 
 FLOW_KEY_ORDER = [
     "id", "nombre", "estado", "dominios", "disparador", "padre",
@@ -9,9 +11,6 @@ FLOW_KEY_ORDER = [
 ]
 
 ESTADOS = ["borrador", "vigente", "desactualizado"]
-
-FLOWS_DIR = paths.CONTROL_ROOT / "flows"
-FLOWS_INDEX_MD = FLOWS_DIR / "_index.md"
 
 _TEMPLATE_BODY = """
 ## Resumen
@@ -36,13 +35,9 @@ def _today():
     return datetime.date.today().isoformat()
 
 
-def _ensure_dirs():
-    FLOWS_DIR.mkdir(parents=True, exist_ok=True)
-
-
 def _all_flow_files():
-    _ensure_dirs()
-    return sorted(FLOWS_DIR.glob("F-*.md"))
+    paths.FLOWS_DIR.mkdir(parents=True, exist_ok=True)
+    return sorted(paths.FLOWS_DIR.glob("F-*.md"))
 
 
 def _next_id():
@@ -56,22 +51,23 @@ def _next_id():
 
 
 def new_flow(nombre, dominios=None, disparador="", padre=None):
-    _ensure_dirs()
-    dominios = dominios or []
-    n = _next_id()
-    fid = f"F-{n:04d}"
-    today = _today()
-    data = {
-        "id": fid, "nombre": nombre, "estado": "borrador",
-        "dominios": dominios, "disparador": disparador, "padre": padre,
-        "creado": today, "actualizado": today, "version_schema": 1,
-    }
-    dominios_lista = "\n".join(f"- {d}" for d in dominios) or "- (completar)"
-    body = _TEMPLATE_BODY.format(fid=fid, dominios_lista=dominios_lista)
-    fpath = FLOWS_DIR / f"{fid}.md"
-    fpath.write_text(fm.dump(data, body, FLOW_KEY_ORDER), encoding="utf-8")
-    _reindex()
-    return fid, fpath
+    with FileLock():
+        dominios = dominios or []
+        n = _next_id()
+        fid = f"F-{n:04d}"
+        today = _today()
+        data = {
+            "id": fid, "nombre": nombre, "estado": "borrador",
+            "dominios": dominios, "disparador": disparador, "padre": padre,
+            "creado": today, "actualizado": today, "version_schema": 1,
+        }
+        dominios_lista = "\n".join(f"- {d}" for d in dominios) or "- (completar)"
+        body = _TEMPLATE_BODY.format(fid=fid, dominios_lista=dominios_lista)
+        fpath = paths.FLOWS_DIR / f"{fid}.md"
+        atomic.write_with_backup(fpath, fm.dump(data, body, FLOW_KEY_ORDER))
+        reindex()
+        event_log.log("flow-created", fid, {"nombre": nombre})
+        return fid, fpath
 
 
 def _find_flow_file(fid):
@@ -93,21 +89,65 @@ def get_data(fid):
 
 
 def set_body(fid, new_body):
-    fpath, data = _find_flow_file(fid)
-    data["actualizado"] = _today()
-    fpath.write_text(fm.dump(data, new_body, FLOW_KEY_ORDER), encoding="utf-8")
+    with FileLock():
+        fpath, data = _find_flow_file(fid)
+        data["actualizado"] = _today()
+        atomic.write_with_backup(fpath, fm.dump(data, new_body, FLOW_KEY_ORDER))
+        event_log.log("flow-body-edited", fid)
 
 
 def touch_estado(fid, estado):
-    if estado not in ESTADOS:
-        raise ValueError(f"estado invalido: {estado}")
-    fpath, data = _find_flow_file(fid)
-    _, body = fm.parse(fpath.read_text(encoding="utf-8"))
-    data["estado"] = estado
-    data["actualizado"] = _today()
-    fpath.write_text(fm.dump(data, body, FLOW_KEY_ORDER), encoding="utf-8")
-    _reindex()
-    return data
+    with FileLock():
+        if estado not in ESTADOS:
+            raise ValueError(f"estado invalido: {estado}")
+        fpath, data = _find_flow_file(fid)
+        _, body = fm.parse(fpath.read_text(encoding="utf-8"))
+        data["estado"] = estado
+        data["actualizado"] = _today()
+        atomic.write_with_backup(fpath, fm.dump(data, body, FLOW_KEY_ORDER))
+        reindex()
+        event_log.log("flow-status-changed", fid, {"estado": estado})
+        return data
+
+
+def _read_index_rows():
+    if not paths.FLOWS_INDEX_MD.exists():
+        return {}
+    rows = {}
+    for line in paths.FLOWS_INDEX_MD.read_text(encoding="utf-8").splitlines():
+        if line.startswith("| ") and not line.startswith("| Flujo") and not line.startswith("|---"):
+            parts = [p.strip() for p in line.strip("|").split("|")]
+            if len(parts) >= 4:
+                rows[parts[0]] = {
+                    "estado": parts[1], "dominios": parts[2], "disparador": parts[3],
+                }
+    return rows
+
+
+def reindex():
+    paths.ensure_dirs()
+    rows = {}
+    for f in _all_flow_files():
+        data, _ = fm.parse(f.read_text(encoding="utf-8"))
+        fid = data.get("id", "")
+        if fid:
+            rows[fid] = {
+                "estado": data.get("estado", "borrador"),
+                "dominios": ", ".join(data.get("dominios") or []),
+                "disparador": data.get("disparador", ""),
+            }
+    lines = [
+        "# Indice de flujos",
+        "",
+        "(generado por `pctl reindex` — no editar a mano)",
+        "",
+        "| Flujo | Estado | Dominios | Disparador |",
+        "|---|---|---|---|",
+    ]
+    for fid in sorted(rows):
+        r = rows[fid]
+        lines.append(f"| {fid} | {r['estado']} | {r['dominios']} | {r['disparador']} |")
+    atomic.write(paths.FLOWS_INDEX_MD, "\n".join(lines) + "\n")
 
 
 def list_flows(dominio=None, estado=None, padre="__any__"):
@@ -118,28 +158,31 @@ def list_flows(dominio=None, estado=None, padre="__any__"):
             continue
         if estado and data.get("estado") != estado:
             continue
-        if padre != "__any__" and data.get("padre") != padre:
+        if padre == "__any__":
+            pass  # todos
+        elif padre is None and data.get("padre"):
+            continue
+        elif padre is not None and data.get("padre") != padre:
             continue
         out.append(data)
-    out.sort(key=lambda d: d.get("id", ""))
     return out
 
 
-def _reindex():
-    _ensure_dirs()
-    lines = [
-        "# Indice de flujos", "",
-        "(generado por pctl -- no editar a mano)", "",
-        "| id | nombre | estado | dominios | disparador |",
-        "|---|---|---|---|---|",
-    ]
-    for d in list_flows():
-        dominios = ", ".join(d.get("dominios") or [])
-        lines.append(
-            f"| {d['id']} | {d['nombre']} | {d['estado']} | {dominios} | {d.get('disparador','')} |"
-        )
-    FLOWS_INDEX_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def reindex():
-    _reindex()
+def tree(fid, indent=0, visited=None, max_depth=5):
+    if visited is None:
+        visited = set()
+    if fid in visited or indent > max_depth:
+        return ""
+    visited.add(fid)
+    result = []
+    prefix = "  " * indent
+    try:
+        data = get_data(fid)
+    except FileNotFoundError:
+        return prefix + f"! flujo no encontrado: {fid}\n"
+    line = f"{prefix}{fid} — {data.get('nombre', '?')} [{data.get('estado', '?')}]\n"
+    result.append(line)
+    hijos = list_flows(padre=fid)
+    for h in hijos:
+        result.append(tree(h.get("id"), indent + 1, visited, max_depth))
+    return "".join(result)

@@ -1,6 +1,7 @@
 import datetime
 
-from . import paths
+from . import atomic, paths, event_log
+from .lock import FileLock
 
 ESTADOS = ["sin_documentar", "parcial", "documentado"]
 
@@ -53,25 +54,25 @@ def _write_index(rows):
     for dominio in sorted(rows):
         r = rows[dominio]
         lines.append(f"| {dominio} | {r['estado']} | {r['actualizado']} | {r['archivo']} |")
-    paths.ARCH_INDEX_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic.write(paths.ARCH_INDEX_MD, "\n".join(lines) + "\n")
 
 
 def touch(dominio, estado="sin_documentar", crear_archivo=False):
-    if estado not in ESTADOS:
-        raise ValueError(f"estado invalido: {estado}")
-    rows = _read_index_rows()
-    archivo = "-"
-    if crear_archivo or estado != "sin_documentar":
-        fpath = paths.ARCH_DIR / f"{dominio}.md"
-        if not fpath.exists():
-            fpath.write_text(
-                _DOMAIN_TEMPLATE.format(dominio=dominio, fecha=_today()),
-                encoding="utf-8",
-            )
-        archivo = fpath.name
-    rows[dominio] = {"estado": estado, "actualizado": _today(), "archivo": archivo}
-    _write_index(rows)
-    return rows[dominio]
+    with FileLock():
+        if estado not in ESTADOS:
+            raise ValueError(f"estado invalido: {estado}")
+        rows = _read_index_rows()
+        archivo = "-"
+        if crear_archivo or estado != "sin_documentar":
+            fpath = paths.ARCH_DIR / f"{dominio}.md"
+            if not fpath.exists():
+                atomic.write_with_backup(fpath,
+                    _DOMAIN_TEMPLATE.format(dominio=dominio, fecha=_today()))
+            archivo = fpath.name
+        rows[dominio] = {"estado": estado, "actualizado": _today(), "archivo": archivo}
+        _write_index(rows)
+        event_log.log("arch-touched", dominio, {"estado": estado})
+        return rows[dominio]
 
 
 def list_domains():
@@ -86,10 +87,12 @@ def get_body(dominio):
 
 
 def set_body(dominio, content):
-    paths.ARCH_DIR.mkdir(parents=True, exist_ok=True)
-    fpath = paths.ARCH_DIR / f"{dominio}.md"
-    fpath.write_text(content, encoding="utf-8")
-    rows = _read_index_rows()
-    estado = rows.get(dominio, {}).get("estado", "parcial")
-    rows[dominio] = {"estado": estado, "actualizado": _today(), "archivo": fpath.name}
-    _write_index(rows)
+    with FileLock():
+        paths.ARCH_DIR.mkdir(parents=True, exist_ok=True)
+        fpath = paths.ARCH_DIR / f"{dominio}.md"
+        atomic.write_with_backup(fpath, content)
+        rows = _read_index_rows()
+        estado = rows.get(dominio, {}).get("estado", "parcial")
+        rows[dominio] = {"estado": estado, "actualizado": _today(), "archivo": fpath.name}
+        _write_index(rows)
+        event_log.log("arch-body-edited", dominio)

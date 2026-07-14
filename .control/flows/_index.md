@@ -1,6 +1,6 @@
 # Indice de flujos
 
-(generado por pctl -- no editar a mano)
+(generado por `pctl reindex` — no editar a mano)
 
-| id | nombre | estado | dominios | disparador |
-|---|---|---|---|---|
+| Flujo | Estado | Dominios | Disparador |
+|---|---|---|---|

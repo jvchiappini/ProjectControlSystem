@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import agent, arch, context, decisions, doc, flows, git, graph, indexes, paths, search, sessions, skills_registry, tasks, validate  # noqa: E402
+from lib import agent, arch, context, decisions, doc, doctor, flows, git, graph, indexes, migrate, paths, search, sessions, skills_registry, tasks, validate  # noqa: E402
 
 
 def cmd_task_new(args):
@@ -313,6 +313,45 @@ def cmd_ref_add(args):
     print(f"referencia agregada: {ref}")
 
 
+# ── doctor ──
+def cmd_doctor(args):
+    errores, advertencias = doctor.run_doctor()
+    if errores:
+        print("ERRORES:")
+        for e in errores:
+            print(f"  {e}")
+    else:
+        print("sin errores")
+    if advertencias:
+        print("\nADVERTENCIAS:")
+        for w in advertencias:
+            print(f"  {w}")
+    if not errores and not advertencias:
+        print("todo en orden")
+
+
+# ── migrate ──
+def cmd_migrate(args):
+    stats = migrate.migrate_all()
+    print("migracion completada:")
+    for k, v in stats.items():
+        print(f"  {k}: {v}")
+
+
+# ── backup ──
+def cmd_backup(args):
+    from lib import backups
+    bpath = backups.create_backup()
+    print(f"backup creado: {bpath}")
+
+
+# ── reindex force ──
+def cmd_reindex_force(args):
+    indexes.rebuild_index_from_files()
+    flows.reindex()
+    print("indices reconstruidos desde los archivos fuente")
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="pctl")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -498,6 +537,19 @@ def build_parser():
     ra.add_argument("--task", default=None, help="ID de tarea destino")
     ra.add_argument("--dominio", default=None, help="dominio destino")
     ra.set_defaults(func=cmd_ref_add)
+
+    # ── doctor ──
+    sub.add_parser("doctor", help="chequeo de integridad del proyecto").set_defaults(func=cmd_doctor)
+
+    # ── migrate ──
+    sub.add_parser("migrate", help="migrar archivos al schema actual").set_defaults(func=cmd_migrate)
+
+    # ── backup ──
+    sub.add_parser("backup", help="crear backup de .control/").set_defaults(func=cmd_backup)
+
+    # ── reindex --force ──
+    rif = sub.add_parser("reindex-force", help="reconstruir indices desde los archivos fuente")
+    rif.set_defaults(func=cmd_reindex_force)
 
     return p
 

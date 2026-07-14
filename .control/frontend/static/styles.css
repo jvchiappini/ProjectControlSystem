@@ -248,6 +248,27 @@ textarea.field { min-height: 80px; resize: vertical; font-family: var(--sans); }
 
 .empty-hint { color: var(--ink-faint); font-size: 12px; padding: 20px; text-align: center; }
 
+/* ---------- kanban filters ---------- */
+.kanban-filters {
+  display: flex; align-items: center; gap: 8px; padding: 8px 0 12px; flex-shrink: 0; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 11px; color: var(--ink-soft);
+}
+.kanban-filters select, .kanban-filters input {
+  font-family: var(--mono); font-size: 11px; padding: 3px 6px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--paper-raised); color: var(--ink);
+}
+.kanban-filters label { margin-right: 4px; }
+.kanban-filters .btn { padding: 3px 8px; }
+
+/* ---------- atajos de teclado ---------- */
+kbd { font-family: var(--mono); }
+
+/* ---------- estado de sincronización SSE ---------- */
+#sse-status { font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+#sse-status.connected { color: var(--accent-progress); }
+#sse-status.disconnected { color: var(--accent-blocked); }
+
 /* ---------- grafo ---------- */
 #view-grafo { padding: 16px; overflow-y: auto; }
 .grafo-search { display: flex; gap: 8px; margin-bottom: 16px; }

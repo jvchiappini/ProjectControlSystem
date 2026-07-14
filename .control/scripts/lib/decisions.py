@@ -1,7 +1,8 @@
 import datetime
 import re
 
-from . import fm, paths
+from . import atomic, fm, paths, event_log
+from .lock import FileLock
 
 DECISION_KEY_ORDER = ["id", "titulo", "fecha", "estado", "reemplaza", "version_schema"]
 ESTADOS = ["propuesta", "aceptada", "rechazada", "reemplazada"]
@@ -38,23 +39,25 @@ def _next_id():
 
 
 def new_decision(titulo, estado="aceptada", reemplaza=None):
-    if estado not in ESTADOS:
-        raise ValueError(f"estado invalido: {estado}")
-    n = _next_id()
-    did = f"D-{n:04d}"
-    data = {
-        "id": did, "titulo": titulo, "fecha": _today(), "estado": estado,
-        "reemplaza": reemplaza or [], "version_schema": 1,
-    }
-    fpath = paths.DECISIONS_DIR / f"{did}.md"
-    fpath.write_text(fm.dump(data, _TEMPLATE_BODY, DECISION_KEY_ORDER), encoding="utf-8")
-    if reemplaza:
-        for old_id in reemplaza:
-            try:
-                _set_estado(old_id, "reemplazada")
-            except FileNotFoundError:
-                pass
-    return did, fpath
+    with FileLock():
+        if estado not in ESTADOS:
+            raise ValueError(f"estado invalido: {estado}")
+        n = _next_id()
+        did = f"D-{n:04d}"
+        data = {
+            "id": did, "titulo": titulo, "fecha": _today(), "estado": estado,
+            "reemplaza": reemplaza or [], "version_schema": 1,
+        }
+        fpath = paths.DECISIONS_DIR / f"{did}.md"
+        atomic.write_with_backup(fpath, fm.dump(data, _TEMPLATE_BODY, DECISION_KEY_ORDER))
+        if reemplaza:
+            for old_id in reemplaza:
+                try:
+                    _set_estado(old_id, "reemplazada")
+                except FileNotFoundError:
+                    pass
+        event_log.log("decision-created", did, {"titulo": titulo, "estado": estado})
+        return did, fpath
 
 
 def _find(did):
@@ -69,7 +72,7 @@ def _set_estado(did, estado):
     fpath, data = _find(did)
     _, body = fm.parse(fpath.read_text(encoding="utf-8"))
     data["estado"] = estado
-    fpath.write_text(fm.dump(data, body, DECISION_KEY_ORDER), encoding="utf-8")
+    atomic.write_with_backup(fpath, fm.dump(data, body, DECISION_KEY_ORDER))
 
 
 def show(did):
@@ -78,8 +81,10 @@ def show(did):
 
 
 def set_body(did, body):
-    fpath, data = _find(did)
-    fpath.write_text(fm.dump(data, body, DECISION_KEY_ORDER), encoding="utf-8")
+    with FileLock():
+        fpath, data = _find(did)
+        atomic.write_with_backup(fpath, fm.dump(data, body, DECISION_KEY_ORDER))
+        event_log.log("decision-body-edited", did)
 
 
 def list_decisions(estado=None):

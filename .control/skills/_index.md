@@ -17,10 +17,10 @@ carga inicial de fábrica)
 | SK-0010 | doc-drift-check | skill | activa | cierre de sesion o refactor de codigo referenciado | skills/doc-drift-check.md | usuario |
 | SK-0011 | flow-mapping | skill | activa | comportamiento que cruza dominios (input->logica->animacion, etc) | skills/flow-mapping.md | usuario |
 | SK-0012 | context-maintenance | skill | activa | inicio/cierre de toda sesion | skills/context-maintenance.md | usuario |
-| SK-0013 | code-review | skill | propuesta | antes de git-commit o cuando el usuario pide revision | skills/proposed/code-review.md | agente |
-| SK-0014 | debug-triage | skill | propuesta | usuario reporta bug sin root cause | skills/proposed/debug-triage.md | agente |
-| SK-0015 | refactor-plan | skill | propuesta | tarea tipo refactor o duplicacion 2+ veces | skills/proposed/refactor-plan.md | agente |
-| SK-0016 | deprecation-track | skill | propuesta | se marca algo como obsoleto o ADR con reemplaza | skills/proposed/deprecation-track.md | agente |
-| SK-0017 | test-gap | skill | propuesta | task-move done en tarea sin tests | skills/proposed/test-gap.md | agente |
-| SK-0018 | onboarding | skill | propuesta | proyecto sin sesiones previas | skills/proposed/onboarding.md | agente |
-| SK-0019 | doc-concise | skill | propuesta | post-edicion de cualquier .md en .control/ | skills/proposed/doc-concise.md | agente |
+| SK-0013 | code-review | skill | activa | antes de git-commit o cuando el usuario pide revision | skills/code-review.md | agente |
+| SK-0014 | debug-triage | skill | activa | usuario reporta bug sin root cause | skills/debug-triage.md | agente |
+| SK-0015 | refactor-plan | skill | activa | tarea tipo refactor o duplicacion 2+ veces | skills/refactor-plan.md | agente |
+| SK-0016 | deprecation-track | skill | activa | se marca algo como obsoleto o ADR con reemplaza | skills/deprecation-track.md | agente |
+| SK-0017 | test-gap | skill | activa | task-move done en tarea sin tests | skills/test-gap.md | agente |
+| SK-0018 | onboarding | skill | activa | proyecto sin sesiones previas | skills/onboarding.md | agente |
+| SK-0019 | doc-concise | skill | activa | post-edicion de cualquier .md en .control/ | skills/doc-concise.md | agente |

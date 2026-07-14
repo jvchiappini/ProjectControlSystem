@@ -16,3 +16,10 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Project Control — runtime / transient
+.control/.events.ndjson
+.control/.control.lock
+.control/.backups/
+.control/.positions.json
+.control/.tasks_index.json
