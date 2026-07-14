@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import agent, arch, context, decisions, doc, doctor, flows, git, graph, indexes, migrate, paths, search, sessions, skills_registry, tasks, validate  # noqa: E402
+from lib import agent, arch, context, decisions, doc, doctor, docs, flows, git, graph, indexes, migrate, paths, roadmaps, search, sessions, skills_registry, tasks, validate  # noqa: E402
 
 
 def cmd_task_new(args):
@@ -66,11 +66,20 @@ def cmd_status(args):
         for d in desactualizados:
             print(f"  {d['id']} {d['nombre']}")
 
+    phases = roadmaps.list_phases()
+    in_progress = [p for p in phases if p.get("estado") == "in_progress"]
+    if in_progress:
+        print("\nroadmap — fases activas:")
+        for p in in_progress:
+            print(f"  {p['id']} {p.get('nombre','')}")
+
 
 def cmd_reindex(args):
     counts = indexes.reindex()
     flows.reindex()
-    print(f"indices regenerados: {counts}")
+    rcounts = roadmaps.reindex()
+    dcounts = docs.reindex()
+    print(f"indices regenerados: tasks={counts}, roadmaps={rcounts}, docs={dcounts}")
 
 
 def cmd_validate(args):
@@ -338,6 +347,38 @@ def cmd_migrate(args):
         print(f"  {k}: {v}")
 
 
+# ── docs ──
+def cmd_doc_new(args):
+    did, fpath = docs.new_doc(args.titulo, args.categoria, tags=args.tags)
+    print(f"creada {did} -> {fpath}")
+
+
+def cmd_doc_list(args):
+    items = docs.list_docs(categoria=args.categoria, estado=args.estado)
+    if not items:
+        print("(sin documentacion tecnica)")
+        return
+    for d in items:
+        print(f"  {d['id']:14} [{d['categoria']:10}] [{d['estado']:10}] {d.get('titulo','')}")
+
+
+def cmd_doc_show(args):
+    content = docs.show_doc(args.id)
+    if content:
+        print(content)
+    else:
+        print(f"Doc {args.id} no encontrado")
+
+
+def cmd_doc_touch(args):
+    try:
+        docs.touch_estado(args.id, args.estado)
+        print(f"{args.id}: estado -> {args.estado}")
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
+
+
 # ── backup ──
 def cmd_backup(args):
     from lib import backups
@@ -349,6 +390,8 @@ def cmd_backup(args):
 def cmd_reindex_force(args):
     indexes.rebuild_index_from_files()
     flows.reindex()
+    roadmaps.reindex()
+    docs.reindex()
     print("indices reconstruidos desde los archivos fuente")
 
 
@@ -544,6 +587,57 @@ def build_parser():
     # ── migrate ──
     sub.add_parser("migrate", help="migrar archivos al schema actual").set_defaults(func=cmd_migrate)
 
+    # ── roadmap ──
+    rpn = sub.add_parser("roadmap-phase-new", help="crear nueva fase en el roadmap")
+    rpn.add_argument("nombre")
+    rpn.add_argument("--orden", type=int, default=1)
+    rpn.set_defaults(func=cmd_roadmap_phase_new)
+
+    rin = sub.add_parser("roadmap-initiative-new", help="crear nueva iniciativa")
+    rin.add_argument("nombre")
+    rin.add_argument("phase")
+    rin.set_defaults(func=cmd_roadmap_initiative_new)
+
+    rmn = sub.add_parser("roadmap-milestone-new", help="crear nuevo milestone")
+    rmn.add_argument("nombre")
+    rmn.add_argument("initiative")
+    rmn.add_argument("phase")
+    rmn.set_defaults(func=cmd_roadmap_milestone_new)
+
+    rl = sub.add_parser("roadmap-list", help="listar items del roadmap")
+    rl.add_argument("--estado", default=None, choices=["not_started", "in_progress", "completed", "blocked", "cancelled", "backlog"])
+    rl.set_defaults(func=cmd_roadmap_list)
+
+    rs = sub.add_parser("roadmap-show", help="mostrar un item del roadmap")
+    rs.add_argument("id")
+    rs.set_defaults(func=cmd_roadmap_show)
+
+    rt = sub.add_parser("roadmap-touch", help="cambiar estado de un item del roadmap")
+    rt.add_argument("id")
+    rt.add_argument("estado")
+    rt.set_defaults(func=cmd_roadmap_touch)
+
+    # ── docs ──
+    dn = sub.add_parser("doc-new", help="crear documento tecnico nuevo")
+    dn.add_argument("titulo")
+    dn.add_argument("categoria", choices=docs.CATEGORIES)
+    dn.add_argument("--tags", default=None, help="tags separadas por coma")
+    dn.set_defaults(func=cmd_doc_new)
+
+    dl = sub.add_parser("doc-list", help="listar documentacion tecnica")
+    dl.add_argument("--categoria", default=None, choices=docs.CATEGORIES)
+    dl.add_argument("--estado", default=None, choices=docs.DOC_STATES)
+    dl.set_defaults(func=cmd_doc_list)
+
+    ds = sub.add_parser("doc-show", help="mostrar un documento tecnico")
+    ds.add_argument("id")
+    ds.set_defaults(func=cmd_doc_show)
+
+    dt = sub.add_parser("doc-touch", help="cambiar estado de un documento")
+    dt.add_argument("id")
+    dt.add_argument("estado", choices=docs.DOC_STATES)
+    dt.set_defaults(func=cmd_doc_touch)
+
     # ── backup ──
     sub.add_parser("backup", help="crear backup de .control/").set_defaults(func=cmd_backup)
 
@@ -552,6 +646,62 @@ def build_parser():
     rif.set_defaults(func=cmd_reindex_force)
 
     return p
+
+
+# ── roadmap command functions ──
+def cmd_roadmap_phase_new(args):
+    pid, fpath = roadmaps.new_phase(args.nombre, orden=args.orden)
+    print(f"creada {pid} -> {fpath}")
+
+
+def cmd_roadmap_initiative_new(args):
+    iid, fpath = roadmaps.new_initiative(args.nombre, args.phase)
+    print(f"creada {iid} -> {fpath}")
+
+
+def cmd_roadmap_milestone_new(args):
+    mid, fpath = roadmaps.new_milestone(args.nombre, args.initiative, args.phase)
+    print(f"creado {mid} -> {fpath}")
+
+
+def cmd_roadmap_list(args):
+    phases = roadmaps.list_phases(estado=args.estado)
+    initiatives = roadmaps.list_initiatives(estado=args.estado)
+    milestones = roadmaps.list_milestones(estado=args.estado)
+
+    if phases:
+        print("PHASES:")
+        for p in phases:
+            inicount = len([i for i in roadmaps.list_initiatives() if i.get("phase") == p.get("id")])
+            print(f"  {p['id']:18} [{p['estado']:12}] orden={p.get('orden','?')}  ({inicount} initiatives)")
+    if initiatives:
+        print("\nINITIATIVES:")
+        for i in initiatives:
+            mcount = len([m for m in roadmaps.list_milestones() if m.get("initiative") == i.get("id")])
+            print(f"  {i['id']:18} [{i['estado']:12}] phase={i.get('phase','?')}  ({mcount} milestones)  {i.get('nombre','')}")
+    if milestones:
+        print("\nMILESTONES:")
+        for m in milestones:
+            print(f"  {m['id']:18} [{m['estado']:12}] target={m.get('target_date','?')}  initiative={m.get('initiative','?')}")
+    if not phases and not initiatives and not milestones:
+        print("(no roadmap items yet)")
+
+
+def cmd_roadmap_show(args):
+    content = roadmaps.show_item(args.id)
+    if content:
+        print(content)
+    else:
+        print(f"Item {args.id} no encontrado")
+
+
+def cmd_roadmap_touch(args):
+    try:
+        data = roadmaps.touch_estado(args.id, args.estado)
+        print(f"{args.id}: estado -> {args.estado}")
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        sys.exit(1)
 
 
 def main():

@@ -1,14 +1,65 @@
 # Roadmap
 
-High-level phases. Do not list individual tasks here — those live in
-`tasks/`. This is the "what stage are we at" view, 3-5 phases max.
+This file is the top-level entry point to the project roadmap. Each phase
+is a separate file in `roadmaps/phases/`, each initiative in
+`roadmaps/initiatives/`, and each milestone in `roadmaps/milestones/`.
 
-## Phase 1: <name>
-Status: not started | in progress | complete
-(1-2 lines describing what this phase involves)
+The index at `roadmaps/_index.md` (auto-generated) provides a summary
+table of all items. Edit the individual files to update statuses, then
+run `pctl reindex` to refresh the index.
 
-## Phase 2: <name>
-Status: not started
+---
 
-## Phase 3: <name>
-Status: not started
+## Phases
+
+| Phase | Status | Timeline | File |
+|---|---|---|---|
+| PHASE-0001 | not_started | TBD | [details](roadmaps/phases/PHASE-0001.md) |
+
+### Phase 1: Foundation
+
+Status: not_started
+
+1-2 lines describing what this phase delivers.
+
+#### Initiatives
+
+| Initiative | Priority | Status | File |
+|---|---|---|---|
+| INITIATIVE-0001 | medium | backlog | [details](roadmaps/initiatives/INITIATIVE-0001.md) |
+
+### Phase 2: Growth
+
+Status: not_started
+
+### Phase 3: Maturity
+
+Status: not_started
+
+---
+
+## How to use
+
+1. **Create a phase**: `python .control/scripts/pctl.py roadmap-phase-new "Phase name" --orden 1`
+2. **Create an initiative**: `python .control/scripts/pctl.py roadmap-initiative-new "Initiative name" PHASE-0001`
+3. **Create a milestone**: `python .control/scripts/pctl.py roadmap-milestone-new "Milestone name" INITIATIVE-0001 PHASE-0001`
+4. **Change status**: `python .control/scripts/pctl.py roadmap-touch PHASE-0001 --estado in_progress`
+5. **View all**: `python .control/scripts/pctl.py roadmap-list`
+6. **Regenerate index**: `python .control/scripts/pctl.py reindex`
+
+Direct editing of the markdown files in `roadmaps/` is also supported.
+After manual edits, run `pctl reindex` to keep the index in sync.
+
+---
+
+## Risks (cross-phase)
+
+| Risk | Affected phases | Likelihood | Impact | Mitigation |
+|---|---|---|---|---|
+| | | | | |
+
+## Key milestones (cross-phase)
+
+| Milestone | Phase | Target | File |
+|---|---|---|---|
+| | | | |

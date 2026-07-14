@@ -479,7 +479,7 @@ def main():
         Handler.log_message = lambda self, fmt, *args: print(
             f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {fmt % args}"
         )
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    server = ThreadingHTTPServer(("0.0.0.0", args.port), Handler)
     print(f"ProjectControl server v{SERVER_VERSION}")
     print(f"Control panel en http://localhost:{args.port}")
     print("Ctrl+C para detener.")

@@ -9,9 +9,9 @@ version_schema: 1
 This file is written and rewritten by the agent — not by the user. It is
 the working memory that survives chat compactions and new chats. It is
 OVERWRITTEN each relevant session, not accumulated without limit like the
-`sessions/` log. Suggested maximum: ~120 lines — if it grows beyond,
-promote stable content to `PROJECT.md`, `architecture/<domain>.md`, or
-`decisions/` and prune this file.
+`sessions/` log. If it grows very large, promote stable content to
+`PROJECT.md`, `architecture/<domain>.md`, `roadmaps/`, or `decisions/`
+and prune this file.
 
 ## What this project is, in practice
 (do not repeat `PROJECT.md` word for word — this is what the agent has

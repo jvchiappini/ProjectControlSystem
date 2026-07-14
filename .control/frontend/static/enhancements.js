@@ -175,7 +175,7 @@ if (_origOpenTaskDrawer) {
         const combined = Array.from(drawerBody.querySelectorAll('textarea')).map(function (ta) {
           return ta.value;
         }).join('\n\n');
-        mdDiv.innerHTML = renderMarkdown(escapeHtml(combined));
+        mdDiv.innerHTML = renderMarkdown(combined);
       };
       textareas.forEach(function (ta) { ta.addEventListener('input', renderPreview); });
       renderPreview();
@@ -200,7 +200,7 @@ if (_origRenderSkills) {
           console.log('[skill click] fetching', url);
           const r = await API.get(url);
           const rendered = r.body
-            ? '<div class="rendered-md">' + renderMarkdown(codeRefPills ? codeRefPills(r.body) : r.body) + '</div>'
+            ? '<div class="rendered-md">' + renderMarkdown(r.body) + '</div>'
             : '<div class="empty-hint">(sin contenido markdown)</div>';
           const metaHtml = r.data ? '<div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-bottom:12px;">' +
             'tipo: ' + escapeHtml(r.data.tipo) + ' · estado: ' + escapeHtml(r.data.estado) + ' · disparador: ' + escapeHtml(r.data.disparador || '—') +

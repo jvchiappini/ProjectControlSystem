@@ -37,12 +37,26 @@ VALID_TRANSITIONS = {
 }
 
 
+ROADMAPS_DIR = CONTROL_ROOT / "roadmaps"
+ROADMAPS_PHASES_DIR = ROADMAPS_DIR / "phases"
+ROADMAPS_INITIATIVES_DIR = ROADMAPS_DIR / "initiatives"
+ROADMAPS_MILESTONES_DIR = ROADMAPS_DIR / "milestones"
+
+DOCS_DIR = CONTROL_ROOT / "docs"
+DOCS_CATEGORIES = ["guides", "api", "database", "reference", "tutorials"]
+
+
 def ensure_dirs():
-    for d in [TASKS_DIR, ARCH_DIR, SESSIONS_DIR, DECISIONS_DIR,
-              SKILLS_DIR, DIAGRAMS_DIR, FLOWS_DIR, DIAGRAMS_DIR / "flows",
-              SKILLS_DIR / "proposed",
-              CONTROL_ROOT / "scripts" / "lib" / "proposed",
-              BACKUPS_DIR]:
+    dirs = [TASKS_DIR, ARCH_DIR, SESSIONS_DIR, DECISIONS_DIR,
+            SKILLS_DIR, DIAGRAMS_DIR, FLOWS_DIR, DIAGRAMS_DIR / "flows",
+            SKILLS_DIR / "proposed",
+            CONTROL_ROOT / "scripts" / "lib" / "proposed",
+            BACKUPS_DIR,
+            ROADMAPS_DIR, ROADMAPS_PHASES_DIR,
+            ROADMAPS_INITIATIVES_DIR, ROADMAPS_MILESTONES_DIR,
+            DOCS_DIR]
+    dirs += [DOCS_DIR / c for c in DOCS_CATEGORIES]
+    for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
 
 

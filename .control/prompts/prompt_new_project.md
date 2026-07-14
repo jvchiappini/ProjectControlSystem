@@ -23,7 +23,9 @@ any code or documentation:
    - `.control/PROJECT.md` with what the user answered
    - `.control/GOALS.md` with the objective and 2-3 success criteria
    - `.control/ROADMAP.md` with very high-level phases (no individual
-     tasks yet — 3 to 5 phases max)
+     tasks yet — 3 to 5 phases). Optionally create individual phase and
+     initiative files in `roadmaps/phases/` and `roadmaps/initiatives/`.
+   - `docs/_index.md` will auto-generate as documentation is created.
    - `.control/CONTEXT.md` (copy the template; it will fill in as the
      agent learns non-obvious things while working)
    - `.control/architecture/_index.md` (table header only, no domains
@@ -31,7 +33,10 @@ any code or documentation:
    - `.control/flows/_index.md` (table header only, no flows yet —
      they are created when a cross-domain behavior appears)
    - Folder structure: `tasks/`, `architecture/`, `flows/`,
-     `diagrams/`, `sessions/`, `decisions/`, `skills/`, `scripts/`
+     `diagrams/`, `sessions/`, `decisions/`, `skills/`, `scripts/`,
+     `roadmaps/` (with `phases/`, `initiatives/`, `milestones/` subdirs),
+     `docs/` (with `guides/`, `api/`, `database/`, `reference/`,
+     `tutorials/` subdirs)
    - If the user works with opencode: create `opencode.json` at the
      project root with `instructions: [".control/SYSTEM.md"]` and
      `default_agent: "project-control"`, and create

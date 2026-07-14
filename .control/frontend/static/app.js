@@ -24,29 +24,274 @@ const STATE = {
   flowBreadcrumb: [],        // pila de {id, nombre}
 };
 
-/* ================= mini markdown -> html (solo lo que nosotros generamos) ================= */
+/* ================= markdown -> html ================= */
+function escapeHtml(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function renderMarkdown(md) {
   if (!md) return '<p class="empty-hint">(vacío)</p>';
-  let html = md
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^## (.*)$/gm, '<h2>$1</h2>');
-  html = html.replace(/^# (.*)$/gm, '<h1>$1</h1>');
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/^- \[[xX]\] (.*)$/gm, '<li style="text-decoration:line-through;color:var(--ink-faint);">$1</li>');
-  html = html.replace(/^- \[ \] (.*)$/gm, '<li>$1</li>');
-  html = html.replace(/^\d+\. (.*)$/gm, '<li>$1</li>');
-  html = html.replace(/^- (.*)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`);
-  html = html.split(/\n{2,}/).map(block => {
-    if (/^<(h1|h2|h3|ul)/.test(block.trim())) return block;
-    if (!block.trim()) return '';
-    return `<p>${block.trim()}</p>`;
-  }).join('\n');
+  const lines = md.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  let html = '';
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.trim() === '') { i++; continue; }
+
+    // Fenced code block
+    if (line.trim().startsWith('```')) {
+      const result = renderCodeBlock(lines, i);
+      html += result.html;
+      i = result.nextIndex;
+      continue;
+    }
+
+    // ATX heading
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      html += `<h${level}>${renderInline(headingMatch[2])}</h${level}>`;
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^(---+|===+|\*\*\*+|___+)\s*$/.test(line.trim())) {
+      html += '<hr>';
+      i++;
+      continue;
+    }
+
+    // Blockquote
+    if (line.trim().startsWith('>')) {
+      const result = renderBlockquote(lines, i);
+      html += result.html;
+      i = result.nextIndex;
+      continue;
+    }
+
+    // Table
+    if (line.includes('|')) {
+      const tableResult = tryRenderTable(lines, i);
+      if (tableResult) {
+        html += tableResult.html;
+        i = tableResult.nextIndex;
+        continue;
+      }
+    }
+
+    // List
+    if (/^(\s*)([-*+]|\d+\.)\s/.test(line)) {
+      const result = renderList(lines, i);
+      html += result.html;
+      i = result.nextIndex;
+      continue;
+    }
+
+    // Paragraph
+    const result = renderParagraph(lines, i);
+    html += result.html;
+    i = result.nextIndex;
+  }
+
   return html;
 }
 
+function renderInline(text) {
+  if (!text) return '';
+  // Escape first so inline formatting doesn't break on existing HTML chars.
+  let html = escapeHtml(text);
+
+  // Code span (must be first to avoid formatting inside code).
+  html = html.replace(/`([^`]+)`/g, (match, code) => {
+    if (/^[\w./-]+:\d+(?:-\d+)?$/.test(code)) {
+      return `<span class="code-ref">${code}</span>`;
+    }
+    return `<code>${code}</code>`;
+  });
+
+  // Images
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2" loading="lazy">');
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // Autolinks <url>
+  html = html.replace(/<([a-z][a-z0-9+.-]*:\/\/[^>]+)>/gi, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+
+  // Bold + italic
+  html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/___([^_]+)___/g, '<strong><em>$1</em></strong>');
+  // Bold
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  // Italic
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+  // Strikethrough
+  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+
+  // Preserve single line breaks inside paragraphs as <br>
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
+}
+
+function renderParagraph(lines, start) {
+  const parts = [];
+  let i = start;
+  while (i < lines.length && lines[i].trim() !== '') {
+    parts.push(lines[i]);
+    i++;
+  }
+  const text = parts.join(' ').trim();
+  return { html: `<p>${renderInline(text)}</p>`, nextIndex: i };
+}
+
+function renderCodeBlock(lines, start) {
+  const fence = lines[start].trim();
+  const lang = fence.slice(3).trim();
+  const code = [];
+  let i = start + 1;
+  while (i < lines.length && lines[i].trim() !== '```') {
+    code.push(lines[i]);
+    i++;
+  }
+  if (i < lines.length) i++; // skip closing fence
+  const escaped = escapeHtml(code.join('\n'));
+  return {
+    html: `<pre><code${lang ? ` class="language-${escapeHtml(lang)}"` : ''}>${escaped}</code></pre>`,
+    nextIndex: i,
+  };
+}
+
+function renderBlockquote(lines, start) {
+  const quote = [];
+  let i = start;
+  while (i < lines.length && lines[i].trim().startsWith('>')) {
+    quote.push(lines[i].replace(/^>\s?/, ''));
+    i++;
+  }
+  return {
+    html: `<blockquote>${renderMarkdown(quote.join('\n'))}</blockquote>`,
+    nextIndex: i,
+  };
+}
+
+function renderList(lines, start) {
+  const items = [];
+  let i = start;
+  while (i < lines.length) {
+    const match = lines[i].match(/^(\s*)([-*+]|\d+\.)\s+(.*)$/);
+    if (!match) break;
+    items.push({ indent: match[1].length, marker: match[2], raw: match[3] });
+    i++;
+  }
+
+  if (items.length === 0) {
+    return { html: '', nextIndex: start };
+  }
+
+  // Build nested list structure using a stack of {type, html}
+  const root = { type: null, html: '', children: [] };
+  const stack = [root];
+
+  function top() { return stack[stack.length - 1]; }
+  function listType(marker) { return /^\d+\./.test(marker) ? 'ol' : 'ul'; }
+  function closeLists(targetDepth) {
+    while (stack.length > targetDepth + 1) {
+      const node = stack.pop();
+      const parent = top();
+      parent.html += `<${node.type}>${node.html}</${node.type}>`;
+    }
+  }
+
+  // Determine base indent
+  let baseIndent = items[0].indent;
+
+  items.forEach((item) => {
+    const depth = Math.floor((item.indent - baseIndent) / 2) + 1;
+    const type = listType(item.marker);
+
+    closeLists(depth);
+
+    // Open new list levels if needed
+    while (stack.length <= depth) {
+      stack.push({ type: type, html: '', children: [] });
+    }
+
+    // If current top list type differs, close and reopen
+    const current = top();
+    if (current.type !== type) {
+      const finished = stack.pop();
+      const parent = top();
+      parent.html += `<${finished.type}>${finished.html}</${finished.type}>`;
+      stack.push({ type: type, html: '', children: [] });
+    }
+
+    const content = renderListItemContent(item.raw);
+    top().html += `<li>${content}</li>`;
+  });
+
+  closeLists(0);
+  return { html: root.html, nextIndex: i };
+}
+
+function renderListItemContent(raw) {
+  // Task checkbox
+  const task = raw.match(/^\[([xX ])\]\s*(.*)$/);
+  if (task) {
+    const checked = task[1].toLowerCase() === 'x' ? 'checked' : '';
+    return `<input type="checkbox" ${checked} disabled> ${renderInline(task[2])}`;
+  }
+  return renderInline(raw);
+}
+
+function tryRenderTable(lines, start) {
+  if (start + 1 >= lines.length) return null;
+  const header = lines[start].trim();
+  const sep = lines[start + 1].trim();
+  if (!/^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/.test(sep)) return null;
+
+  let i = start + 2;
+  const bodyRows = [];
+  while (i < lines.length && lines[i].trim().startsWith('|')) {
+    bodyRows.push(lines[i].trim());
+    i++;
+  }
+
+  const parseCells = (row) => row.split('|').map(c => c.trim()).filter((_, idx, arr) => {
+    // Drop empty first/last cells caused by leading/trailing pipes
+    if (idx === 0 && c.trim() === '') return false;
+    if (idx === arr.length - 1 && c.trim() === '') return false;
+    return true;
+  });
+
+  // More robust parse: split by |, trim, drop leading/trailing empties
+  const cleanSplit = (row) => {
+    const cells = row.split('|').map(c => c.trim());
+    if (cells[0] === '') cells.shift();
+    if (cells[cells.length - 1] === '') cells.pop();
+    return cells;
+  };
+
+  let html = '<table><thead><tr>';
+  cleanSplit(header).forEach(cell => {
+    html += `<th>${renderInline(cell)}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+  bodyRows.forEach(row => {
+    html += '<tr>';
+    cleanSplit(row).forEach(cell => {
+      html += `<td>${renderInline(cell)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+
+  return { html, nextIndex: i };
+}
+
+// Kept for backward compatibility; renderMarkdown handles code refs inline now.
 function codeRefPills(text) {
   return (text || '').replace(/`([\w./-]+:\d+(?:-\d+)?)`/g, '<span class="code-ref">$1</span>');
 }
@@ -334,10 +579,6 @@ function openNewTaskModal() {
   };
 }
 
-function escapeHtml(s) {
-  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
 /* ================================================================
    MOTOR DE CANVAS INFINITO (reusado por Arquitectura y Flujos)
    ================================================================ */
@@ -473,7 +714,7 @@ async function renderArchitectureCanvas() {
 
 async function openDomainDrawer(name) {
   const r = await API.get(`/api/architecture/${name}`);
-  let bodyHtml = `<div class="rendered-md">${renderMarkdown(codeRefPills(r.body))}</div>`;
+  let bodyHtml = `<div class="rendered-md">${renderMarkdown(r.body)}</div>`;
   const mmdMatch = (r.body || '').match(/diagrams\/[\w./-]+\.mmd/);
   bodyHtml += `<div class="section-label">Diagrama</div><div id="domain-diagram">${mmdMatch ? 'cargando...' : '<span class="empty-hint">sin diagrama referenciado</span>'}</div>`;
   openDrawer({ id: 'DOMINIO', title: name, bodyHtml, footButtons: [] });
@@ -558,7 +799,7 @@ function flowCurrentCardHtml(current) {
     <div class="node-title">${escapeHtml(d.nombre)}</div>
     <div class="node-meta">estado: ${d.estado} · dominios: ${escapeHtml(dominios)}</div>
     <div style="font-size:12px;margin-top:8px;max-height:180px;overflow:auto;">
-      ${renderMarkdown(codeRefPills(secciones['Resumen'] || ''))}
+      ${renderMarkdown(secciones['Resumen'] || '')}
     </div>
     <div class="node-actions">
       <button data-a="desplegar-actual">ver todo</button>
@@ -603,7 +844,7 @@ async function openFlowDrawer(id) {
     <div class="badges"><span class="badge estado-${full.data.estado === 'vigente' ? 'in_progress' : full.data.estado === 'desactualizado' ? 'blocked' : ''}">${full.data.estado}</span></div>
     <div class="section-label">Disparador</div><div>${escapeHtml(full.data.disparador || '—')}</div>
     <div class="section-label">Resumen</div><div class="rendered-md">${renderMarkdown(secciones['Resumen'] || '')}</div>
-    <div class="section-label">Pasos</div><div class="rendered-md">${renderMarkdown(codeRefPills(secciones['Pasos'] || ''))}</div>
+    <div class="section-label">Pasos</div><div class="rendered-md">${renderMarkdown(secciones['Pasos'] || '')}</div>
     <div class="section-label">Diagrama</div><div id="flow-diagram">${/diagrams\/flows\//.test(full.body) ? 'cargando...' : '<span class="empty-hint">sin diagrama</span>'}</div>
     <div class="section-label">Dominios relacionados</div><div>${renderMarkdown(secciones['Dominios relacionados'] || '')}</div>
     <div class="section-label">Notas de mantenimiento</div><div class="rendered-md">${renderMarkdown(secciones['Notas de mantenimiento'] || '')}</div>`;

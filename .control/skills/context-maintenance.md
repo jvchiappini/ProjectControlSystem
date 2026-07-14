@@ -24,8 +24,8 @@ a re-read of all past sessions.
 - `sessions/*.md`: append-only log, one file per session, never
   rewritten, grows indefinitely.
 - `CONTEXT.md`: agent working memory, a SINGLE file that is
-  **rewritten entirely** each time (not appended), bounded size
-  (~120 lines). It is the first thing read after `SYSTEM.md`.
+  **rewritten entirely** each time (not appended). It is the first
+  thing read after `SYSTEM.md`.
 
 ## At session start
 
@@ -47,12 +47,13 @@ a re-read of all past sessions.
    `pctl context-write --file <tmp>` (best to generate the content in
    a temporary file and pass it with `--file` to avoid shell escaping
    issues). Keep the fixed sections from the template.
-3. Run `pctl context-check`. If it warns about exceeding the budget,
+3. Run `pctl context-check`. If it warns about excessive length,
    PROMOTE what is already stable and confirmed to its permanent place
    (`PROJECT.md` if it is project identity,
    `architecture/<domain>.md` if it belongs to a specific module,
-   `decisions/` if it is a decision with trade-offs) and prune
-   `CONTEXT.md` to what remains genuine working memory.
+   `roadmaps/` if it belongs to roadmap context, `decisions/` if it
+   is a decision with trade-offs) and prune `CONTEXT.md` to what
+   remains genuine working memory.
 4. Update the "Last relevant session" section with the session ID and
    one line, not the full log content.
 

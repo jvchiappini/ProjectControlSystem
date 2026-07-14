@@ -17,15 +17,15 @@ Trigger: always at session start, more critical the larger the project.
 
 Default load order, without exception:
 
-1. `PROJECT.md` + `GOALS.md` in full (short by design — if they grew
-   a lot, it is a sign they need pruning, not that they should stop
-   being read).
+1. `PROJECT.md` + `GOALS.md` in full.
 2. `tasks/IN_PROGRESS.md` — an index at one line per task, not the
    full tasks.
-3. `architecture/_index.md` — domain map, one line each.
-4. NOTHING ELSE yet. Only after the user's request in this turn, load:
+3. `architecture/_index.md` — domain map.
+4. `roadmaps/_index.md` — roadmap overview.
+5. NOTHING ELSE yet. Only after the user's request in this turn, load:
    - the specific task file(s) (`pctl task-show <id>`)
    - the architecture `.md` of the relevant domain, if it exists
+   - the roadmap item files if the roadmap is being discussed
    - specific code files via `file:line`, never the full file if the
      reference already points to a bounded range
 

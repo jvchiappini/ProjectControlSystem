@@ -16,7 +16,9 @@ anything else:
 4. Run `python .control/scripts/pctl.py status` to see the task summary
    and any outdated flows (or read `.control/tasks/IN_PROGRESS.md` if
    no code execution is available).
-5. Read `.control/architecture/_index.md` (map only) and
+5. Read `.control/architecture/_index.md` (map only),
+   `.control/roadmaps/_index.md` (roadmap overview),
+   `.control/docs/_index.md` (documentation panel), and
    `.control/flows/_index.md` (map only) — do not open each domain or
    flow yet.
 6. If the project uses opencode and `opencode.json` does not exist at

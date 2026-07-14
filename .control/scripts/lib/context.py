@@ -4,9 +4,6 @@ from . import atomic, fm, paths
 
 CONTEXT_MD = paths.CONTROL_ROOT / "CONTEXT.md"
 CONTEXT_KEY_ORDER = ["actualizado", "actualizado_por", "version_schema"]
-MAX_BODY_LINES = 120
-
-
 def _today():
     return datetime.date.today().isoformat()
 
@@ -31,10 +28,10 @@ def check_budget():
         return None
     _, body = fm.parse(CONTEXT_MD.read_text(encoding="utf-8"))
     n = len([l for l in body.splitlines() if l.strip()])
-    if n > MAX_BODY_LINES:
+    if n > 500:
         return (
-            f"CONTEXT.md tiene {n} lineas no vacias (limite sugerido "
-            f"{MAX_BODY_LINES}). Promover lo estable a PROJECT.md, "
-            f"architecture/ o decisions/, y podar el resto."
+            f"CONTEXT.md tiene {n} lineas no vacias. Si el contenido es "
+            f"estable, considera promoverlo a PROJECT.md, architecture/, "
+            f"roadmaps/ o decisions/ y podar el resto."
         )
     return None
