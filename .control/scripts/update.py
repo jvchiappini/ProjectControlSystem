@@ -47,6 +47,14 @@ FRAMEWORK_GLOBS = [
     "scripts/pctl.py",
     "scripts/update.py",
     "scripts/lib/*.py",
+    "frontend/server.py",
+    "frontend/static/*",
+    "docs/**/_template.md",
+    "roadmaps/phases/PHASE-XXXX.md",
+    "roadmaps/initiatives/INITIATIVE-XXXX.md",
+    "roadmaps/milestones/M-XXXX.md",
+    "roadmaps/_index.md",
+    "docs/_index.md",
 ]
 
 USER_DATA_GLOBS = [
@@ -60,6 +68,7 @@ USER_DATA_GLOBS = [
     "architecture/**/*",
     "flows/**/*",
     "roadmaps/**/*",
+    "docs/**/*.md",
     "skills/proposed/**/*",
     "scripts/lib/proposed/**/*",
 ]
@@ -313,7 +322,7 @@ _migration(3, 4, "Create roadmaps directories", _migrate_roadmaps_dir)
 # Report
 # ---------------------------------------------------------------------------
 
-def _report(updated, skipped, errors, local_modified, dropped, dry_run,
+def _report(updated, skipped, errors, local_modified, dry_run,
             framework_count, user_count, branch, origin, log_lines):
     print()
     print("=" * 62)
@@ -340,10 +349,6 @@ def _report(updated, skipped, errors, local_modified, dropped, dry_run,
         for f in sorted(local_modified):
             print(f"    ! {f}")
         print("    Review and merge manually if needed.")
-    if dropped:
-        print(f"  Removed from framework ({len(dropped)}):")
-        for f in sorted(dropped):
-            print(f"    - {f}")
     if errors:
         print(f"  ERRORS ({len(errors)}):")
         for e in errors:
@@ -465,23 +470,10 @@ def main():
         except OSError as e:
             errors.append(f"{rel}: {e}")
 
-    # --- Remove files that no longer exist in the new version ---
-    old_framework = set()
-    for rel in framework_files:
-        old_framework.add(str(rel))
-    dropped = []
-    for pat in FRAMEWORK_GLOBS:
-        for existing in CONTROL_ROOT.rglob(pat):
-            try:
-                rel = str(existing.relative_to(CONTROL_ROOT)).replace("\\", "/")
-            except ValueError:
-                continue
-            if rel not in old_framework:
-                if not dry_run:
-                    existing.unlink()
-                    _log(f"Removed: {rel}")
-                dropped.append(rel)
-    dropped.sort()
+    # NOTE: We do NOT delete files that exist locally but not in the remote.
+    # User data and local additions are NEVER removed by the update. Framework
+    # files that are no longer part of the distribution are simply left in
+    # place; they become inert. A future migration can clean them up if needed.
 
     # --- Run built-in migrations ---
     if not dry_run and not errors:
@@ -500,7 +492,6 @@ def main():
         skipped=skipped,
         errors=errors,
         local_modified=local_modified,
-        dropped=dropped,
         dry_run=dry_run,
         framework_count=len(framework_files),
         user_count=len(user_files),
