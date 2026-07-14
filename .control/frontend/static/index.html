@@ -56,7 +56,19 @@
       <div class="view" id="view-decisiones"><div class="simple-list" id="list-decisiones"></div></div>
       <div class="view" id="view-skills"><div class="simple-list" id="list-skills"></div></div>
 
-      <div class="view" id="view-docs"><div class="simple-list" id="list-docs"></div></div>
+      <div class="view" id="view-docs">
+        <div class="docs-toolbar">
+          <div class="docs-cats" id="docs-cats"></div>
+          <div class="docs-actions">
+            <input class="field" id="docs-search" placeholder="Filtrar documentaci&oacute;n..." spellcheck="false">
+            <button class="btn primary" id="btn-new-doc">+ Nuevo</button>
+          </div>
+        </div>
+        <div id="docs-content">
+          <div id="docs-list"></div>
+          <div id="docs-reader" style="display:none;"></div>
+        </div>
+      </div>
 
       <div class="view" id="view-grafo">
         <div class="grafo-search">

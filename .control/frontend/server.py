@@ -448,6 +448,10 @@ class Handler(BaseHTTPRequestHandler):
                 _save_positions(pos)
                 event_log.log("position-updated", f"{seccion}/{payload['id']}")
                 return self._send_json({"ok": True})
+            if re.match(r"^/api/docs/[\w-]+/body$", p):
+                doc_id = p.split("/")[3]
+                docs.set_body(doc_id, payload["body"])
+                return self._send_json({"ok": True})
             if re.match(r"^/api/docs/[\w-]+/touch$", p):
                 doc_id = p.split("/")[3]
                 d = docs.touch_estado(doc_id, payload["estado"])

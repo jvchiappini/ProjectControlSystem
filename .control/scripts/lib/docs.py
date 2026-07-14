@@ -107,6 +107,19 @@ def show_doc(doc_id):
     return None
 
 
+def set_body(doc_id, new_body):
+    for cat in CATEGORIES:
+        fpath = DOCS_DIR / cat / f"{doc_id}.md"
+        if fpath.exists():
+            with FileLock():
+                data, _ = fm.parse(fpath.read_text(encoding="utf-8"))
+                atomic.write_with_backup(fpath, fm.dump(data, new_body, _key_order(data)))
+                reindex()
+                event_log.log("doc-updated", doc_id)
+                return
+    raise ValueError(f"Doc {doc_id} no encontrado")
+
+
 def touch_estado(doc_id, nuevo_estado):
     if nuevo_estado not in DOC_STATES:
         raise ValueError(f"Estado invalido: {nuevo_estado}. Validos: {DOC_STATES}")

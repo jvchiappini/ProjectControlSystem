@@ -291,6 +291,65 @@ kbd { font-family: var(--mono); }
 #sse-status.connected { color: var(--accent-progress); }
 #sse-status.disconnected { color: var(--accent-blocked); }
 
+/* ---------- docs view (full-page redesign) ---------- */
+#view-docs { flex-direction: column; }
+.docs-toolbar {
+  flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-bottom: 1px solid var(--line);
+  background: var(--paper-raised);
+}
+.docs-cats { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; }
+.cat-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.03em;
+  padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 12px;
+  background: transparent; color: var(--ink-soft); cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+}
+.cat-btn:hover { border-color: var(--ink); color: var(--ink); }
+.cat-btn.active { background: var(--ink); color: var(--paper-raised); border-color: var(--ink); }
+.cat-btn .cat-count { font-size: 9px; opacity: 0.7; }
+.cat-btn.active .cat-count { opacity: 0.8; }
+.docs-actions { display: flex; gap: 8px; flex: 1; justify-content: flex-end; }
+.docs-actions .field { max-width: 220px; font-family: var(--mono); font-size: 11px; padding: 5px 8px; }
+#docs-content { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+#docs-list { padding: 14px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; align-content: start; }
+.doc-card {
+  background: var(--paper-raised); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  padding: 12px 14px; cursor: pointer; transition: border-color 0.1s, box-shadow 0.1s;
+}
+.doc-card:hover { border-color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.doc-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.doc-card-head .id { font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
+.doc-card-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; line-height: 1.35; }
+.doc-card-meta { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; font-size: 10px; }
+.doc-card-meta .date { color: var(--ink-faint); font-family: var(--mono); margin-left: auto; font-size: 9px; }
+.cat-badge {
+  font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 2px 6px; border-radius: 2px; background: var(--accent-neutral-bg); color: var(--ink-soft);
+}
+.cat-badge.guides { background: #dce8f0; color: #2b5a7a; }
+.cat-badge.api { background: #ede0f0; color: #6a3d7a; }
+.cat-badge.database { background: #ddf0df; color: #2a6a3d; }
+.cat-badge.reference { background: #f0e8da; color: #7a5a2a; }
+.cat-badge.tutorials { background: #f0dce8; color: #7a2b5a; }
+.tag {
+  font-family: var(--mono); font-size: 9px; padding: 1px 5px; border-radius: 2px;
+  background: var(--accent-neutral-bg); color: var(--ink-faint);
+}
+
+/* ---------- docs inline reader ---------- */
+#docs-reader { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+.doc-reader-panel { max-width: 860px; width: 100%; margin: 0 auto; padding: 24px 32px 48px; }
+.doc-reader-nav {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 11px;
+}
+.doc-reader-nav .id { color: var(--ink-faint); }
+.doc-reader-title { font-size: 22px; font-weight: 600; margin: 0 0 12px; line-height: 1.3; }
+.doc-reader-actions { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.doc-reader-tags { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+.doc-reader-body { line-height: 1.6; font-size: 14px; }
+
 /* ---------- grafo ---------- */
 #view-grafo { padding: 16px; overflow-y: auto; }
 .grafo-search { display: flex; gap: 8px; margin-bottom: 16px; }

@@ -955,71 +955,189 @@ function renderSkills() {
 }
 
 /* ================================================================
-   DOCUMENTACION TECNICA
+   DOCUMENTACION TECNICA — full-page redesign
    ================================================================ */
-function renderDocs() {
-  const root = document.getElementById('list-docs'); root.innerHTML = '';
-  const items = STATE.data.docs;
-  if (!items.length) {
-    root.innerHTML = '<div class="empty-hint">Todavía no hay documentación técnica. Creá una con <kbd>pctl doc-new</kbd> o desde acá abajo.</div>';
-    renderDocsAddButton(root);
+const DOCS_CATEGORIES = ['guides', 'api', 'database', 'reference', 'tutorials'];
+const CAT_LABELS = { guides: 'Guides', api: 'API', database: 'Database', reference: 'Reference', tutorials: 'Tutorials' };
+
+const DOCS_STATE = { category: '', search: '' };
+
+function renderDocsCats() {
+  const container = document.getElementById('docs-cats');
+  let html = `<button class="cat-btn active" data-cat="">All <span class="cat-count">${STATE.data.docs.length}</span></button>`;
+  DOCS_CATEGORIES.forEach(cat => {
+    const count = STATE.data.docs.filter(d => d.categoria === cat).length;
+    html += `<button class="cat-btn" data-cat="${cat}">${CAT_LABELS[cat] || cat} <span class="cat-count">${count}</span></button>`;
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      DOCS_STATE.category = btn.dataset.cat;
+      renderDocsList();
+    });
+  });
+}
+
+function renderDocsList() {
+  const root = document.getElementById('docs-list');
+  root.style.display = '';
+  document.getElementById('docs-reader').style.display = 'none';
+
+  let filtered = STATE.data.docs;
+  if (DOCS_STATE.category) {
+    filtered = filtered.filter(d => d.categoria === DOCS_STATE.category);
+  }
+  const q = DOCS_STATE.search.trim().toLowerCase();
+  if (q) {
+    filtered = filtered.filter(d =>
+      (d.titulo || '').toLowerCase().includes(q) ||
+      (d.id || '').toLowerCase().includes(q) ||
+      (d.estado || '').toLowerCase().includes(q) ||
+      (d.tags || []).some(t => t.toLowerCase().includes(q))
+    );
+  }
+  filtered.sort((a, b) => a.id.localeCompare(b.id));
+
+  root.innerHTML = '';
+  if (!filtered.length) {
+    root.innerHTML = `<div class="empty-hint">${q ? 'No hay documentos que coincidan con tu b&uacute;squeda.' : 'Todav&iacute;a no hay documentaci&oacute;n en esta categor&iacute;a.'}</div>`;
     return;
   }
-  const sorted = [...items].sort((a, b) => a.id.localeCompare(b.id));
-  sorted.forEach(d => {
-    const row = document.createElement('div'); row.className = 'list-row';
-    const tags = (d.tags || []).join(', ');
-    row.innerHTML = `
-      <span class="id">${escapeHtml(d.id)}</span>
-      <span class="titulo">${escapeHtml(d.titulo)}</span>
-      <span style="font-family:var(--mono);font-size:10px;color:var(--ink-faint);width:60px;">${escapeHtml(d.categoria)}</span>
-      <span class="estado-tag ${d.estado}">${d.estado}</span>
-      <span class="fecha">${d.actualizado || ''}</span>`;
-    row.onclick = () => openDocDrawer(d);
-    root.appendChild(row);
+
+  filtered.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'doc-card';
+    card.innerHTML = `
+      <div class="doc-card-head">
+        <span class="id">${escapeHtml(d.id)}</span>
+        <span class="estado-tag ${d.estado}">${d.estado}</span>
+      </div>
+      <div class="doc-card-title">${escapeHtml(d.titulo)}</div>
+      <div class="doc-card-meta">
+        <span class="cat-badge ${d.categoria}">${CAT_LABELS[d.categoria] || d.categoria}</span>
+        ${(d.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+        <span class="date">${d.actualizado || ''}</span>
+      </div>`;
+    card.addEventListener('click', () => openDocReader(d));
+    root.appendChild(card);
   });
-  renderDocsAddButton(root);
 }
 
-function renderDocsAddButton(root) {
-  const addBtn = document.createElement('div');
-  addBtn.className = 'add-card-btn'; addBtn.textContent = '+ nuevo documento';
-  addBtn.onclick = openNewDocModal;
-  root.appendChild(addBtn);
+async function openDocReader(doc) {
+  const reader = document.getElementById('docs-reader');
+  const list = document.getElementById('docs-list');
+  list.style.display = 'none';
+  reader.style.display = 'flex';
+  reader.innerHTML = '<div class="empty-hint" style="margin:auto;">Cargando...</div>';
+
+  try {
+    const r = await API.get(`/api/docs/${doc.id}`);
+    const bodyText = r.body || '';
+    const content = bodyText.replace(/^---[\s\S]*?---\n/, '').trim();
+    const html = renderMarkdown(content);
+
+    const estados = ['draft', 'published', 'outdated', 'deprecated'];
+    const stateBtns = estados.filter(e => e !== doc.estado).map(e =>
+      `<button class="btn ${e === 'published' ? 'primary' : 'ghost'}" data-action="state" data-estado="${e}">Marcar ${e}</button>`
+    ).join('');
+
+    reader.innerHTML = `
+      <div class="doc-reader-panel">
+        <div class="doc-reader-nav">
+          <button class="btn ghost" id="doc-reader-back">&larr; Volver</button>
+          <span class="id">${escapeHtml(doc.id)}</span>
+          <span class="cat-badge ${doc.categoria}">${CAT_LABELS[doc.categoria] || doc.categoria}</span>
+          <span class="estado-tag ${doc.estado}">${doc.estado}</span>
+        </div>
+        <h1 class="doc-reader-title">${escapeHtml(doc.titulo)}</h1>
+        <div class="doc-reader-actions">
+          ${stateBtns}
+          <button class="btn ghost" id="doc-reader-edit">Editar</button>
+        </div>
+        ${(doc.tags || []).length ? `<div class="doc-reader-tags">${(doc.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        <div class="doc-reader-body rendered-md">${html}</div>
+      </div>`;
+
+    // Back
+    reader.querySelector('#doc-reader-back').addEventListener('click', () => {
+      reader.style.display = 'none';
+      list.style.display = '';
+    });
+
+    // State buttons
+    reader.querySelectorAll('[data-action="state"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await API.post(`/api/docs/${doc.id}/touch`, { estado: btn.dataset.estado });
+        STATE.data.docs = await API.get('/api/docs');
+        const updated = STATE.data.docs.find(d => d.id === doc.id);
+        if (updated) openDocReader(updated);
+        renderDocsCats();
+      });
+    });
+
+    // Edit
+    reader.querySelector('#doc-reader-edit').addEventListener('click', () => {
+      openDocEditor(doc, bodyText);
+    });
+  } catch (e) {
+    reader.innerHTML = `<div class="empty-hint">Error al cargar: ${escapeHtml(e.message)}</div>`;
+  }
 }
 
-async function openDocDrawer(d) {
-  const r = await API.get(`/api/docs/${d.id}`);
-  const bodyText = r.body || '';
-  const bodyHtml = `
-    <div class="badges">
-      <span class="badge">${escapeHtml(d.categoria)}</span>
-      <span class="estado-tag ${d.estado}">${d.estado}</span>
-    </div>
-    <div class="section-label">Contenido</div>
-    <div class="rendered-md">${renderMarkdown(bodyText.replace(/^---[\s\S]*?---\n/, ''))}</div>`;
+function openDocEditor(doc, bodyText) {
+  openModal(`
+    <h3>Editar: ${escapeHtml(doc.titulo)}</h3>
+    <textarea class="field" id="m-body" style="min-height:400px;font-family:var(--mono);font-size:12px;">${escapeHtml(bodyText)}</textarea>
+    <div class="actions">
+      <button class="btn ghost" id="m-cancel">Cancelar</button>
+      <button class="btn primary" id="m-save">Guardar</button>
+    </div>`);
+  document.getElementById('m-cancel').onclick = closeModal;
+  document.getElementById('m-save').onclick = async () => {
+    const body = document.getElementById('m-body').value;
+    await API.post(`/api/docs/${doc.id}/body`, { body });
+    STATE.data.docs = await API.get('/api/docs');
+    closeModal();
+    const updated = STATE.data.docs.find(d => d.id === doc.id);
+    if (updated) openDocReader(updated);
+  };
+}
 
-  const estados = ['draft', 'published', 'outdated', 'deprecated'];
-  const buttons = estados.filter(e => e !== d.estado).map(e => ({
-    label: `Marcar ${e}`, cls: e === 'published' ? 'primary' : 'ghost',
-    onClick: async () => {
-      await API.post(`/api/docs/${d.id}/touch`, { estado: e });
-      STATE.data.docs = await API.get('/api/docs');
-      closeDrawer(); renderDocs();
-    },
-  }));
+function renderDocs() {
+  renderDocsCats();
+  renderDocsList();
+  setupDocsSearch();
+  setupDocsNewButton();
+}
 
-  openDrawer({ id: d.id, title: d.titulo, bodyHtml, footButtons: buttons });
+function setupDocsSearch() {
+  const input = document.getElementById('docs-search');
+  const handler = () => {
+    DOCS_STATE.search = input.value;
+    // Don't reload list if reader is open
+    if (document.getElementById('docs-reader').style.display !== 'flex') {
+      renderDocsList();
+    }
+  };
+  // Replace previous listener
+  const clone = input.cloneNode(true);
+  input.parentNode.replaceChild(clone, input);
+  clone.addEventListener('input', handler);
+}
+
+function setupDocsNewButton() {
+  document.getElementById('btn-new-doc').onclick = openNewDocModal;
 }
 
 function openNewDocModal() {
-  const cats = ['guides', 'api', 'database', 'reference', 'tutorials'];
-  const catOptions = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  const catOptions = DOCS_CATEGORIES.map(c => `<option value="${c}">${CAT_LABELS[c] || c}</option>`).join('');
   openModal(`
-    <h3>Nuevo documento técnico</h3>
-    <div class="field-group"><label>Título</label><input class="field" id="m-titulo"></div>
-    <div class="field-group"><label>Categoría</label><select class="field" id="m-categoria">${catOptions}</select></div>
-    <div class="field-group"><label>Tags (separados por coma, opcional)</label><input class="field" id="m-tags" placeholder="ej: auth, api, guia"></div>
+    <h3>Nuevo documento</h3>
+    <div class="field-group"><label>T&iacute;tulo</label><input class="field" id="m-titulo"></div>
+    <div class="field-group"><label>Categor&iacute;a</label><select class="field" id="m-categoria">${catOptions}</select></div>
+    <div class="field-group"><label>Tags (separados por coma, opcional)</label><input class="field" id="m-tags" placeholder="ej: auth, api, gu&iacute;a"></div>
     <div class="actions">
       <button class="btn ghost" id="m-cancel">Cancelar</button>
       <button class="btn primary" id="m-save">Crear</button>
@@ -1032,7 +1150,9 @@ function openNewDocModal() {
     const tags = document.getElementById('m-tags').value.trim();
     await API.post('/api/docs', { titulo, categoria, tags: tags || null });
     STATE.data.docs = await API.get('/api/docs');
-    closeModal(); renderDocs();
+    closeModal();
+    renderDocsCats();
+    renderDocsList();
   };
 }
 
