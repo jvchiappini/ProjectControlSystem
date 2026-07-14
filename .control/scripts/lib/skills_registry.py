@@ -193,6 +193,7 @@ def get_content(sid):
     """Devuelve (frontmatter, body) de una skill.
 
     `ubicacion` se almacena como 'skills/nombre.md' (relativo a CONTROL_ROOT).
+    Si el archivo no tiene frontmatter, se fusionan los metadatos del índice.
     """
     rows = _read_rows()
     for r in rows:
@@ -202,7 +203,10 @@ def get_content(sid):
             if not fpath.exists():
                 fpath = paths.SKILLS_DIR / loc.replace("skills/", "", 1)
             if fpath.exists():
-                return fm.parse(fpath.read_text(encoding="utf-8"))
+                data, body = fm.parse(fpath.read_text(encoding="utf-8"))
+                if not data:
+                    data = r
+                return data, body
             return r, None
     raise FileNotFoundError(f"skill no encontrada: {sid}")
 
