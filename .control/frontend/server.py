@@ -22,6 +22,7 @@ from urllib.parse import urlparse, parse_qs
 FRONTEND_DIR = Path(__file__).resolve().parent
 CONTROL_DIR = FRONTEND_DIR.parent
 STATIC_DIR = FRONTEND_DIR / "static"
+SERVER_VERSION = "2025-07-14-b"
 
 sys.path.insert(0, str(CONTROL_DIR / "scripts"))
 from lib import (
@@ -231,8 +232,7 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         p = parsed.path
         qs = parse_qs(parsed.query, keep_blank_values=True)
-        if getattr(Handler, "_verbose", False):
-            print(f"[GET] {p}")
+        print(f"[GET] {p}")
         try:
             if p == "/api/bootstrap":
                 return self._send_json(bootstrap())
@@ -345,8 +345,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         p = parsed.path
-        if getattr(Handler, "_verbose", False):
-            print(f"[POST] {p}")
+        print(f"[POST] {p}")
         try:
             payload = self._read_json()
             if p == "/api/tasks":
@@ -481,6 +480,7 @@ def main():
             f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {fmt % args}"
         )
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    print(f"ProjectControl server v{SERVER_VERSION}")
     print(f"Control panel en http://localhost:{args.port}")
     print("Ctrl+C para detener.")
     try:
