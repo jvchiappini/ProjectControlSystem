@@ -196,7 +196,9 @@ if (_origRenderSkills) {
       row.style.cursor = 'pointer';
       row.onclick = async function () {
         try {
-          const r = await API.get('/api/skills/' + sid);
+          const url = '/api/skills/' + sid;
+          console.log('[skill click] fetching', url);
+          const r = await API.get(url);
           const rendered = r.body
             ? '<div class="rendered-md">' + renderMarkdown(codeRefPills ? codeRefPills(r.body) : r.body) + '</div>'
             : '<div class="empty-hint">(sin contenido markdown)</div>';

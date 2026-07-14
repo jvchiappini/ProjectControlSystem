@@ -231,6 +231,8 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         p = parsed.path
         qs = parse_qs(parsed.query, keep_blank_values=True)
+        if getattr(Handler, "_verbose", False):
+            print(f"[GET] {p}")
         try:
             if p == "/api/bootstrap":
                 return self._send_json(bootstrap())
@@ -287,13 +289,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send_json({"body": decisions.show(did)})
             if p == "/api/skills":
                 return self._send_json(_skills_payload())
-            if p.startswith("/api/skills/") and p.count("/") == 3:
-                sid = p[len("/api/skills/"):]
-                try:
-                    data, body = skills_registry.get_content(sid)
-                    return self._send_json({"data": data, "body": body})
-                except FileNotFoundError:
-                    return self._send_error_json(f"skill no encontrada: {sid}", 404)
+            if p.startswith("/api/skills/"):
+                sid = p[len("/api/skills/"):].strip("/")
+                if sid and sid != "promote":
+                    try:
+                        data, body = skills_registry.get_content(sid)
+                        return self._send_json({"data": data, "body": body})
+                    except FileNotFoundError:
+                        return self._send_error_json(f"skill no encontrada: {sid}", 404)
             if p == "/api/positions":
                 return self._send_json(_positions())
             if p == "/api/search":
@@ -304,6 +307,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send_json(graph.relations(eid))
             if p.startswith("/diagrams/"):
                 return self._serve_diagram(p[len("/diagrams/"):])
+            if p.startswith("/api/"):
+                return self._send_error_json(f"ruta API no encontrada: {p}", 404)
             return self._serve_static(p)
         except FileNotFoundError as e:
             return self._send_error_json(e, 404)
@@ -340,6 +345,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         p = parsed.path
+        if getattr(Handler, "_verbose", False):
+            print(f"[POST] {p}")
         try:
             payload = self._read_json()
             if p == "/api/tasks":
@@ -468,6 +475,7 @@ def main():
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
     paths.ensure_dirs()
+    Handler._verbose = args.verbose
     if args.verbose:
         Handler.log_message = lambda self, fmt, *args: print(
             f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {fmt % args}"
