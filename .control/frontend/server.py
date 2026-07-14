@@ -287,10 +287,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send_json({"body": decisions.show(did)})
             if p == "/api/skills":
                 return self._send_json(_skills_payload())
-            if re.match(r"^/api/skills/SK-\d+$", p):
-                sid = p.split("/")[-1]
-                data, body = skills_registry.get_content(sid)
-                return self._send_json({"data": data, "body": body})
+            if p.startswith("/api/skills/") and p.count("/") == 3:
+                sid = p[len("/api/skills/"):]
+                try:
+                    data, body = skills_registry.get_content(sid)
+                    return self._send_json({"data": data, "body": body})
+                except FileNotFoundError:
+                    return self._send_error_json(f"skill no encontrada: {sid}", 404)
             if p == "/api/positions":
                 return self._send_json(_positions())
             if p == "/api/search":
