@@ -560,6 +560,10 @@ _migration(3, 4, "Create roadmaps directories", _migrate_roadmaps_dir)
 # ---------------------------------------------------------------------------
 
 def _append_changelog(new_version, migrations_ran, log_lines, deprecations=None):
+    has_content = bool(migrations_ran or log_lines or deprecations)
+    if not has_content:
+        return
+
     header = f"## v{new_version} ({datetime.date.today().isoformat()})"
     parts = [header, ""]
     if migrations_ran:
@@ -942,12 +946,11 @@ Safety notes:
     # Update changelog
     if not aborted and not dry_run and not errors:
         new_version = _current_schema()
-        if updated or ran or log_lines:
-            _append_changelog(
-                new_version=new_version,
-                migrations_ran=ran,
-                log_lines=log_lines,
-            )
+        _append_changelog(
+            new_version=new_version,
+            migrations_ran=ran,
+            log_lines=log_lines,
+        )
 
     # Report
     _report(
