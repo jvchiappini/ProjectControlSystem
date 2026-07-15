@@ -175,7 +175,7 @@ hierarchy:
 - Direct edits to the markdown files are also valid; run `pctl reindex`
   afterward.
 
-## 8. Documenting architecture & decisions
+## 9. Documenting architecture & decisions
 
 - When a domain is touched during a task, reflect the changes in
   `architecture/<domain>.md`. Update structure, references, and status
@@ -189,7 +189,7 @@ hierarchy:
 - After editing any `.md` file in `.control/`, review it for conciseness
   and clarity (see skill `doc-concise.md`).
 
-## 9. Controlled self-evolution
+## 10. Controlled self-evolution
 
 The agent may detect repeated patterns (2+ occurrences) that would
 benefit from a new script or skill and propose it via the meta-skill
@@ -205,7 +205,7 @@ benefit from a new script or skill and propose it via the meta-skill
 - Skills proposed by the agent can later be promoted to active (see
   skill `skill-authoring.md`).
 
-## 10. Context loading order
+## 11. Context loading order
 
 In large projects, the agent NEVER loads the entire `.control/` at once.
 At session start, load in this order, at most:
@@ -213,16 +213,18 @@ At session start, load in this order, at most:
 1. `SYSTEM.md` (this file)
 2. `CONTEXT.md` (agent working memory, see section 6)
 3. `PROJECT.md` and `GOALS.md` in full
-4. `tasks/IN_PROGRESS.md` (index, not the full tasks)
-5. `architecture/_index.md` (domain map)
-6. `roadmaps/_index.md` (roadmap summary)
-7. `flows/_index.md` (flow map)
-8. Only the task, domain, roadmap item, and/or flow files relevant to
-   what the user asked for in this turn
+4. `CHANGELOG.md` (framework changes since last session)
+5. `tasks/IN_PROGRESS.md` (index, not the full tasks)
+6. `docs/_index.md` (documentation panel)
+7. `architecture/_index.md` (domain map)
+8. `roadmaps/_index.md` (roadmap summary)
+9. `flows/_index.md` (flow map)
+10. Only the task, domain, doc, roadmap item, and/or flow files relevant to
+    what the user asked for in this turn
 
 See skill `context-budget.md` for details.
 
-## 11. Session close (mandatory, no exceptions)
+## 12. Session close (mandatory, no exceptions)
 
 Before ending any work session, the agent executes the checklist in
 `skills/session-close.md`: close the session log, confirm indexes are
@@ -231,7 +233,7 @@ learned that the next session needs (see `skills/context-maintenance.md`),
 and verify that no `file:line` reference touched during the session was
 left outdated (`pctl doc-check-refs`).
 
-## 12. Code review
+## 13. Code review
 
 Before committing any code (`pctl git-commit --yes`), or when the user
 explicitly asks for review, run through the checklist in
@@ -239,13 +241,13 @@ explicitly asks for review, run through the checklist in
 follows project conventions, no out-of-scope changes, no sensitive data
 in logs, documentation references updated.
 
-## 13. Goal alignment
+## 14. Goal alignment
 
 At the start of a large task or whenever the scope seems to be drifting,
 review `skills/goal-check.md` to ensure the work still aligns with
 project goals and success criteria.
 
-## 14. Available skills reference
+## 15. Available skills reference
 
 The following skills are registered in `skills/_index.md` (all active).
 Refer to them when the corresponding trigger occurs:
@@ -274,7 +276,7 @@ Refer to them when the corresponding trigger occurs:
 | `roadmap-management` | Creating, updating, or discussing the roadmap | `skills/roadmap-management.md` |
 | `docs-management` | Creating, updating, or browsing technical docs | `skills/docs-management.md` |
 
-## 15. Language
+## 16. Language
 
 All content inside `.control/` (rules, prompts, templates, skills,
 documentation) is written in English. Frontmatter field names and `pctl`
