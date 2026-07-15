@@ -23,6 +23,17 @@ via `instructions` — follow them without exception.
 9. If this is the **first session ever** (no `.control/sessions/S-*.md`),
    follow `.control/prompts/prompt_new_project.md` instead.
 
+## Skills in `.control/skills/`
+
+The `.control/skills/` directory contains procedural skill files (markdown)
+that tell you exactly how to handle specific situations. Every skill is
+registered in `.control/skills/_index.md` with its trigger condition.
+
+When you encounter a situation that matches a skill's trigger
+(e.g., creating a task, closing a session, documenting a domain), consult
+the corresponding skill file first. The full list with triggers is in
+`SYSTEM.md` section 15 (Available skills reference).
+
 ## Available tools
 
 ### Core (tasks, sessions, context)
