@@ -10,14 +10,15 @@ to resume work, in one bounded output (default ~2k tokens):
   5. CONTEXT.md working memory (template guidance stripped) + inbox notes
   6. active roadmap phase, git state
   7. where to look next (commands, not file dumps)
-The lean-mode level is one line under the header (omitted when off).
+The lean-mode level is one line under the header (omitted when off), and
+so is the UI line (only when the project has style/markup files).
 
 Sections are emitted in priority order; when the budget runs out, lower
 priority sections are cut and a pointer to the full source is left.
 """
 import datetime
 
-from . import context, fm, lean, paths, sessions, tasks, updates, util
+from . import context, fm, lean, paths, sessions, tasks, ui_scan, updates, util
 
 DEFAULT_BUDGET = 8000  # characters (~2k tokens)
 LOCAL_RULES = paths.CONTROL_ROOT / "SYSTEM.local.md"
@@ -240,6 +241,12 @@ def build(budget=DEFAULT_BUDGET, check_updates=True):
     lean_line = lean.brief_line()
     if lean_line:
         header += "\n" + lean_line
+    try:
+        ui_line = ui_scan.brief_line()
+    except Exception:  # a broken scan must never break session start
+        ui_line = None
+    if ui_line:
+        header += "\n" + ui_line
     if not (paths.CONTROL_ROOT / "PROJECT.md").exists():
         update = _update_line() if check_updates else None
         return "\n".join([

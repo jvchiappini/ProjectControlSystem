@@ -1,8 +1,19 @@
 {
   "name": "project-control",
-  "description": "Persistent project memory and control for coding agents, plus lean mode: reuse before writing, shared utilities, lean output.",
-  "version": "5.1.0",
-  "author": { "name": "jvchiappini" },
+  "description": "Persistent project memory and control for coding agents, lean mode (reuse before writing, shared utilities, lean output) and UI design (discovery, design system, critique and audit).",
+  "version": "5.2.0",
+  "author": {
+    "name": "jvchiappini"
+  },
   "repository": "https://github.com/jvchiappini/ProjectControlSystem",
-  "keywords": ["memory", "tasks", "handoff", "documentation", "lean"]
+  "keywords": [
+    "memory",
+    "tasks",
+    "handoff",
+    "documentation",
+    "lean",
+    "ui",
+    "design",
+    "frontend"
+  ]
 }

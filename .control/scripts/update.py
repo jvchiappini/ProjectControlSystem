@@ -285,6 +285,21 @@ GENERATED_SKILLS = {
         "<!-- generated from .control/skills/lean.md by `update.py --build-manifest`; edit that file -->\n\n"
         "Without ProjectControl (no `.control/`), apply the same steps with your own search tools and "
         "skip the `pctl` commands; the level is `lite`.\n\n")),
+    "skills/ui-design/SKILL.md": (".control/skills/ui-design.md", (
+        "---\n"
+        "name: ui-design\n"
+        "description: Design distinctive, production-grade interfaces (web, mobile, desktop) instead of generic "
+        "AI-looking UI. Use when building, redesigning, critiquing or auditing a user interface: analyze the "
+        "repo, infer the product type and what it lacks, ask focused questions, record a design system, plan, "
+        "build with tokens, then verify with a scored critique and a P0-P3 audit.\n"
+        "---\n\n"
+        "<!-- generated from .control/skills/ui-design.md by `update.py --build-manifest`; edit that file -->\n\n"
+        "Without ProjectControl (no `.control/`): `prompts/ui-discovery.md` is `discovery.md` next to this "
+        "file; keep the design doc in `DESIGN.md` (or the project's docs folder); turn `pctl task-new` into a "
+        "checklist and ADRs into a short Decisions section of the design doc; skip `pctl ui-scan`, `dupes` and "
+        "`reuse` (search the code yourself).\n\n")),
+    "skills/ui-design/discovery.md": (".control/prompts/ui-discovery.md",
+                                      "<!-- generated from .control/prompts/ui-discovery.md by `update.py --build-manifest` -->\n\n"),
     # Copilot cannot import files, so it gets a copy of AGENTS.md
     ".github/copilot-instructions.md": ("AGENTS.md", "<!-- generated from AGENTS.md by `update.py --build-manifest` -->\n\n"),
 }

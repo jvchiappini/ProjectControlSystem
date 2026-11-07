@@ -3,12 +3,12 @@
   "owner": {
     "name": "jvchiappini"
   },
-  "description": "ProjectControl: persistent project memory, tasks and handoffs for coding agents, with lean mode.",
+  "description": "ProjectControl: persistent project memory, tasks and handoffs for coding agents, with lean mode and UI design.",
   "plugins": [
     {
       "name": "project-control",
       "source": "./",
-      "description": "Persistent project memory and control for coding agents, plus lean mode."
+      "description": "Persistent project memory and control for coding agents, plus lean mode and UI design."
     }
   ]
 }

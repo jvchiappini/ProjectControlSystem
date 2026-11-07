@@ -203,3 +203,20 @@ def report(include=None, changed_base=None, apply=False, limit=8):
     lines.append("In use: " + ", ".join(f"{v} {k}" for k, v in stats.items())
                  + " (many near-duplicates = consolidate into design tokens)")
     return "\n".join(lines), len(findings)
+
+
+def brief_line():
+    """One brief line when the project has UI files; scans only changed lines (cheap)."""
+    ui = [r for r in util.project_files() if _kind(r) in ("s", "m")]
+    if not ui:
+        return None
+    doc_rel = design_doc()[0]
+    line = "UI: work follows `.control/skills/ui-design.md`" + ("" if doc_rel else " (no design doc yet)")
+    hunks = review.changed_hunks("HEAD")
+    changed = [r for r in ui if r in hunks]
+    if changed:
+        p1 = [f for f in scan(changed)[0] if f["prio"] == "P1"
+              and any(s <= f["line"] <= e for s, e in hunks[f["rel"]])]
+        if p1:
+            line += f"; {len(p1)} P1 in uncommitted changes (`pctl ui-scan --changed`)"
+    return line + "."

@@ -3,6 +3,37 @@
 Written by the framework maintainers, shipped with each release.
 `update.py --check` shows the entries newer than your installed version.
 
+## v5.2.0 (2026-11-07)
+
+### UI design
+- New skill `skills/ui-design.md` (inspired by Impeccable): analyze the repo
+  (stack, components, data, assets), infer the product archetype and what
+  it lacks, ask in rounds with stated defaults, propose 2-3 directions,
+  record `architecture/design-system.md` + an ADR, plan as tasks, build with
+  tokens avoiding generic-AI patterns, verify with a scored critique and a
+  P0-P3 audit whose findings become tasks. Greenfield foundations,
+  brownfield consistency audit, overlay and optimistic-UI rules, steering
+  vocabulary (bolder, quieter, polish, harden...).
+- `prompts/ui-discovery.md`: archetype playbooks (store, SaaS, dashboard,
+  portfolio, editorial, local business, docs, mobile) and question bank,
+  loaded only for discovery.
+
+### UI scan
+- `pctl ui-scan [paths] [--changed] [--apply] [--fail]`: stdlib checks over
+  styles and markup: accessibility (P1/P2), generic-AI patterns (P3), colors
+  and fonts missing from the design doc (P2), counts of distinct values in
+  use. `--apply` creates one task per rule (deduplicated); `--fail` exits 2.
+  Silence with `ui-scan-disable <rule>` or `ui-scan-allow:` in the design doc.
+- `pctl brief` shows one UI line when the project has style/markup files,
+  with the P1 count in uncommitted changes.
+
+### Portable skills
+- `skills/ui-design/` (SKILL.md + discovery.md) for any agent with skill
+  support and the Claude Code plugin.
+
+### Internal
+- `lean.tracked_keys()` shared by `debt-scan` and `ui-scan`.
+
 ## v5.1.0 (2026-11-07)
 
 ### Lean mode

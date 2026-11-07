@@ -1,7 +1,7 @@
 {
   "name": "ProjectControl",
-  "version": "5.1.0",
-  "summary": "Lean mode; Shared utilities; Review and audit; Update notifier; Portable skills; Fixes",
+  "version": "5.2.0",
+  "summary": "UI design; UI scan; Portable skills; Internal",
   "schema": 5,
   "upstream": {
     "url": "https://github.com/jvchiappini/ProjectControlSystem.git",
@@ -16,9 +16,10 @@
     },
     ".control/CHANGELOG.md": {
       "strategy": "managed",
-      "sha256": "73df857c949171d207d1af514e2a56f1ff27dfa3193df3fb4246966229c8537c",
+      "sha256": "c51e9089c4556ed49edd5206a3b63b109b9f546026dc0c84cd3d7f65ffa7ccf4",
       "known": [
         "3eb33185533615f189ea926f75bce896113e11c15b39441b42134260ae97b3c5",
+        "73df857c949171d207d1af514e2a56f1ff27dfa3193df3fb4246966229c8537c",
         "fc5173ee0c3a88b08d6baac1009a9c7c25c2fd56b81b6333ce0fa237fddd529f"
       ]
     },
@@ -55,10 +56,11 @@
     },
     ".control/SYSTEM.md": {
       "strategy": "managed",
-      "sha256": "95ff6009878bdea0ed87c6a6ebb04e8927c9a4d7f3962ae907b2c66f3d12452b",
+      "sha256": "423142f5e081a46a944cda8e1ad31b0c71a030f8f93feeea0313d272b4310254",
       "known": [
         "213aa5a593d411fbc73e5b18f481a38fd12d623753ab90218adea5bafe35b652",
         "678be3edd36bde8bbcc5fc2dc40aa578f58c8824b8b384c7d4bdfac611f94b68",
+        "95ff6009878bdea0ed87c6a6ebb04e8927c9a4d7f3962ae907b2c66f3d12452b",
         "9acc936c1d1dff1a2a7d2b0de42b2e4fffac7a4526b5be681ae248fd56466fee",
         "aabdd91e4de54519017a9fee21edddb693be880fc10f4dfa5e1da2167f976b26",
         "bb6b11a031cf307b174bdc023467367e20ebbf1eecf1a6ce380f3211e95c94fd",
@@ -187,6 +189,11 @@
         "9c516ae5e0f3b156106c58db435b4d84b0d7839d2c2e2cde04e7007fbec89317"
       ]
     },
+    ".control/prompts/ui-discovery.md": {
+      "strategy": "managed",
+      "sha256": "5b03edcfd36e400d6a538e9c05539045b763dc426ee8ef5e7ee721a43b62ccf1",
+      "known": []
+    },
     ".control/roadmaps/_index.md": {
       "strategy": "create_only",
       "sha256": "8a9cddfadeb08b0b43606873ad845459ec32cffbdaadf440f84a10ba78f4d3f9",
@@ -239,11 +246,12 @@
     },
     ".control/scripts/lib/brief.py": {
       "strategy": "managed",
-      "sha256": "c21f3bd2c9e5074304fa7045126b77cd4773796448d400ab1febf9f2ffbf93de",
+      "sha256": "4c4a6ef2828b5ea8656ceb98be90f311c9e20255035be6c64258780add7b1685",
       "known": [
         "3d19d281a9fbb67a66827b8ece1e229cec55436272abad101c3716c3a42d091b",
         "a7d81c6ecf0a6d7e59d1088d936705c2f54297bd52d868f5b163014a87b3d264",
         "babffcda4c886bc4a94be3b8b0cb3e0ffbe8dc9186879fc669ed08cbe35d8bb0",
+        "c21f3bd2c9e5074304fa7045126b77cd4773796448d400ab1febf9f2ffbf93de",
         "d58e46fec73b15688aebc5a9a85ab30918938e82780f22abe51eea2248c41f7e",
         "ef379249990d36c686c291ee8e19a0842a13eac6d02c8031f67defcbcecf6f9d"
       ]
@@ -330,8 +338,9 @@
     },
     ".control/scripts/lib/lean.py": {
       "strategy": "managed",
-      "sha256": "299e396c83af952f2cacbdc83de26d2bcfbdc11003cb86d3b3bfbe0031f5e964",
+      "sha256": "68c652b02157e2e51d75cd0df8076d705063ea24b1de33660c7263c7967212ee",
       "known": [
+        "299e396c83af952f2cacbdc83de26d2bcfbdc11003cb86d3b3bfbe0031f5e964",
         "a6014adb7834511112bdde1810c68f1434f41f53d64429b2297beef8969d1a20",
         "b7072fbfae470e820cdb3775537c1b1feb85841f7674c82cb2b9f590b2fd43ee"
       ]
@@ -417,6 +426,13 @@
         "d08304a780120e3967ea65b9142c3b96093b7b30a50b241bd4a32bca53b6059e"
       ]
     },
+    ".control/scripts/lib/ui_scan.py": {
+      "strategy": "managed",
+      "sha256": "1613331149381d4e399d5c784d2663271352f116a1a905bf9477908e883bfdff",
+      "known": [
+        "c3660b9b757f30becbfb5f450392b0b66f75f8d269863258055e75848a4c1a05"
+      ]
+    },
     ".control/scripts/lib/updates.py": {
       "strategy": "managed",
       "sha256": "6fbc9d7b1d27c24c605f36f1c299248e625610c946e12ee8385b5d54da1597aa",
@@ -436,11 +452,12 @@
     },
     ".control/scripts/pctl.py": {
       "strategy": "managed",
-      "sha256": "539d2f4014bfe9fb81103731e0bdeaaf5a3e7307da84384962581117ffbfc708",
+      "sha256": "1da44ea6029d345127a293e84a1e932f9ff7e9effe074b3783f3e38cb2febf11",
       "known": [
         "16aab33fa4b314d0ad058a74708e4e567706cc1ce69e23b24bed6c81e5b42272",
         "3343aa4fd98d73a6d12ccd24a7f2e5b4d19361f706f0476ea4e5971cb34cebe6",
         "359c7dadf588596d605102acc66b893f7aee09d15ffdf1d25041bcf4f5edb603",
+        "539d2f4014bfe9fb81103731e0bdeaaf5a3e7307da84384962581117ffbfc708",
         "5deef425cd24fd7c9821b80c2b3b89a822b7a20ea9b8e9ce707c67a1b5c357be",
         "686dfb01bb5a0eb946cc02ea0d54ccb25a49f68451f9047e900c0a4c2955b945",
         "75e08bd4cca4a199a6f2390d76abb532e744a8bac5eee566b4e4a2f419599a2e",
@@ -451,13 +468,14 @@
     },
     ".control/scripts/update.py": {
       "strategy": "managed",
-      "sha256": "31848869a3ed486ae4f677965f83a34ea49ea22c2c3f63452a6084515df83d48",
+      "sha256": "b70ad6725c83f1d9c4b2640c46d4ca72a7000fbb82fec21afa859f0aab3c315a",
       "known": [
         "02c9a3e8f7e2ca0d37a01a480eae016b75b259e8d2ae08bd927c7372168dc4a4",
         "03771d3480e8b727051f35273ec72c9f61e91bb131ea53868f5a60e5d06c94d7",
         "0cd37d75e2f528ff6abde19216ae3da3a9a95f55cbb48efac8e5c287ee848120",
         "217d95655783e7a23023a152b36d15b312d38dbd11cff48b6f023323ec63e64c",
         "28fe4eac6f106e680134a3f4c5b5626269a81e4c40133729b4d53ca75e853880",
+        "31848869a3ed486ae4f677965f83a34ea49ea22c2c3f63452a6084515df83d48",
         "41c64ad1b99c5d7d10cadb18945eccf5d690ff5956be8b816050e75868f860ce",
         "69c211fbd9b4d677525efb82e4791a87830054cfa2b01a9840637792faad5be0",
         "b4e7658f49d5d04eef09398047ca0cf445984ed1d59bfcba4b13d67fdcbbb814",
@@ -466,12 +484,13 @@
     },
     ".control/skills/_index.md": {
       "strategy": "skill_registry",
-      "sha256": "fdc2ef1c5bb4227264b2ba80797aa2807f4413bfd607bd897ed78f68a12082d5",
+      "sha256": "220bcbe43697598f07ceb3db4713cb6837d667ca277c2d6df1426bbcf98e11e9",
       "known": [
         "5d54433a5175dacea35ad49e10fd665c6ee9a7f487b477748f9832361397f33b",
         "a5e010e4c929dfc555355b1e3d8324f3548d925ba580c3ac1f830c5f93841573",
         "aaf7731acab4867e070465a488e03b525be292d41d401f1887b4d9ceeb1af171",
-        "e29c4c5fc41a59e7d20389da4c5a15905a4eb19bf2b404176e197fd4a711793a"
+        "e29c4c5fc41a59e7d20389da4c5a15905a4eb19bf2b404176e197fd4a711793a",
+        "fdc2ef1c5bb4227264b2ba80797aa2807f4413bfd607bd897ed78f68a12082d5"
       ]
     },
     ".control/skills/architecture-update.md": {
@@ -632,6 +651,13 @@
         "ac838b10620d45dc60e2a0a448216b8c0fba092bc621cad29defb763c1c72034"
       ]
     },
+    ".control/skills/ui-design.md": {
+      "strategy": "managed",
+      "sha256": "7a06e9cd64b5bb0a759521f9c2e2d5d0f200fdbe93bf393b3e4986e32560c38e",
+      "known": [
+        "2c741f158a509bfe6d013645a0571df091c8de0ace13551e93ac703e407b0bee"
+      ]
+    },
     ".control/tasks/BACKLOG.md": {
       "strategy": "create_only",
       "sha256": "1689691d67316afe1a9ba780b8cc8c4b9827b4e71e823e4f14f255a0be34b569",
@@ -654,11 +680,13 @@
     },
     ".opencode/agents/project-control.md": {
       "strategy": "managed",
-      "sha256": "3ab94f09cbc6c02ccf78c05c4c76e31c747923186bdc1985b4c37c09316c7b12",
+      "sha256": "8738e4e5b37cede612f7872fef095c0454d7e6d55a11019f8d6abac93d9af281",
       "known": [
         "0a5074c140c83a8c8b55721ef905d6c3284739462c1cbd42f7172a7746955e70",
+        "3ab94f09cbc6c02ccf78c05c4c76e31c747923186bdc1985b4c37c09316c7b12",
         "5c73b6db90ed6d6c1e4c7f648758a37289aac769a3197b210619a7c5c17e8ca4",
         "63c4ba4f71f3219d40bddfd434ccf83e7a5d10706633b90d092d52d85b240ed0",
+        "69d102b2298b656237ebf9dc4eb6db38da97d5b2d5e58a75abcc71d00c70e590",
         "945b67f9cbd0cc09c7997df7924221942923fa6dd79f7532658d23c555c02bf4",
         "ad0181e4356da65eea3ef6e20477ed02121f95560880d5182c648891ae1bf815",
         "b762a98b816cf6fc45d98945d9c2d62b1fd0ecbc957d44da106dc7d0410e48bd",

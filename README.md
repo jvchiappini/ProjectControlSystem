@@ -74,7 +74,8 @@ completa `PROJECT.md`/`GOALS.md` siguiendo `prompts/prompt_new_project.md`.
 
 Las skills `skills/project-control/SKILL.md` (usar/instalar ProjectControl) y
 `skills/lean/SKILL.md` (código mínimo, utilidades compartidas, salida sin
-tokens basura) siguen el formato estándar `SKILL.md`:
+tokens basura) y `skills/ui-design/SKILL.md` (diseño de interfaces) siguen el
+formato estándar `SKILL.md`:
 
 - Claude Code: `/plugin marketplace add jvchiappini/ProjectControlSystem` y luego
   `/plugin install project-control@project-control` (o en un paso:
@@ -83,8 +84,9 @@ tokens basura) siguen el formato estándar `SKILL.md`:
   skills. Sin soporte de skills: `AGENTS.md` (Codex, Cursor, opencode...),
   `GEMINI.md`, `.github/copilot-instructions.md`.
 
-`skills/lean/SKILL.md` y `.github/copilot-instructions.md` se generan con
-`update.py --build-manifest` desde `.control/skills/lean.md` y `AGENTS.md`:
+`skills/lean/SKILL.md`, `skills/ui-design/` y `.github/copilot-instructions.md` se
+generan con `update.py --build-manifest` desde `.control/skills/lean.md`,
+`.control/skills/ui-design.md`, `.control/prompts/ui-discovery.md` y `AGENTS.md`:
 editar esos originales.
 
 ## Lean mode
