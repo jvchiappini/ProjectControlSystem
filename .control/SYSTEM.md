@@ -293,6 +293,7 @@ Refer to them when the corresponding trigger occurs:
 | `roadmap-management` | Creating, updating, or discussing the roadmap | `skills/roadmap-management.md` |
 | `docs-management` | Creating, updating, or browsing technical docs | `skills/docs-management.md` |
 | `lean` | Before writing or changing code (lean mode not off) | `skills/lean.md` |
+| `ui-design` | Task creates or substantially changes a user interface, or UI critique/audit | `skills/ui-design.md` |
 
 ## 16. Context discipline (mandatory)
 

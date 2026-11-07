@@ -97,6 +97,18 @@ validación, seguridad ni accesibilidad, y no reimprime código ni hace resúmen
 innecesarios. Niveles `off | lite | full | strict` (por defecto `lite`):
 `pctl lean <nivel>`. Detalle en `.control/skills/lean.md`.
 
+## Diseño de interfaces (`ui-design`)
+
+Inspirado en [Impeccable](https://github.com/pbakaus/impeccable), integrado con
+la memoria de ProjectControl. Antes de diseñar una UI el agente analiza el repo
+(stack, componentes, datos, assets), deduce el tipo de producto (p. ej. qué
+clase de tienda) y lo que le falta, hace preguntas en rondas con valores por
+defecto propuestos, ofrece 2-3 direcciones visuales y guarda la elegida en
+`architecture/design-system.md` + un ADR. Luego planifica en tareas, construye
+con tokens evitando los patrones genéricos de IA, y verifica con una crítica
+puntuada y una auditoría P0-P3 cuyos hallazgos quedan como tareas. Detalle en
+`.control/skills/ui-design.md` y `.control/prompts/ui-discovery.md`.
+
 ## Contexto y memoria entre sesiones
 
 El objetivo: que el agente arranque sabiendo todo lo necesario gastando

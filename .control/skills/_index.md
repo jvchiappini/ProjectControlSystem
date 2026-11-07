@@ -27,3 +27,4 @@ carga inicial de fábrica)
 | SK-0020 | roadmap-management | skill | activa | creacion, actualizacion o discusion del roadmap | skills/roadmap-management.md | agente |
 | SK-0021 | docs-management | skill | activa | creacion, actualizacion o consulta de documentacion tecnica | skills/docs-management.md | agente |
 | SK-0022 | lean | skill | activa | antes de escribir o cambiar codigo (lean mode no apagado) | skills/lean.md | usuario |
+| SK-0023 | ui-design | skill | activa | tarea que crea o cambia mucho una interfaz, o pedido de critica/auditoria de UI | skills/ui-design.md | usuario |
