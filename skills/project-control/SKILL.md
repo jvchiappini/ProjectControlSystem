@@ -19,11 +19,13 @@ task needs.
    its trigger happens.
 3. While the brief shows "Lean mode", code changes follow
    `.control/skills/lean.md`.
-4. Save learnings the moment they happen:
+4. Interface work (new UI, redesign, critique, audit) follows
+   `.control/skills/ui-design.md`; `pctl ui-scan --changed` checks it.
+5. Save learnings the moment they happen:
    `pctl context-note "..." --tipo gotcha|convention|fact|todo|decision`.
-5. Session end: `.control/skills/session-close.md` (leave a handoff with
+6. Session end: `.control/skills/session-close.md` (leave a handoff with
    `--next`).
-6. If the brief announces a ProjectControl update, ask the user. Only with
+7. If the brief announces a ProjectControl update, ask the user. Only with
    their consent: `python .control/scripts/update.py` (`--check` previews,
    `pctl update-check --skip` stops the reminder for that version).
 

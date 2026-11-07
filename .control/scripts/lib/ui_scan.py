@@ -117,6 +117,19 @@ def _disabled(rule, lines, n, file_off):
     return f"ui-scan-disable {rule}" in near
 
 
+OPEN_TAG_RX = re.compile(r"<[A-Za-z][\w.-]*\b[^<>]*$")
+
+
+def _whole_tag(lines, i, max_lines=15):
+    """Line i, joined with the next lines while a tag opened on it is still unclosed."""
+    out = lines[i]
+    j = i
+    while OPEN_TAG_RX.search(out) and j + 1 < len(lines) and j - i < max_lines:
+        j += 1
+        out += " " + lines[j].strip()
+    return out
+
+
 def scan(include=None):
     """(findings, stats, doc_rel). finding: {rule, prio, msg, rel, line}."""
     doc_rel, colors, fonts, allow = design_doc()
@@ -131,8 +144,9 @@ def scan(include=None):
         has_focus_style = "focus-visible" in text
         for n, line in enumerate(lines, 1):
             hits = []
+            target = _whole_tag(lines, n - 1) if kind == "m" else line
             for rid, prio, kinds, rx, msg in RULES:
-                if kind in kinds and rid not in allow and rx.search(line):
+                if kind in kinds and rid not in allow and rx.search(target):
                     if (rid == "outline-removed" and has_focus_style) or \
                             (rid == "side-stripe" and "blockquote" in line):
                         continue

@@ -1,7 +1,7 @@
 {
   "name": "ProjectControl",
-  "version": "5.2.0",
-  "summary": "UI design; UI scan; Portable skills; Internal",
+  "version": "5.2.1",
+  "summary": "UI review; Fixes",
   "schema": 5,
   "upstream": {
     "url": "https://github.com/jvchiappini/ProjectControlSystem.git",
@@ -16,10 +16,11 @@
     },
     ".control/CHANGELOG.md": {
       "strategy": "managed",
-      "sha256": "c51e9089c4556ed49edd5206a3b63b109b9f546026dc0c84cd3d7f65ffa7ccf4",
+      "sha256": "f15e506e8aadfeb128b1a7445e3e407615a6f39c6aef5e2585a0ce37ea867597",
       "known": [
         "3eb33185533615f189ea926f75bce896113e11c15b39441b42134260ae97b3c5",
         "73df857c949171d207d1af514e2a56f1ff27dfa3193df3fb4246966229c8537c",
+        "c51e9089c4556ed49edd5206a3b63b109b9f546026dc0c84cd3d7f65ffa7ccf4",
         "fc5173ee0c3a88b08d6baac1009a9c7c25c2fd56b81b6333ce0fa237fddd529f"
       ]
     },
@@ -428,8 +429,9 @@
     },
     ".control/scripts/lib/ui_scan.py": {
       "strategy": "managed",
-      "sha256": "1613331149381d4e399d5c784d2663271352f116a1a905bf9477908e883bfdff",
+      "sha256": "f3d22dea24243b3d22ae9fb0293fe6552b29c7574862e800b2c9d9cb4a8eea01",
       "known": [
+        "1613331149381d4e399d5c784d2663271352f116a1a905bf9477908e883bfdff",
         "c3660b9b757f30becbfb5f450392b0b66f75f8d269863258055e75848a4c1a05"
       ]
     },
@@ -502,9 +504,10 @@
     },
     ".control/skills/code-review.md": {
       "strategy": "managed",
-      "sha256": "bdbaae9b1876b34f06d02dfc93a82bca624dca65e13ab5f1e6ae50b924f7556a",
+      "sha256": "13d352925ba6d2475c6b9f292b8e8305cb2abc70745d9b1e9ba2811f87b6bd3d",
       "known": [
         "643491eb7be87f3057bd2e864c028ffeb2b27108fcf874912fb7a5410fe45c77",
+        "bdbaae9b1876b34f06d02dfc93a82bca624dca65e13ab5f1e6ae50b924f7556a",
         "c6e23ba90d9deb90802d6a66ec6fb69c89d51b38ec5a4b4dba69b4ad83f2360f",
         "e8913bcf0676ceb055bc3b4ad2f5f829c5da4df16e1e1c4d268960e25d9e7bdb"
       ]

@@ -3,6 +3,17 @@
 Written by the framework maintainers, shipped with each release.
 `update.py --check` shows the entries newer than your installed version.
 
+## v5.2.1 (2026-11-07)
+
+### UI review
+- `skills/code-review.md`: diffs that touch styles or markup run
+  `pctl ui-scan --changed`; P1 findings block the commit.
+- `skills/project-control/SKILL.md` points interface work to `ui-design.md`.
+
+### Fixes
+- `pctl ui-scan`: tags split over several lines (JSX/HTML attributes one per
+  line) are now checked as a whole (missing alt, clickable div...).
+
 ## v5.2.0 (2026-11-07)
 
 ### UI design

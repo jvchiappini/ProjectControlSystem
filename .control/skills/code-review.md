@@ -34,7 +34,10 @@ explicit review or audit.
 8. **New dependencies justified** — `pctl deps-check` lists them; each
    needs a reason (and an ADR in lean `strict`). See `skills/lean.md`.
 9. **No duplicated logic** — callers use the shared utility, not a copy.
-10. **Commit message in English** — the commit message must be 100% in
+10. **UI changes checked** — if the diff touches styles or markup,
+   `pctl ui-scan --changed`: P1 findings block the commit; the rest
+   follow `ui-design.md` phase 6.
+11. **Commit message in English** — the commit message must be 100% in
    English, regardless of the language used in the user's conversation.
 
 ## Whole-repo audit

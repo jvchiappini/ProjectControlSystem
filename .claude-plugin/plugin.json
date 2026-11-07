@@ -1,7 +1,7 @@
 {
   "name": "project-control",
   "description": "Persistent project memory and control for coding agents, lean mode (reuse before writing, shared utilities, lean output) and UI design (discovery, design system, critique and audit).",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "author": {
     "name": "jvchiappini"
   },
