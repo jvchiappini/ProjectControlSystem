@@ -58,36 +58,101 @@ cambio hecho por un agente vía `pctl`, y viceversa.
 
 ## Instalación en un proyecto
 
-1. Copiar la carpeta `.control/` completa a la raíz de tu proyecto.
-2. Copiar `PROJECT.md.template`, `GOALS.md.template`,
-   `ROADMAP.md.template` y `CONTEXT.md.template` como `PROJECT.md`,
-   `GOALS.md`, `ROADMAP.md` y `CONTEXT.md` (sin el `.template`) y
-   completarlos — o dejar que el agente lo haga siguiendo
-   `prompts/prompt_new_project.md`.
-3. Verificar que `python3` esté disponible: `python3 .control/scripts/pctl.py status`.
+Desde la raíz de tu proyecto (Python 3.8+ y git):
 
-## Integración con opencode
+```
+git clone --depth 1 https://github.com/jvchiappini/ProjectControlSystem.git /tmp/pc
+python /tmp/pc/.control/scripts/update.py --source /tmp/pc --target .
+```
 
-Si usás opencode como agente, no necesitas configurar nada manualmente.
-El archivo `opencode.json` en la raíz ya le dice a opencode que cargue
-`.control/SYSTEM.md` automáticamente al inicio de cada sesión (vía el
-campo `instructions`).
+Instala `.control/` y crea `AGENTS.md`, `CLAUDE.md`, `opencode.json` y
+`.claude/settings.json` **solo si no existen** (si ya tenés los tuyos, no
+se tocan y el instalador te dice qué línea agregar). Después, el agente
+completa `PROJECT.md`/`GOALS.md` siguiendo `prompts/prompt_new_project.md`.
 
-El flujo es:
+## Contexto y memoria entre sesiones
 
-1. opencode arranca y lee `opencode.json` → carga `.control/SYSTEM.md`
-   como instrucción inicial.
-2. `SYSTEM.md` (sección 9, `context-budget.md`) ordena al agente leer
-   `CONTEXT.md`, `PROJECT.md`, `GOALS.md`, y los índices ligeros.
-3. El agente detecta si es un proyecto nuevo (sin sesiones prevías) o
-   existente, y carga el prompt correspondiente desde `prompts/`.
-4. Al cerrar sesión, `session-close.md` + `context-maintenance.md`
-   aseguran que `CONTEXT.md` se reescriba con lo aprendido, listo para
-   la próxima sesión.
+El objetivo: que el agente arranque sabiendo todo lo necesario gastando
+el mínimo de contexto, y que nada de lo aprendido se pierda.
 
-El resultado: podés cerrar opencode, volver a abrirlo al día siguiente,
-y el agente retoma exactamente donde lo dejaste — sin tener que
-explicarle el proyecto de nuevo.
+- **`pctl brief`**: un solo comando con presupuesto acotado (~2k tokens)
+  que reemplaza leer ~10 archivos: alertas, reglas locales, el *handoff*
+  de la sesión anterior (próximos pasos y preguntas abiertas), tareas en
+  curso con progreso de criterios, `CONTEXT.md`, roadmap y git.
+- **Handoff**: `pctl session-close <sid> "resumen" --next "..." --question "..."`.
+  La próxima sesión lo ve primero.
+- **Notas inmediatas**: `pctl context-note "..." --tipo gotcha` guarda un
+  aprendizaje en el *Inbox* de `CONTEXT.md` en el momento. Sobrevive a
+  compactaciones de chat y a sesiones que se cortan sin cerrar; al cerrar
+  sesión se consolida.
+- **Disciplina de contexto** (`SYSTEM.md` §16): buscar antes de leer, leer
+  rangos `archivo:línea`, no abrir sesiones viejas, delegar exploración.
+- **Reglas propias del proyecto** en `.control/SYSTEM.local.md`: aparecen
+  en cada brief y no se pisan con las actualizaciones.
+
+### Integración por agente
+
+| Agente | Cómo recibe el contexto |
+|---|---|
+| Claude Code | hook `SessionStart` en `.claude/settings.json` inyecta `pctl brief` al iniciar y después de cada compactación; `CLAUDE.md` -> `AGENTS.md` |
+| opencode | `opencode.json` carga `SYSTEM.md`; el agente `project-control` corre `pctl brief` |
+| Codex, Cursor, otros | leen `AGENTS.md`, que indica correr `pctl brief` |
+| Chat sin ejecución | `SYSTEM.md` §11: `CONTEXT.md` + `IN_PROGRESS.md` + handoff de la última sesión |
+
+Si ya tenés tu propio `.claude/settings.json`, agregá este hook:
+`{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"python .control/scripts/pctl.py brief"}]}]}}`
+
+## Búsqueda
+
+`pctl search` recorre **todo** `.control/` (tareas, sesiones, arquitectura,
+flujos, decisiones, docs, roadmaps, skills, prompts, diagramas y los
+archivos raíz como `CONTEXT.md`) y devuelve resultados agrupados por
+archivo y ordenados por relevancia (coincidencias en id/título pesan más
+que en el cuerpo).
+
+```
+pctl search stock redis                 # todas las palabras deben aparecer
+pctl search "race condition"            # frase exacta
+pctl search checkout --area tasks,flows --estado in_progress
+pctl search T-00 --fm                   # solo frontmatter (id, titulo, estado...)
+pctl search "def \w+_task" --regex --code   # incluir scripts/ y frontend/
+pctl search login --files               # solo rutas, mínimo de tokens
+```
+
+## Actualizaciones
+
+```
+python .control/scripts/update.py --check     # ¿hay versión nueva? ¿qué cambió?
+python .control/scripts/update.py --dry-run   # plan archivo por archivo, sin tocar nada
+python .control/scripts/update.py             # aplicar (pregunta una vez)
+python .control/scripts/update.py --rollback  # deshacer la última actualización
+```
+
+Garantías:
+
+- Solo se tocan archivos listados en `.control/framework.json`. Tareas,
+  sesiones, decisiones, docs, roadmaps, `CONTEXT.md`, `PROJECT.md`, skills
+  propias y cualquier otro archivo tuyo **nunca** se leen ni se escriben.
+- Por cada archivo se comparan tres hashes (tu copia, la instalada, la
+  nueva): si no lo tocaste se actualiza; si lo editaste y upstream no
+  cambió, queda el tuyo; si ambos cambiaron se hace merge de 3 vías, y si
+  hay conflicto **tu archivo queda intacto** y la versión nueva se deja en
+  `.control/.update/` para revisar (`--take-upstream <ruta>` o merge a mano,
+  y luego `--resolved`).
+- Nunca borra nada; los archivos que el framework deja de usar se reportan.
+- Backup de todo lo que cambia y `--rollback`.
+- El `update.py` más nuevo es el que ejecuta la actualización (bootstrap),
+  así las migraciones nuevas siempre corren.
+- `pctl brief` avisa cuando hay versión nueva (como mucho un
+  `git ls-remote` por día; `PCTL_NO_UPDATE_CHECK=1` lo desactiva).
+
+### Publicar una versión (mantenedores)
+
+1. Agregar la entrada `## vX.Y.Z (fecha)` arriba en `.control/CHANGELOG.md`.
+2. Si cambia el formato de datos, agregar una migración en `MIGRATIONS`
+   de `update.py` (idempotente, solo toca lo que nombra).
+3. `python .control/scripts/update.py --build-manifest --version X.Y.Z`
+4. Commit + push a `main`. Los proyectos lo ven en su próximo `pctl brief`.
 
 ## Los tres prompts
 
@@ -114,11 +179,16 @@ python3 .control/scripts/pctl.py <comando>
 | `task-move <id> <estado> [--motivo] [--force]` | cambia estado respetando la máquina de estados |
 | `task-show <id>` | muestra una tarea |
 | `task-list [--estado]` | lista tareas |
+| `brief [--budget N] [--offline]` | contexto completo de inicio de sesión, acotado |
+| `context-note "texto" [--tipo]` | guardar un aprendizaje ya en `CONTEXT.md` |
+| `search <palabras> [--area] [--estado] [--fm] [--regex] [--files] [--code]` | búsqueda en todo `.control/` |
+| `session-current` | id de la sesión abierta |
+| `update-check` | ¿hay versión nueva del framework? |
 | `status` | resumen corto del proyecto (incluye flujos desactualizados) |
 | `reindex` | regenera BACKLOG/IN_PROGRESS/DONE/arch index/flows index |
 | `validate` | valida schema + referencias `archivo:línea` |
 | `doc-check-refs` | valida solo referencias de código |
-| `session-start [--agente]` / `session-log <id> "texto"` / `session-close <id> "resumen" [--tareas]` | bitácora de sesión |
+| `session-start [--agente]` / `session-log <id> "texto"` / `session-close <id> "resumen" [--tareas] [--next] [--question]` | bitácora de sesión + handoff |
 | `arch-touch <dominio> [--estado] [--crear-archivo]` | registra/crea documentación de un dominio |
 | `arch-list` | lista dominios y su estado |
 | `flow-new "nombre" --dominios a,b --disparador "..."` | crea un flujo (comportamiento que cruza dominios) |

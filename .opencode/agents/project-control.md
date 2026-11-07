@@ -9,19 +9,18 @@ via `instructions` — follow them without exception.
 
 ## Session start procedure
 
-1. Read `.control/CONTEXT.md` (agent working memory, survives chat
-   compactions).
-2. Read `.control/PROJECT.md` and `.control/GOALS.md` in full.
-3. Read `.control/CHANGELOG.md` to see what has changed in the framework
-   since last session.
-4. Run `python .control/scripts/pctl.py status` for a project summary.
-5. Check `.control/tasks/IN_PROGRESS.md` for current task.
-6. Check `.control/docs/_index.md` for technical documentation index.
-7. Check `.control/roadmaps/_index.md` for roadmap phases/initiatives.
-8. Check `.control/architecture/_index.md` and `.control/flows/_index.md`
-   for domain/flow map.
-9. If this is the **first session ever** (no `.control/sessions/S-*.md`),
-   follow `.control/prompts/prompt_new_project.md` instead.
+1. Run `python .control/scripts/pctl.py brief` — one bounded digest with
+   alerts, local rules, the last session's handoff (next steps, open
+   questions), tasks, `CONTEXT.md` and git state. Do NOT read `.control/`
+   files one by one.
+2. Handle its Alerts, then `pctl session-start --agente opencode`.
+3. Load anything else only when the user's request needs it
+   (`pctl search <words>`, `pctl task-show <id>`, a flow, a domain doc).
+4. If the brief says `PROJECT.md` does not exist, this is the first
+   session: follow `.control/prompts/prompt_new_project.md`.
+
+During work, save non-obvious learnings immediately:
+`pctl context-note "..." --tipo gotcha`.
 
 ## Skills in `.control/skills/`
 
@@ -65,10 +64,16 @@ the corresponding skill file first. The full list with triggers is in
 - `pctl skill-propose`, `skill-promote`, `skill-list`
 - New skills/scripts go into `skills/proposed/` or `scripts/lib/proposed/`
 
-### Updates
-- `python .control/scripts/update.py` — updates the framework itself
-- `--dry-run` to preview, `--force` to skip confirmation
-- Check `.control/CHANGELOG.md` after each update for changes
+### Context & search
+- `pctl brief` (session start), `pctl context-note "..." --tipo <kind>`
+- `pctl search <words> [--area tasks,flows] [--fm] [--files] [--code]`
+- `pctl session-current`, `pctl session-close <sid> "..." --next "..."`
+
+### Updates (only with the user's consent)
+- `python .control/scripts/update.py --check` — is there a new version, what changed
+- `--dry-run` full plan, no args to apply, `--rollback` to undo
+- Only files in `.control/framework.json` are touched; user edits are
+  merged or kept, never overwritten. Project rules go in `SYSTEM.local.md`.
 
 ### Frontend (control panel)
 Start with: `python .control/frontend/server.py [--port 8420]`
@@ -95,7 +100,6 @@ architecture canvas, flows, docs reader, and more.
 
 Run through `.control/skills/session-close.md` checklist:
 - `pctl reindex`
-- `pctl context-check`
-- Update `CONTEXT.md` if needed
-- `pctl session-close`
+- Consolidate the `CONTEXT.md` Inbox; update `CONTEXT.md` if needed; `pctl context-check`
 - `pctl validate` for reference drift
+- `pctl session-close <sid> "summary" --tareas ... --next "..." [--question "..."]`

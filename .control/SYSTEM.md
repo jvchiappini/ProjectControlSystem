@@ -117,8 +117,14 @@ overwritten (not appended), and exists specifically to survive chat
 compactions and new chats without having to re-read the entire session
 history.
 
-- Read it always at session start, right after `SYSTEM.md` and before
-  anything else (see skill `context-maintenance.md`).
+- Read it always at session start (it is included in `pctl brief`, see
+  section 11 and skill `context-maintenance.md`).
+- **Save learnings the moment they happen**, not only at session close:
+  `pctl context-note "..." --tipo gotcha|convention|fact|todo|decision`
+  appends to the `Inbox` section of `CONTEXT.md`. Chats get compacted or
+  cut before session close; a note written immediately survives that.
+- At session close, consolidate the Inbox into the proper sections (or
+  promote it to its permanent place) and empty it.
 - Rewrite it when closing any session where something non-obvious was
   learned that the next session would need to know and that does not yet
   have a formal place (`PROJECT.md`, `architecture/`, `roadmaps/`,
@@ -207,20 +213,25 @@ benefit from a new script or skill and propose it via the meta-skill
 
 ## 11. Context loading order
 
-In large projects, the agent NEVER loads the entire `.control/` at once.
-At session start, load in this order, at most:
+The agent NEVER loads the entire `.control/` at once.
 
-1. `SYSTEM.md` (this file)
-2. `CONTEXT.md` (agent working memory, see section 6)
-3. `PROJECT.md` and `GOALS.md` in full
-4. `CHANGELOG.md` (framework changes since last session)
-5. `tasks/IN_PROGRESS.md` (index, not the full tasks)
-6. `docs/_index.md` (documentation panel)
-7. `architecture/_index.md` (domain map)
-8. `roadmaps/_index.md` (roadmap summary)
-9. `flows/_index.md` (flow map)
-10. Only the task, domain, doc, roadmap item, and/or flow files relevant to
-    what the user asked for in this turn
+**With code execution**, session start is exactly:
+
+1. `SYSTEM.md` (this file, usually auto-loaded)
+2. `python .control/scripts/pctl.py brief` — ONE bounded digest
+   (~2k tokens): alerts, local rules (`SYSTEM.local.md`), handoff from the
+   last session (next steps, open questions), tasks in progress/blocked,
+   top of backlog, `CONTEXT.md`, active roadmap phase, git state. If a
+   brief is already in context (e.g. injected by a hook), do not rerun it.
+3. Nothing else until the user says what to work on. Then load only the
+   task / domain / flow / doc files relevant to that request.
+
+Do not open `PROJECT.md`, `GOALS.md`, `CHANGELOG.md` or the `_index.md`
+files "for general context" — read them only when the request needs them
+(e.g. `goal-check`, onboarding, roadmap discussion).
+
+**Without code execution**, read `CONTEXT.md`, then `tasks/IN_PROGRESS.md`,
+then the `## Handoff` section of the newest closed `sessions/S-*.md`.
 
 See skill `context-budget.md` for details.
 
@@ -228,10 +239,16 @@ See skill `context-budget.md` for details.
 
 Before ending any work session, the agent executes the checklist in
 `skills/session-close.md`: close the session log, confirm indexes are
-regenerated (`pctl reindex`), update `CONTEXT.md` if something was
-learned that the next session needs (see `skills/context-maintenance.md`),
-and verify that no `file:line` reference touched during the session was
-left outdated (`pctl doc-check-refs`).
+regenerated (`pctl reindex`), consolidate the `CONTEXT.md` Inbox and update
+`CONTEXT.md` if something was learned that the next session needs (see
+`skills/context-maintenance.md`), and verify that no `file:line` reference
+touched during the session was left outdated (`pctl doc-check-refs`).
+
+The close MUST leave a handoff for the next agent:
+`pctl session-close <sid> "<summary>" --tareas T-1,T-2 --next "<concrete
+next step>" [--next ...] [--question "<open question>"]`. The next
+`pctl brief` shows it first, so the next session resumes without
+re-reading anything.
 
 ## 13. Code review
 
@@ -276,7 +293,49 @@ Refer to them when the corresponding trigger occurs:
 | `roadmap-management` | Creating, updating, or discussing the roadmap | `skills/roadmap-management.md` |
 | `docs-management` | Creating, updating, or browsing technical docs | `skills/docs-management.md` |
 
-## 16. Language
+## 16. Context discipline (mandatory)
+
+The context window is the scarcest resource. Every read must earn its place.
+
+- **Locate before reading.** Use `pctl search <words>` (ranked, grouped,
+  searches ALL of `.control/`; `--area tasks,flows`, `--fm`, `--files`,
+  `--code`) or the project's grep. Open a file only after search says it
+  is the right one.
+- **Read ranges, not files.** When a `file:line` or `file:start-end`
+  reference exists, read that range. Never re-read a file already in
+  context unless it changed.
+- **Prefer CLI views over raw files.** `pctl task-show <id>`,
+  `pctl flow-show <id>`, `pctl task-list --estado X` instead of opening
+  generated indexes or whole directories.
+- **Sessions are a log, not context.** Do not open past sessions; their
+  summary and handoff are in `pctl brief`. Use `pctl session-summarize
+  <id>` only when a specific past detail is needed.
+- **Delegate wide exploration.** If the agent supports sub-agents, send
+  broad searches across the codebase to them and keep only the conclusion.
+- **Write memory early.** Anything that would be expensive to rediscover
+  goes to `pctl context-note` the moment it is learned (section 6).
+- **Promote, then prune.** Stable knowledge moves from `CONTEXT.md` to
+  `architecture/`, `flows/`, `decisions/` or `PROJECT.md`, so the brief
+  stays small.
+
+## 17. Framework updates and local rules
+
+ProjectControl updates itself from git with
+`python .control/scripts/update.py` (`--check` to see what's new,
+`--dry-run` for the full plan, `--rollback` to undo). The updater only
+touches files listed in `.control/framework.json`; tasks, sessions,
+decisions, docs, roadmaps, `CONTEXT.md`, `PROJECT.md`, `GOALS.md` and any
+other user file are never touched. Framework files edited by the user are
+merged 3-way or kept, never silently overwritten.
+
+- **Project-specific rules go in `.control/SYSTEM.local.md`** (user-owned,
+  shown in every `pctl brief`, overrides this file where they conflict).
+  Do not customize `SYSTEM.md` or shipped skills: that creates merge work
+  on every update.
+- When `pctl brief` reports an available update or staged conflicts, tell
+  the user. Never run the updater without the user's explicit consent.
+
+## 18. Language
 
 All content inside `.control/` (rules, prompts, templates, skills,
 documentation) is written in English. Frontmatter field names and `pctl`

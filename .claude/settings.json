@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .control/scripts/pctl.py brief 2>/dev/null || python .control/scripts/pctl.py brief",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

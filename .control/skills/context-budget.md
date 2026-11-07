@@ -3,46 +3,51 @@ id: SK-0008
 nombre: context-budget
 tipo: skill
 estado: activa
-disparador: "start of any session in a project with many accumulated domains/tasks"
+disparador: "start of any session, and any moment the agent is about to read files for general context"
 ubicacion: skills/context-budget.md
 creado_por: usuario
-version: 1
+version: 2
 ---
 
 # Skill: context-budget
 
-Trigger: always at session start, more critical the larger the project.
+Trigger: always at session start, and whenever you are about to open
+files "to get context". See `SYSTEM.md` sections 11 and 16.
 
-## Load order rule (see `SYSTEM.md` section 6)
+## Session start (code execution available)
 
-Default load order, without exception:
+1. `python .control/scripts/pctl.py brief` — the whole start-up context in
+   one bounded output. Skip it if a brief is already in context (hooks
+   inject it in some agents, e.g. Claude Code).
+2. Act on its **Alerts** first (unclosed session, update conflicts,
+   outdated flows).
+3. If the handoff has **Next steps** and the user did not ask for
+   something else, propose continuing with the first one.
+4. Load NOTHING else until the request is known.
 
-1. `PROJECT.md` + `GOALS.md` in full.
-2. `tasks/IN_PROGRESS.md` — an index at one line per task, not the
-   full tasks.
-3. `architecture/_index.md` — domain map.
-4. `roadmaps/_index.md` — roadmap overview.
-5. NOTHING ELSE yet. Only after the user's request in this turn, load:
-   - the specific task file(s) (`pctl task-show <id>`)
-   - the architecture `.md` of the relevant domain, if it exists
-   - the roadmap item files if the roadmap is being discussed
-   - specific code files via `file:line`, never the full file if the
-     reference already points to a bounded range
+Without code execution: `CONTEXT.md`, `tasks/IN_PROGRESS.md`, and the
+`## Handoff` section of the newest closed `sessions/S-*.md`. Nothing more.
+
+## Loading on demand (after the request is known)
+
+| Need | Use | Not |
+|---|---|---|
+| a task | `pctl task-show <id>` | `tasks/BACKLOG.md` |
+| "where is X mentioned?" | `pctl search X` (`--area`, `--fm`, `--files`) | opening directories |
+| behavior across modules | `pctl flow-list` -> `pctl flow-show <id>` | all domain docs |
+| one module | `architecture/<domain>.md` | every `architecture/*.md` |
+| code | the `file:start-end` range from a reference | the whole file |
+| a past session detail | `pctl session-summarize <id>` | full session bodies |
 
 ## Signs the budget is being violated
 
-- Loading `tasks/BACKLOG.md` entirely when the user asked about a
-  single task — use `pctl task-list --estado backlog` with a filter,
-  or `pctl task-show <id>` directly if the ID is already known.
-- Opening all `.md` files in `architecture/` "for general context" —
-  the index already provides that general context, one line per domain.
-- Re-reading old sessions in full — the summary of each session
-  (`resumen:` in the frontmatter) usually suffices; only open a full
-  session body if the event detail is needed.
+- Reading a file "just in case" or for "general context".
+- Re-reading a file that is already in context and has not changed.
+- Opening more than ~3 `.control/` files before the first useful action.
+- Searching by opening files instead of `pctl search` / grep.
 
 ## When it IS worth loading more
 
-If the user explicitly asks for an overview ("give me a complete
-project summary", "I want to see everything pending"), then it is
-justified to traverse more — but even then, prefer the generated
-indexes over opening files one by one.
+The user explicitly asks for an overview ("summary of everything", "what's
+pending"). Even then, prefer `pctl status`, `pctl task-list`,
+`pctl roadmap-list` and the generated indexes over opening files one by one.

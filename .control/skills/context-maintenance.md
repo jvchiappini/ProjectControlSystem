@@ -36,8 +36,23 @@ a re-read of all past sessions.
    something there contradicts what is now observed in the code, flag
    it and correct it at session close.
 
+## During the session (do not wait for the close)
+
+The moment you learn something non-obvious that would be expensive to
+rediscover (a trap, a hidden dependency, a convention, a user preference),
+save it:
+
+`pctl context-note "<one line, with file:line if relevant>" --tipo gotcha`
+
+Kinds: `fact`, `gotcha`, `convention`, `todo`, `decision`. It is appended
+to the `Inbox` section of `CONTEXT.md` and logged in the open session, so
+it survives a chat compaction or a session that ends abruptly.
+
 ## At session close (part of `session-close.md`)
 
+0. Consolidate the Inbox: move each note into its section (or its
+   permanent place: `architecture/`, `flows/`, `decisions/`), drop the
+   ones no longer true, and leave the Inbox empty.
 1. Ask yourself: did I learn anything in this session that the next
    session (or a new chat, or the same agent without memory of this
    conversation) would need to know and that is NOT already in

@@ -23,3 +23,5 @@ Thumbs.db
 .control/.backups/
 .control/.positions.json
 .control/.tasks_index.json
+.control/.update/
+.control/.update_check.json

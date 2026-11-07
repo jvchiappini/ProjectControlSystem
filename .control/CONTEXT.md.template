@@ -31,6 +31,10 @@ non-obvious dependencies, fragile parts)
 (1-2 lines: overall health of the project as the agent sees it right
 now — not the formal status from `ROADMAP.md`, but a quick read)
 
+## Inbox (unconsolidated notes)
+(written during sessions with `pctl context-note`; consolidated into the
+sections above and emptied at session close)
+
 ## Last relevant session
 (session ID + 1 line, to know where to look if more detail is needed —
 do not copy the session content here)

@@ -9,19 +9,14 @@ This project already has a control system in `.control/`. Before doing
 anything else:
 
 1. Read `.control/SYSTEM.md` in full — these are the mandatory rules.
-2. Read `.control/CONTEXT.md` if it exists — it is the working memory
-   that the agent has been building across previous sessions. It is
-   faster and more reliable than re-reading old sessions.
-3. Read `.control/PROJECT.md` and `.control/GOALS.md` in full.
-4. Run `python .control/scripts/pctl.py status` to see the task summary
-   and any outdated flows (or read `.control/tasks/IN_PROGRESS.md` if
-   no code execution is available).
-5. Read `.control/architecture/_index.md` (map only),
-   `.control/roadmaps/_index.md` (roadmap overview),
-   `.control/docs/_index.md` (documentation panel), and
-   `.control/flows/_index.md` (map only) — do not open each domain or
-   flow yet.
-6. If the project uses opencode and `opencode.json` does not exist at
+2. Run `python .control/scripts/pctl.py brief`. It contains the working
+   memory (`CONTEXT.md`), the last session's handoff, tasks, alerts and
+   local rules in one bounded output. Without code execution, read
+   `.control/CONTEXT.md`, `.control/tasks/IN_PROGRESS.md` and the
+   `## Handoff` section of the newest closed session instead.
+3. Do not open other `.control/` files yet (indexes, PROJECT.md,
+   GOALS.md, domains, flows) — only when the request needs them.
+4. If the project uses opencode and `opencode.json` does not exist at
    the root, suggest creating it with
    `instructions: [".control/SYSTEM.md"]` and
    `default_agent: "project-control"`, along with

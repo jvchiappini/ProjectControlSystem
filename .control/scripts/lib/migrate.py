@@ -84,13 +84,10 @@ def migrate_all():
         except Exception as e:
             stats["errors"].append(f"{f}: {e}")
 
-    # Promover todas las skills pendientes a activas
-    for s in skills_registry.list_skills(estado="propuesta"):
-        try:
-            skills_registry.promote(s["id"])
-            stats.setdefault("skills_promoted", 0)
-            stats["skills_promoted"] += 1
-        except (ValueError, FileNotFoundError) as e:
-            stats["errors"].append(f"{s['id']}: {e}")
+    # Proposed skills are NOT promoted here: SYSTEM.md section 10 requires
+    # explicit human confirmation via `pctl skill-promote`.
+    pendientes = skills_registry.list_skills(estado="propuesta")
+    if pendientes:
+        stats["skills_pending_promotion"] = [s["id"] for s in pendientes]
 
     return stats

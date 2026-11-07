@@ -24,16 +24,20 @@ explicitly ask for it.
    `pctl task-move` (no manual `estado` edits).
 3. Run `pctl reindex` — ensures `BACKLOG.md`, `IN_PROGRESS.md`,
    `DONE.md` and `architecture/_index.md` reflect the actual state.
-4. Apply `context-maintenance.md`: if something was learned in this
-   session that the next session (or a new chat after compaction) would
-   need to know, rewrite `CONTEXT.md` completely (do not append) and
-   run `pctl context-check` to confirm it is within the size budget.
+4. Apply `context-maintenance.md`: consolidate the `Inbox` notes of
+   `CONTEXT.md` (written during the session with `pctl context-note`)
+   into the proper sections or their permanent place; if something else
+   was learned that the next session would need, rewrite `CONTEXT.md`
+   completely (do not append) and run `pctl context-check`.
 5. Run `pctl doc-check-refs` (or `pctl validate`, which includes it) —
    if there are broken `file:line` references due to changes in this
    turn, fix them before closing, do not leave them for the next
    session.
-6. Close the session:
-   `pctl session-close <sid> "<1-2 line summary>" --tareas T-XXXX,T-YYYY`
+6. Close the session WITH a handoff (the next `pctl brief` shows it first):
+   `pctl session-close <sid> "<1-2 line summary>" --tareas T-XXXX,T-YYYY
+   --next "<concrete next step, with file:line if useful>" [--next ...]
+   [--question "<decision the user still has to make>"]`
+   Use `pctl session-current` if you lost the session id.
 7. If something was left half-done that is not yet a formal task (an
    idea, a loose end), do not leave it only in the conversation —
    create it as a task in `backlog` with `task-intake.md` so it is not

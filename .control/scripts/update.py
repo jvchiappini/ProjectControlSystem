@@ -1,973 +1,899 @@
 #!/usr/bin/env python3
-"""ProjectControlSystem self-update - professional, safe, interactive.
+"""ProjectControl installer / updater - declarative, 3-way, never destructive.
 
-SELF-CONTAINED: This script must NOT import any .control/ module (not
-pctl.py, not lib/*). It relies ONLY on Python stdlib and git. This is
-because it OVERWRITES those very files during the update, so importing
-them would race against the file replacement or fail if the old version
-had a different API.
+SELF-CONTAINED: stdlib + git only. Never imports .control/ modules,
+because it replaces them.
 
-It must also be backward-compatible: it must run correctly on ANY
-previous version of the framework, including versions that:
-  - Did not have an update.py script
-  - Had a different directory structure
-  - Had a different pctl.py or lib module API
-  - Had no pctl.py at all
+HOW IT DECIDES WHAT TO TOUCH
+  Upstream ships `.control/framework.json`: the exhaustive list of
+  framework files, each with a strategy and its sha256. Anything NOT
+  listed there is user data and is never read, written or deleted.
 
-Safety guarantees:
-  - User data is NEVER deleted or overwritten. Only files matching
-    FRAMEWORK_GLOBS are candidates for update.
-  - Before overwriting any existing file, the user is asked explicitly
-    (unless --accept-all or --reject-all is used).
-  - A full backup of .control/ is created before any mutation.
-  - File writes are atomic (temp + rename).
+  Locally, `.control/.framework_lock.json` records the hash of every
+  framework file as it was installed. Comparing three hashes per file
+  (local, installed base, new upstream) tells exactly who changed what:
 
-Usage:
-    python .control/scripts/update.py                  # interactive
-    python .control/scripts/update.py --dry-run        # preview only
-    python .control/scripts/update.py --accept-all     # auto-accept overwrites
-    python .control/scripts/update.py --reject-all     # only add missing files
-    python .control/scripts/update.py --ref=origin/main
+    local == upstream                 -> already current
+    local == base (or a known past    -> untouched by the user: replace
+      upstream version)
+    user edited, upstream unchanged   -> keep the user's file
+    user edited, upstream changed     -> 3-way merge (git merge-file) using
+                                         the pristine base copy; if it merges
+                                         cleanly, apply it; if not, KEEP the
+                                         user's file and stage the upstream
+                                         version + a conflict-marked merge in
+                                         .control/.update/ for review
+    user deleted a framework file     -> respected, not restored
+    file dropped by upstream          -> reported, never deleted
+
+  Strategies: managed (rules above), create_only (only created if
+  missing: opencode.json, CLAUDE.md, ...), skill_registry (merge rows by
+  skill name into skills/_index.md, user rows untouched).
+
+SAFETY
+  - backup of every file it changes, `--rollback` restores the last one
+  - atomic writes, nothing written in --check / --dry-run
+  - the newest update.py always runs the update (self-bootstrap), so old
+    installs get new migrations and fixes
+  - upstream comes from framework.json `upstream.url` (never the user's
+    own `origin` remote)
+
+USAGE
+  python .control/scripts/update.py --check          # is there an update? what changed?
+  python .control/scripts/update.py --dry-run        # full per-file plan, no changes
+  python .control/scripts/update.py                  # apply (asks once)
+  python .control/scripts/update.py --yes            # apply without asking
+  python .control/scripts/update.py --take-upstream .control/SYSTEM.md   # replace my edited copy
+  python .control/scripts/update.py --resolved       # I fixed the staged conflicts
+  python .control/scripts/update.py --rollback       # undo the last update
+  python .control/scripts/update.py --source ../ProjectControlSystem     # local checkout as upstream
+
+  Fresh install into any project (no .control/ yet):
+    git clone --depth 1 <upstream-url> /tmp/pc
+    python /tmp/pc/.control/scripts/update.py --source /tmp/pc --target .
+
+  Maintainers (framework repo only):
+    python .control/scripts/update.py --build-manifest --version 5.1.0
 """
 
 import argparse
 import datetime
 import difflib
+import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
-import time
+import tempfile
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
+DEFAULT_UPSTREAM = "https://github.com/jvchiappini/ProjectControlSystem.git"
+DEFAULT_REF = "main"
+MANIFEST_REL = ".control/framework.json"
+LOCK_REL = ".control/.framework_lock.json"
+BASE_REL = ".control/.framework_base"
+STAGE_REL = ".control/.update"
+BACKUPS_REL = ".control/.backups"
+SCHEMA_REL = ".control/.schema_version"
+HISTORY_KEEP = 20
 
-CONTROL_ROOT = Path(__file__).resolve().parents[1]
-BACKUPS_DIR = CONTROL_ROOT / ".backups"
-PROJECT_ROOT = CONTROL_ROOT.parent
-SCHEMA_FILE = CONTROL_ROOT / ".schema_version"
-CHANGELOG_FILE = CONTROL_ROOT / "CHANGELOG.md"
-
-FRAMEWORK_GLOBS = [
-    "SYSTEM.md",
-    "ROADMAP.md.template",
-    "PROJECT.md.template",
-    "GOALS.md.template",
-    "CONTEXT.md.template",
-    "prompts/*.md",
-    "skills/*.md",
-    "scripts/pctl.py",
-    "scripts/update.py",
-    "scripts/lib/*.py",
-    "frontend/server.py",
-    "frontend/static/*",
-    "docs/**/_template.md",
-    "roadmaps/phases/PHASE-XXXX.md",
-    "roadmaps/initiatives/INITIATIVE-XXXX.md",
-    "roadmaps/milestones/M-XXXX.md",
-    "roadmaps/_index.md",
-    "docs/_index.md",
+# ---- maintainer spec: which files of this repo are the framework ----
+# First matching group wins. Paths are project-root relative (posix).
+SPEC = [
+    ("skill_registry", [".control/skills/_index.md"]),
+    ("create_only", [
+        "opencode.json", "AGENTS.md", "CLAUDE.md", ".claude/settings.json",
+        ".control/**/.gitkeep",
+        ".control/docs/_index.md", ".control/roadmaps/_index.md", ".control/flows/_index.md",
+        ".control/tasks/BACKLOG.md", ".control/tasks/IN_PROGRESS.md", ".control/tasks/DONE.md",
+    ]),
+    ("managed", [
+        ".control/SYSTEM.md", ".control/CHANGELOG.md", ".control/*.template",
+        ".control/prompts/*.md", ".control/skills/*.md",
+        ".control/scripts/*.py", ".control/scripts/lib/*.py", ".control/scripts/lib/schema.md",
+        ".control/frontend/server.py", ".control/frontend/static/*",
+        ".control/docs/*/_template.md",
+        ".control/roadmaps/phases/PHASE-XXXX.md",
+        ".control/roadmaps/initiatives/INITIATIVE-XXXX.md",
+        ".control/roadmaps/milestones/M-XXXX.md",
+        ".opencode/agents/project-control.md",
+    ]),
 ]
+NEVER_SHIP = {MANIFEST_REL, LOCK_REL, SCHEMA_REL}
 
-USER_DATA_GLOBS = [
-    "PROJECT.md",
-    "GOALS.md",
-    "ROADMAP.md",
-    "CONTEXT.md",
-    "tasks/**/*",
-    "sessions/**/*",
-    "decisions/**/*",
-    "architecture/**/*",
-    "flows/**/*",
-    "roadmaps/**/*",
-    "docs/**/*.md",
-    "skills/proposed/**/*",
-    "scripts/lib/proposed/**/*",
-]
-
-BACKUP_EXCLUDE_NAMES = {
-    ".backups", "__pycache__", ".tasks_index.json",
-    ".events.ndjson", ".positions.json", ".control.lock",
-    "CHANGELOG.md",
+# create_only files the user already has: suggest (never apply) the integration line
+INTEGRATION_HINTS = {
+    "CLAUDE.md": "add a line '@AGENTS.md' so Claude Code loads the ProjectControl instructions",
+    "AGENTS.md": "add: 'Session start: run `python .control/scripts/pctl.py brief`; rules in .control/SYSTEM.md'",
+    ".claude/settings.json": "add a SessionStart hook with command "
+                             "`python .control/scripts/pctl.py brief` (see README, 'Claude Code')",
+    "opencode.json": "make sure 'instructions' includes '.control/SYSTEM.md'",
 }
 
 
 # ---------------------------------------------------------------------------
-# Terminal colors (auto-disabled when not a TTY)
+# Output
 # ---------------------------------------------------------------------------
 
-class _Colors:
-    def __init__(self):
-        self._enabled = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+class _C:
+    on = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
 
-    def _c(self, code, text):
-        return f"\033[{code}m{text}\033[0m" if self._enabled else text
-
-    def bold(self, text): return self._c("1", text)
-    def red(self, text): return self._c("31", text)
-    def green(self, text): return self._c("32", text)
-    def yellow(self, text): return self._c("33", text)
-    def blue(self, text): return self._c("34", text)
-    def faint(self, text): return self._c("2", text)
+    @classmethod
+    def c(cls, code, t):
+        return f"\033[{code}m{t}\033[0m" if cls.on else t
 
 
-C = _Colors()
+def bold(t): return _C.c("1", t)
+def red(t): return _C.c("31", t)
+def green(t): return _C.c("32", t)
+def yellow(t): return _C.c("33", t)
+def faint(t): return _C.c("2", t)
 
 
-# ---------------------------------------------------------------------------
-# Logging helpers
-# ---------------------------------------------------------------------------
-
-def _log(msg, level="info"):
-    prefix = {
-        "ok": C.green("  [ok] "),
-        "warn": C.yellow("  [warn] "),
-        "err": C.red("  [err] "),
-        "info": C.blue("  [info] "),
-    }.get(level, "  [info] ")
-    print(prefix + msg)
+def log(msg, level="info"):
+    tag = {"ok": green("[ok]  "), "warn": yellow("[warn]"), "err": red("[err] "),
+           "info": "[info]"}[level]
+    print(f"  {tag} {msg}")
 
 
-def _print_header(title):
+def header(title):
     print()
-    print(C.bold("=" * 70))
-    print("  " + C.bold(title))
-    print(C.bold("=" * 70))
+    print(bold("=" * 70))
+    print("  " + bold(title))
+    print(bold("=" * 70))
 
 
-def _print_section(title):
-    print()
-    print(C.bold(title))
-    print(C.bold("-" * len(title)))
-
-
-def _fatal(msg, hint=None):
-    print()
-    print(C.red("FATAL: " + msg))
-    if hint:
-        print(C.faint(hint))
-    sys.exit(1)
+class Fatal(Exception):
+    def __init__(self, msg, hint=None):
+        super().__init__(msg)
+        self.hint = hint
 
 
 # ---------------------------------------------------------------------------
-# Git helpers (with robust error handling)
+# Small helpers
 # ---------------------------------------------------------------------------
 
-def _git(args, check=False, cwd=None, strip=True):
-    """Run git. Returns (stdout, stderr, rc). Never raises."""
-    cwd = cwd or PROJECT_ROOT
+def norm(data):
+    """Line-ending agnostic content (hashes must not depend on autocrlf)."""
+    return data.replace(b"\r\n", b"\n")
+
+
+def sha(data):
+    return hashlib.sha256(norm(data)).hexdigest()
+
+
+def read_bytes(p):
     try:
-        r = subprocess.run(
-            ["git"] + args,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            check=check,
-            cwd=cwd,
-        )
-        out = r.stdout.strip() if strip else r.stdout
-        err = r.stderr.strip() if strip else r.stderr
-        return out, err, r.returncode
-    except FileNotFoundError:
-        return "", "git command not found", 127
-    except Exception as e:
-        return "", str(e), 1
-
-
-def _require_git():
-    _, _, rc = _git(["--version"])
-    if rc != 0:
-        _fatal("git is not installed or not in PATH.")
-
-
-def _require_repo():
-    _, _, rc = _git(["rev-parse", "--git-dir"])
-    if rc != 0:
-        _fatal("Not inside a git repository.",
-               hint="Run this script from the project root.")
-
-
-def _origin_url():
-    out, _, rc = _git(["remote", "get-url", "origin"])
-    return out if rc == 0 else None
-
-
-def _current_branch():
-    out, _, rc = _git(["rev-parse", "--abbrev-ref", "HEAD"])
-    return out if rc == 0 else "unknown"
-
-
-def _has_uncommitted():
-    out, _, rc = _git(["status", "--porcelain"])
-    return bool(out.strip()) if rc == 0 else True
-
-
-def _fetch(ref):
-    _log("Fetching from origin...")
-    # Fetch all refs from origin. The remote-tracking branch for the ref
-    # (e.g. origin/main) will be updated.
-    _, err, rc = _git(["fetch", "--tags", "origin"])
-    if rc != 0:
-        _log(f"Fetch failed: {err}", level="err")
-        return False
-    _log("Fetch OK", level="ok")
-    return True
-
-
-def _ls_remote(ref):
-    """List all .control/ files from a git ref."""
-    out, err, rc = _git(["ls-tree", "-r", "--name-only", ref, ".control/"])
-    if rc != 0:
-        _log(f"Could not list files at {ref}: {err}", level="err")
-        return []
-    return [line.strip() for line in out.splitlines() if line.strip()]
-
-
-def _cat(ref, rel_path):
-    """Read file content from a git ref.
-
-    rel_path is the inner path (e.g. SYSTEM.md); git show needs the full
-    repository path (.control/SYSTEM.md).
-    """
-    inner = Path(rel_path).as_posix()
-    full_path = f".control/{inner}"
-    out, err, rc = _git(["show", f"{ref}:{full_path}"], strip=False)
-    if rc != 0:
-        _log(f"Could not read {full_path} from {ref}: {err}", level="err")
-        return None
-    return out
-
-
-def _diff_log(ref_from, ref_to="HEAD"):
-    out, _, _ = _git(["log", "--oneline", f"{ref_from}..{ref_to}", "--", ".control/"])
-    return out
-
-
-def _merge_base(ref):
-    out, _, rc = _git(["merge-base", ref, "HEAD"])
-    return out if rc == 0 else None
-
-
-def _is_git_modified(rel_path):
-    """Check if a framework file has uncommitted local changes.
-
-    rel_path is the inner path (e.g. SYSTEM.md); git status needs the
-    project-relative path (.control/SYSTEM.md).
-    """
-    project_rel = f".control/{Path(rel_path).as_posix()}"
-    out, _, rc = _git(["status", "--porcelain", "--", project_rel])
-    return rc == 0 and bool(out.strip())
-
-
-def _local_file_size(local_path):
-    try:
-        return local_path.stat().st_size
+        return p.read_bytes()
     except OSError:
         return None
 
 
-# ---------------------------------------------------------------------------
-# File classification
-# ---------------------------------------------------------------------------
-
-def _glob_match(rel_posix, patterns):
-    for pat in patterns:
-        if Path(pat).match(rel_posix):
-            return True
-    return False
-
-
-def _classify_files(file_list):
-    framework, user_data, unknown = [], [], []
-    prefix = ".control/"
-    for f in file_list:
-        posix = Path(f).as_posix()
-        # Strip the .control/ prefix so patterns match (e.g. SYSTEM.md, not .control/SYSTEM.md)
-        if posix.startswith(prefix):
-            inner = posix[len(prefix):]
-        else:
-            inner = posix
-        rel = Path(inner)
-        if _glob_match(inner, FRAMEWORK_GLOBS):
-            framework.append(rel)
-        elif _glob_match(inner, USER_DATA_GLOBS):
-            user_data.append(rel)
-        else:
-            unknown.append(rel)
-    return framework, user_data, unknown
-
-
-# ---------------------------------------------------------------------------
-# Safe file operations
-# ---------------------------------------------------------------------------
-
-def _normalize_text(s):
-    """Normalize line endings to LF for comparison."""
-    return (s or "").replace("\r\n", "\n").replace("\r", "\n")
-
-
-def _is_same_content(local_path, content):
-    if not local_path.exists():
-        return False
+def read_json(p, default=None):
     try:
-        local = local_path.read_text(encoding="utf-8")
-        return _normalize_text(local) == _normalize_text(content)
-    except Exception:
-        return False
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return default
 
 
-def _atomic_write(local_path, content):
-    """Write content atomically: temp file then rename."""
-    local_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = local_path.with_suffix(local_path.suffix + ".update-tmp")
+def atomic_write(p, data):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(p.parent), prefix=f".{p.name}.", suffix=".tmp")
     try:
-        tmp_path.write_text(content, encoding="utf-8")
-        tmp_path.replace(local_path)
-        return True
-    except OSError as e:
-        _log(f"Failed to write {local_path}: {e}", level="err")
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp, str(p))
+    except BaseException:
         try:
-            tmp_path.unlink(missing_ok=True)
+            os.unlink(tmp)
         except OSError:
             pass
-        return False
+        raise
 
 
-def _human_size(n):
-    if n is None:
-        return "?"
-    for unit in ["B", "KB", "MB"]:
-        if n < 1024:
-            return f"{n:.1f} {unit}" if unit != "B" else f"{n} B"
-        n /= 1024
-    return f"{n:.1f} GB"
+def write_json(p, obj):
+    atomic_write(p, (json.dumps(obj, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
 
 
-# ---------------------------------------------------------------------------
-# Backup
-# ---------------------------------------------------------------------------
-
-def _backup():
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    dst = BACKUPS_DIR / f"pre_update_{ts}"
-    BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
-
-    def _ignore(src, names):
-        return [n for n in names if n in BACKUP_EXCLUDE_NAMES or n == "__pycache__"]
-
+def git(args, cwd=None, timeout=120):
     try:
-        shutil.copytree(CONTROL_ROOT, dst, ignore=_ignore)
-        _log(f"Backup created: {dst}", level="ok")
-        return dst
-    except Exception as e:
-        _log(f"Backup failed: {e}", level="err")
-        return None
+        r = subprocess.run(["git"] + args, cwd=cwd, capture_output=True, timeout=timeout,
+                           env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
+        return r.stdout, r.stderr.decode("utf-8", "replace").strip(), r.returncode
+    except FileNotFoundError:
+        return b"", "git is not installed or not in PATH", 127
+    except subprocess.TimeoutExpired:
+        return b"", "git timed out", 124
 
 
-def _restore_hint(backup_path):
-    if backup_path and backup_path.exists():
-        return f"To restore: cp -r {backup_path}/* .control/"
-    return ""
-
-
-# ---------------------------------------------------------------------------
-# Diff display
-# ---------------------------------------------------------------------------
-
-def _show_diff(rel_path, local_content, remote_content, max_lines=40):
-    diff = list(difflib.unified_diff(
-        local_content.splitlines(keepends=True),
-        remote_content.splitlines(keepends=True),
-        fromfile=f"a/{rel_path}",
-        tofile=f"b/{rel_path}",
-        n=2,
-    ))
-    if not diff:
-        print("  (no textual diff)")
-        return
-
-    total = len(diff)
-    shown = diff[:max_lines]
-    print()
-    for line in shown:
-        line = line.rstrip("\n")
-        if line.startswith("+"):
-            print(C.green(line))
-        elif line.startswith("-"):
-            print(C.red(line))
-        elif line.startswith("@@"):
-            print(C.yellow(line))
+def glob_to_re(pattern):
+    out, i = "", 0
+    while i < len(pattern):
+        if pattern.startswith("**/", i):
+            out += "(?:.*/)?"
+            i += 3
+        elif pattern[i] == "*":
+            out += "[^/]*"
+            i += 1
+        elif pattern[i] == "?":
+            out += "[^/]"
+            i += 1
         else:
-            print(line)
-    if total > max_lines:
-        print(C.faint(f"  ... {total - max_lines} more lines (use git diff to see full)"))
-    print()
+            out += re.escape(pattern[i])
+            i += 1
+    return re.compile("^" + out + "$")
 
 
-# ---------------------------------------------------------------------------
-# Interactive prompt
-# ---------------------------------------------------------------------------
+def classify(rel):
+    if rel in NEVER_SHIP or "/proposed/" in rel or "__pycache__" in rel:
+        return None
+    for strategy, patterns in SPEC:
+        if any(glob_to_re(p).match(rel) for p in patterns):
+            return strategy
+    return None
 
-def _prompt_overwrite(rel_path, local_path, remote_content, locally_modified):
-    """Ask the user what to do about an overwrite. Returns 'yes', 'no', 'all', or 'quit'."""
-    local_size = _human_size(_local_file_size(local_path))
-    remote_size = _human_size(len(remote_content.encode("utf-8")))
 
-    print()
-    if locally_modified:
-        print(C.yellow("  ! WARNING: local file has uncommitted changes"))
-        print(C.red(f"     {rel_path}"))
-        print(f"     Local: {local_size}  |  Remote: {remote_size}")
-        print(C.faint("     Overwriting will discard your local changes."))
-    else:
-        print(C.yellow("  ! About to overwrite existing framework file"))
-        print(f"     {rel_path}")
-        print(f"     Local: {local_size}  |  Remote: {remote_size}")
+def version_tuple(v):
+    return tuple(int(x) for x in re.findall(r"\d+", str(v or "0"))) or (0,)
 
-    opts = "[y]es  [n]o  [d]iff  [a]ll  [q]uit"
+
+def ask(prompt, choices, default):
+    if not sys.stdin.isatty():
+        return default
     while True:
         try:
-            answer = input("  " + opts + "> ").strip().lower()
+            a = input(f"  {prompt} ").strip().lower()
         except (EOFError, KeyboardInterrupt):
             print()
-            return "quit"
-
-        if not answer:
-            continue
-        if answer in ("y", "yes"):
-            return "yes"
-        if answer in ("n", "no"):
-            return "no"
-        if answer in ("a", "all"):
-            return "all"
-        if answer in ("q", "quit"):
-            return "quit"
-        if answer in ("d", "diff"):
-            try:
-                local_content = local_path.read_text(encoding="utf-8")
-            except Exception:
-                local_content = ""
-            _show_diff(rel_path, local_content, remote_content)
-            continue
-        print("  Please enter y, n, d, a, or q.")
+            return "q" if "q" in choices else default
+        if not a:
+            return default
+        if a[0] in choices:
+            return a[0]
 
 
 # ---------------------------------------------------------------------------
-# Built-in migration engine
+# Maintainer: build framework.json from the framework repo
 # ---------------------------------------------------------------------------
 
-_MIGRATIONS = []
+def build_manifest(root, version):
+    # tracked + new (untracked, not ignored) files, so a release can be built before committing
+    out, err, rc = git(["ls-files", "-z", "--cached", "--others", "--exclude-standard"], cwd=root)
+    if rc != 0:
+        raise Fatal("--build-manifest must run inside the framework git repo", err)
+    files = [f for f in out.decode("utf-8").split("\0") if f]
+    existing = read_json(root / MANIFEST_REL, {}) or {}
+    entries = {}
+    for rel in sorted(set(files)):
+        strategy = classify(rel)
+        if not strategy or not (root / rel).is_file():
+            continue
+        current = sha((root / rel).read_bytes())
+        # inherit history from the previous manifest (survives shallow clones/rewrites)
+        prev = (existing.get("files") or {}).get(rel) or {}
+        known = set(prev.get("known", [])) | ({prev["sha256"]} if prev.get("sha256") else set())
+        log_out, _, _ = git(["log", "--format=%H", "--", rel], cwd=root)
+        for commit in log_out.decode().split():
+            blob, _, brc = git(["show", f"{commit}:{rel}"], cwd=root)
+            if brc == 0:
+                known.add(sha(blob))
+        known.discard(current)
+        entries[rel] = {"strategy": strategy, "sha256": current, "known": sorted(known)}
+    manifest = {
+        "name": "ProjectControl",
+        "version": version,
+        "schema": max(m[0] for m in MIGRATIONS),
+        "upstream": existing.get("upstream") or {"url": DEFAULT_UPSTREAM, "ref": DEFAULT_REF},
+        "generated": datetime.date.today().isoformat(),
+        "files": entries,
+    }
+    write_json(root / MANIFEST_REL, manifest)
+    counts = {}
+    for e in entries.values():
+        counts[e["strategy"]] = counts.get(e["strategy"], 0) + 1
+    log(f"framework.json v{version}: {len(entries)} files {counts}", "ok")
 
 
-def _migration(from_v, to_v, description, fn):
-    _MIGRATIONS.append((from_v, to_v, description, fn))
+# ---------------------------------------------------------------------------
+# Schema migrations (run once each, in order, recorded in .schema_version)
+# Every migration must be idempotent and must only touch what it names.
+# ---------------------------------------------------------------------------
+
+def _m1_dirs(ctl):
+    for d in ["architecture", "tasks", "sessions", "decisions", "flows", "diagrams/flows",
+              "skills/proposed", "scripts/lib/proposed", "prompts",
+              "roadmaps/phases", "roadmaps/initiatives", "roadmaps/milestones"]:
+        (ctl / d).mkdir(parents=True, exist_ok=True)
 
 
-def _current_schema():
-    if SCHEMA_FILE.exists():
-        try:
-            return json.loads(SCHEMA_FILE.read_text(encoding="utf-8")).get("version", 0)
-        except (json.JSONDecodeError, OSError):
-            return 0
-    return 0
+def _m2_noop(ctl):
+    pass  # templates are shipped as managed files now
 
 
-def _write_schema(version):
-    SCHEMA_FILE.write_text(json.dumps({"version": version}, indent=2), encoding="utf-8")
+def _gitignore_edit(ctl, add=(), remove=()):
+    gi = ctl.parent / ".gitignore"
+    lines = gi.read_text(encoding="utf-8").splitlines() if gi.exists() else []
+    changed = False
+    for r in remove:
+        if r in lines:
+            lines = [l for l in lines if l != r]
+            changed = True
+            log(f".gitignore: removed '{r}'", "ok")
+    missing = [a for a in add if a not in lines]
+    if missing:
+        marker = "# ProjectControl runtime state (added by update.py)"
+        if marker not in lines:
+            if lines and lines[-1].strip():
+                lines.append("")
+            lines.append(marker)
+        lines += missing
+        changed = True
+    if changed:
+        atomic_write(gi, ("\n".join(lines) + "\n").encode("utf-8"))
 
 
-def _run_migrations(start_version):
+def _m3_gitignore(ctl):
+    _gitignore_edit(ctl, add=[".control/.tasks_index.json", ".control/.events.ndjson",
+                              ".control/.positions.json", ".control/.control.lock"])
+
+
+def _m4_roadmaps(ctl):
+    _m1_dirs(ctl)
+
+
+def _m5_fix_gitignore(ctl):
+    # v4 wrongly ignored the user's roadmaps; also ignore new runtime files
+    _gitignore_edit(ctl, add=[".control/.backups/", ".control/.update/",
+                              ".control/.update_check.json", "__pycache__/"],
+                    remove=[".control/roadmaps/"])
+
+
+MIGRATIONS = [
+    (1, "Ensure standard directories", _m1_dirs),
+    (2, "Templates (no-op, now shipped by manifest)", _m2_noop),
+    (3, "Ignore runtime files in .gitignore", _m3_gitignore),
+    (4, "Create roadmaps directories", _m4_roadmaps),
+    (5, "Stop ignoring .control/roadmaps/; ignore update/backup state", _m5_fix_gitignore),
+]
+
+
+def run_migrations(ctl, target_schema):
+    cur = (read_json(ctl.parent / SCHEMA_REL, {}) or {}).get("version", 0)
     ran = []
-    sorted_migs = sorted(_MIGRATIONS, key=lambda m: m[0])
-    for from_v, to_v, desc, fn in sorted_migs:
-        if start_version >= to_v:
-            continue
-        if _current_schema() < to_v:
-            _log(f"Running migration {from_v} -> {to_v}: {desc}")
-            try:
-                fn(CONTROL_ROOT)
-                _write_schema(to_v)
-                ran.append((from_v, to_v, desc))
-                _log(f"Migration {from_v} -> {to_v}: OK", level="ok")
-            except Exception as e:
-                _log(f"Migration {from_v} -> {to_v} FAILED: {e}", level="err")
-                raise
+    for v, desc, fn in MIGRATIONS:
+        if cur < v <= target_schema:
+            fn(ctl)
+            write_json(ctl.parent / SCHEMA_REL, {"version": v})
+            ran.append(f"{v}: {desc}")
+            log(f"migration {v}: {desc}", "ok")
     return ran
 
 
-# ---- Define migrations ----
+# ---------------------------------------------------------------------------
+# Upstream acquisition
+# ---------------------------------------------------------------------------
 
-def _migrate_ensure_dirs(root):
-    dirs = [
-        "architecture", "tasks", "sessions", "decisions", "flows",
-        "diagrams", "diagrams/flows", "skills", "skills/proposed",
-        "scripts", "scripts/lib", "scripts/lib/proposed",
-        "prompts", "roadmaps", "roadmaps/phases", "roadmaps/initiatives",
-        "roadmaps/milestones",
-    ]
-    for d in dirs:
-        (root / d).mkdir(parents=True, exist_ok=True)
-
-
-def _migrate_create_templates(root):
-    templates = {
-        "PROJECT.md.template": "# Project: <name>\n\n## Description\n\n## Type\n\n## Main stack\n\n## General status\n",
-        "GOALS.md.template": "# Goals\n\n## Objective\n\n## Success criteria\n- [ ]\n\n## Out of scope\n",
-        "CONTEXT.md.template": "# Context memory\n\n## What this project is\n\n## Tacit conventions\n\n## Things to watch out for\n\n## Perceived status\n\n## Last relevant session\n",
-    }
-    for name, content in templates.items():
-        fpath = root / name
-        if not fpath.exists():
-            fpath.write_text(content, encoding="utf-8")
-            _log(f"Created missing template: {name}")
-
-
-def _migrate_gitignore(root):
-    gitignore = root.parent / ".gitignore"
-    entries = [
-        ".control/scripts/__pycache__/",
-        ".control/.tasks_index.json",
-        ".control/.events.ndjson",
-        ".control/.positions.json",
-        ".control/.control.lock",
-        ".control/roadmaps/",
-    ]
-    if gitignore.exists():
-        existing = gitignore.read_text(encoding="utf-8")
-        additions = [e for e in entries if e not in existing]
-        if additions:
-            gitignore.write_text(existing + "\n" + "\n".join(additions) + "\n", encoding="utf-8")
-    else:
-        gitignore.write_text("\n".join(entries) + "\n", encoding="utf-8")
-
-
-def _migrate_roadmaps_dir(root):
-    for d in ["roadmaps", "roadmaps/phases", "roadmaps/initiatives", "roadmaps/milestones"]:
-        (root / d).mkdir(parents=True, exist_ok=True)
-
-
-_migration(0, 1, "Ensure standard directories", _migrate_ensure_dirs)
-_migration(1, 2, "Create missing templates", _migrate_create_templates)
-_migration(2, 3, "Add .gitignore entries", _migrate_gitignore)
-_migration(3, 4, "Create roadmaps directories", _migrate_roadmaps_dir)
+def acquire(source, ref, tmp_holder):
+    """Return (path_to_upstream_checkout, commit_or_None, label)."""
+    if source and Path(source).is_dir():
+        p = Path(source).resolve()
+        out, _, rc = git(["rev-parse", "HEAD"], cwd=p)
+        return p, (out.decode().strip() if rc == 0 else None), str(p)
+    url = source or DEFAULT_UPSTREAM
+    tmp = Path(tempfile.mkdtemp(prefix="pctl-upstream-"))
+    tmp_holder.append(tmp)
+    log(f"downloading {url} ({ref})...")
+    _, err, rc = git(["clone", "--depth", "1", "--branch", ref, "--quiet", url, str(tmp / "src")])
+    if rc != 0:
+        raise Fatal(f"could not download upstream: {err}",
+                    "Check your connection, the URL in .control/framework.json, or pass --source.")
+    out, _, _ = git(["rev-parse", "HEAD"], cwd=tmp / "src")
+    return tmp / "src", out.decode().strip() or None, url
 
 
 # ---------------------------------------------------------------------------
-# Changelog
+# Planning
 # ---------------------------------------------------------------------------
 
-def _append_changelog(new_version, migrations_ran, log_lines, deprecations=None):
-    has_content = bool(migrations_ran or log_lines or deprecations)
-    if not has_content:
-        return
-
-    header = f"## v{new_version} ({datetime.date.today().isoformat()})"
-    parts = [header, ""]
-    if migrations_ran:
-        parts.append("### Migrations")
-        for from_v, to_v, desc in migrations_ran:
-            parts.append(f"- `{from_v}->{to_v}`: {desc}")
-        parts.append("")
-    if deprecations:
-        parts.append("### Deprecations")
-        for d in deprecations:
-            parts.append(f"- {d}")
-        parts.append("")
-    if log_lines:
-        parts.append("### Changes since last update")
-        for line in log_lines.strip().splitlines():
-            parts.append(f"- {line}")
-        parts.append("")
-    entry = "\n".join(parts)
-
-    if CHANGELOG_FILE.exists():
-        current = CHANGELOG_FILE.read_text(encoding="utf-8")
-        lines = current.splitlines()
-        if lines and lines[0].startswith("# "):
-            body = "\n".join(lines[1:]).strip()
-            new_content = lines[0] + "\n\n" + entry + "\n" + body + "\n"
-        else:
-            new_content = entry + "\n" + current
-    else:
-        new_content = "# ProjectControl Changelog\n\n" + entry + "\n"
-
-    CHANGELOG_FILE.write_text(new_content, encoding="utf-8")
-    _log(f"Changelog updated -> v{new_version}")
+def three_way(local, base, upstream):
+    """Return (merged_bytes, clean). Needs git; (None, False) if unavailable."""
+    with tempfile.TemporaryDirectory(prefix="pctl-merge-") as d:
+        d = Path(d)
+        for name, data in (("local", local), ("base", base), ("upstream", upstream)):
+            (d / name).write_bytes(norm(data))
+        out, _, rc = git(["merge-file", "-p", "-L", "yours", "-L", "base", "-L", "upstream",
+                          str(d / "local"), str(d / "base"), str(d / "upstream")])
+        # exit code: 0 clean, 1..127 number of conflicts, anything else = error
+        if rc < 0 or rc > 127 or (rc in (124, 127) and not out):
+            return None, False
+        return out, rc == 0
 
 
-# ---------------------------------------------------------------------------
-# Update plan & execution
-# ---------------------------------------------------------------------------
+def registry_merge(local, upstream):
+    """Append upstream skill rows whose name is not registered locally."""
+    def rows(text):
+        return [l for l in text.splitlines() if l.startswith("| SK-")]
 
-def _compute_plan(framework_files, ref):
-    """Build the update plan: list of actions per file."""
+    def name(row):
+        parts = [p.strip() for p in row.strip("|").split("|")]
+        return parts[1] if len(parts) > 1 else ""
+
+    ltext, utext = local.decode("utf-8"), upstream.decode("utf-8")
+    lrows = rows(ltext)
+    have = {name(r) for r in lrows}
+    used = {int(m) for r in lrows for m in re.findall(r"^\| SK-(\d+)", r)}
+    added = []
+    for r in rows(utext):
+        if name(r) in have:
+            continue
+        sid = int(re.findall(r"^\| SK-(\d+)", r)[0])
+        if sid in used:
+            sid = max(used) + 1
+            r = re.sub(r"^\| SK-\d+", f"| SK-{sid:04d}", r)
+        used.add(sid)
+        added.append(r)
+    if not added:
+        return None, []
+    lines = ltext.rstrip("\n").split("\n") + added
+    return ("\n".join(lines) + "\n").encode("utf-8"), [name(r) for r in added]
+
+
+def plan_updates(root, up_root, manifest, lock, take_upstream):
+    base_dir = root / BASE_REL
+    lock_files = (lock or {}).get("files", {})
     plan = []
-    for rel in sorted(framework_files):
-        local_path = CONTROL_ROOT / rel
-        content = _cat(ref, rel)
-        if content is None:
-            plan.append({
-                "rel": rel,
-                "local_path": local_path,
-                "action": "error",
-                "reason": "could not read from remote",
-            })
+    for rel, meta in sorted(manifest["files"].items()):
+        strategy = meta.get("strategy", "managed")
+        up = read_bytes(up_root / rel)
+        if up is None:
+            plan.append({"rel": rel, "action": "error", "why": "missing in upstream checkout"})
             continue
+        up_h = sha(up)
+        loc = read_bytes(root / rel)
+        loc_h = sha(loc) if loc is not None else None
+        item = {"rel": rel, "strategy": strategy, "data": up, "up_h": up_h}
 
-        if _is_same_content(local_path, content):
-            plan.append({
-                "rel": rel,
-                "local_path": local_path,
-                "action": "skip",
-                "reason": "already current",
-            })
-            continue
-
-        if not local_path.exists():
-            plan.append({
-                "rel": rel,
-                "local_path": local_path,
-                "action": "add",
-                "content": content,
-                "reason": "missing locally",
-            })
-            continue
-
-        locally_modified = _is_git_modified(rel)
-        plan.append({
-            "rel": rel,
-            "local_path": local_path,
-            "action": "overwrite",
-            "content": content,
-            "locally_modified": locally_modified,
-            "reason": "locally modified" if locally_modified else "remote differs",
-        })
-    return plan
-
-
-def _execute_plan(plan, mode, dry_run=False):
-    """Execute (or simulate) the plan. Returns (updated, skipped, errors, local_modified, aborted)."""
-    updated, skipped, errors, local_modified = [], [], [], []
-    accept_all = mode == "accept"
-    reject_all = mode == "reject"
-
-    for item in plan:
-        action = item["action"]
-        rel = item["rel"]
-        local_path = item["local_path"]
-
-        if action == "error":
-            errors.append(f"{rel}: {item['reason']}")
-            continue
-
-        if action == "skip":
-            skipped.append(rel)
-            continue
-
-        if action == "add":
-            if dry_run:
-                updated.append(rel)
-                continue
-            if _atomic_write(local_path, item["content"]):
-                updated.append(rel)
-                _log(f"Added: {rel}", level="ok")
+        if strategy == "create_only":
+            if loc is None:
+                item.update(action="add", why="new")
+            elif loc_h == up_h:
+                item.update(action="current", why="already current")
             else:
-                errors.append(f"{rel}: failed to write")
-            continue
-
-        if action == "overwrite":
-            if accept_all:
-                decision = "yes"
-            elif reject_all:
-                decision = "no"
-            elif dry_run:
-                # In dry-run, assume the user would confirm each overwrite
-                # unless reject-all was requested.
-                decision = "yes"
+                item.update(action="skip", why="exists (yours)")
+                if rel in INTEGRATION_HINTS:
+                    item["hint"] = INTEGRATION_HINTS[rel]
+        elif strategy == "skill_registry":
+            if loc is None:
+                item.update(action="add", why="new")
             else:
-                decision = _prompt_overwrite(
-                    rel, local_path, item["content"], item.get("locally_modified", False)
-                )
-
-            if decision == "quit":
-                _log("Update aborted by user.", level="warn")
-                return updated, skipped, errors, local_modified, True  # aborted
-            if decision == "all":
-                accept_all = True
-                decision = "yes"
-
-            if decision == "yes":
-                if dry_run:
-                    updated.append(rel)
-                    if item.get("locally_modified"):
-                        local_modified.append(rel)
-                    continue
-                if _atomic_write(local_path, item["content"]):
-                    updated.append(rel)
-                    if item.get("locally_modified"):
-                        local_modified.append(rel)
-                    status = " (overwrote local changes)" if item.get("locally_modified") else ""
-                    _log(f"Overwritten: {rel}{status}", level="ok")
+                merged, names = registry_merge(loc, up)
+                if merged:
+                    item.update(action="registry", data=merged, why="register " + ", ".join(names))
                 else:
-                    errors.append(f"{rel}: failed to write")
+                    item.update(action="skip", why="all skills registered")
+        else:  # managed
+            base_h = lock_files.get(rel)
+            known = set(meta.get("known", [])) | ({base_h} if base_h else set())
+            if loc is None:
+                if base_h and rel not in take_upstream:
+                    item.update(action="skip", why="you deleted it (kept deleted)")
+                else:
+                    item.update(action="add", why="new")
+            elif loc_h == up_h:
+                item.update(action="current", why="already current")
+            elif rel in take_upstream:
+                item.update(action="replace", why="--take-upstream")
+            elif loc_h in known:
+                item.update(action="replace", why="unmodified by you")
+            elif base_h == up_h:
+                item.update(action="keep", why="your edits; upstream unchanged")
             else:
-                skipped.append(rel)
-                if not dry_run:
-                    _log(f"Kept local: {rel}")
+                base = read_bytes(base_dir / rel)
+                merged, clean = (None, False)
+                if base is not None:
+                    merged, clean = three_way(loc, base, up)
+                if clean:
+                    item.update(action="merge", data=merged, why="your edits + upstream merged cleanly")
+                else:
+                    item.update(action="conflict", merged=merged,
+                                why="your edits conflict with upstream" if base is not None
+                                else "edited by you (no install record to merge against)")
+        plan.append(item)
 
-    return updated, skipped, errors, local_modified, False
+    dropped = sorted(set(lock_files) - set(manifest["files"]))
+    return plan, dropped
 
 
 # ---------------------------------------------------------------------------
 # Reporting
 # ---------------------------------------------------------------------------
 
-def _report(plan, updated, skipped, errors, local_modified, aborted,
-            dry_run, backup_path, log_lines):
-    _print_header("PROJECTCONTROL UPDATE SUMMARY")
+LABELS = {
+    "add": (green, "+", "new files"),
+    "replace": (green, "~", "updated (you had not modified them)"),
+    "merge": (green, "M", "merged with your edits"),
+    "registry": (green, "R", "skill registry entries added"),
+    "conflict": (yellow, "!", "CONFLICTS - your file kept, upstream staged for review"),
+    "keep": (faint, "=", "kept your edited version (upstream unchanged)"),
+    "skip": (faint, "-", "left alone"),
+    "current": (faint, ".", "already current"),
+    "error": (red, "x", "errors"),
+}
 
-    counts = {"add": 0, "overwrite": 0, "skip": 0, "error": 0}
-    for item in plan:
-        counts[item["action"]] = counts.get(item["action"], 0) + 1
 
-    print(f"  Plan items:       {len(plan)}")
-    print(f"  New files:        {counts.get('add', 0)}")
-    print(f"  Overwrites:       {counts.get('overwrite', 0)}")
-    print(f"  Already current:  {counts.get('skip', 0)}")
-    print(f"  Read errors:      {counts.get('error', 0)}")
-    print()
+def print_plan(plan, dropped, verbose):
+    by = {}
+    for it in plan:
+        by.setdefault(it["action"], []).append(it)
+    for action in ["add", "replace", "merge", "registry", "conflict", "keep", "skip", "error", "current"]:
+        items = by.get(action, [])
+        if not items:
+            continue
+        color, mark, label = LABELS[action]
+        print(color(f"  {mark} {len(items):3d} {label}"))
+        always = action in ("conflict", "error", "merge", "registry", "keep")
+        for it in items:
+            if verbose and action != "current" or always or "deleted" in it["why"] or it.get("hint"):
+                print(faint(f"        {it['rel']}  ({it['why']})"))
+                if it.get("hint"):
+                    print(yellow(f"          tip: {it['hint']}"))
+    if dropped:
+        print(yellow(f"  ? {len(dropped):3d} no longer part of the framework (kept; delete if unused):"))
+        for rel in dropped:
+            print(faint(f"        {rel}"))
 
-    if dry_run:
-        print(C.yellow("  DRY RUN - no files were changed."))
-        print()
 
-    if updated:
-        print(C.green(f"  Updated ({len(updated)}):"))
-        for rel in sorted(updated):
-            print(f"    + {rel}")
-        print()
+def changelog_since(up_root, installed_version):
+    p = up_root / ".control" / "CHANGELOG.md"
+    if not p.exists():
+        return ""
+    text = p.read_text(encoding="utf-8")
+    parts = re.split(r"(?m)^(?=## v)", text)
+    keep = [s.strip() for s in parts[1:]
+            if version_tuple(re.match(r"## v(\S+)", s).group(1)) > version_tuple(installed_version)]
+    return "\n\n".join(keep)
 
-    if local_modified and not dry_run:
-        print(C.yellow(f"  Overwritten despite local changes ({len(local_modified)}):"))
-        for rel in sorted(local_modified):
-            print(f"    ! {rel}")
-        print()
 
-    if skipped:
-        print(C.blue(f"  Kept local ({len(skipped)}):"))
-        for rel in sorted(skipped):
-            print(f"    - {rel}")
-        print()
+def counts_line(plan):
+    n = lambda a: sum(1 for i in plan if i["action"] == a)  # noqa: E731
+    return (f"{n('add')} new, {n('replace')} updated, {n('merge')} merged, "
+            f"{n('conflict')} conflicts, {n('keep') + n('skip')} left as you have them")
 
-    if errors:
-        print(C.red(f"  ERRORS ({len(errors)}):"))
-        for e in errors:
-            print(f"    x {e}")
-        print()
 
-    if log_lines:
-        print("  Changes since last update:")
-        for line in log_lines.strip().splitlines():
-            print(f"    {line}")
-        print()
+# ---------------------------------------------------------------------------
+# Apply / rollback
+# ---------------------------------------------------------------------------
 
-    if aborted:
-        print(C.yellow("  UPDATE ABORTED by user."))
-    elif errors:
-        print(C.yellow("  UPDATE COMPLETED WITH ERRORS."))
-        hint = _restore_hint(backup_path)
-        if hint:
-            print(C.faint(f"  {hint}"))
-    elif not dry_run:
-        print(C.green("  UPDATE COMPLETE."))
+def apply_plan(root, plan, dropped, manifest, commit, source_label, lock):
+    ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    bdir = root / BACKUPS_REL / f"update-{ts}"
+    stage = root / STAGE_REL / ts
+    changed, created, conflicts = [], [], []
 
-    if backup_path and backup_path.exists() and not dry_run:
-        print(C.faint(f"  Backup: {backup_path}"))
+    # 1. backup everything we are about to modify
+    for it in plan:
+        if it["action"] in ("replace", "merge", "registry"):
+            src = root / it["rel"]
+            dst = bdir / "files" / it["rel"]
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+    bdir.mkdir(parents=True, exist_ok=True)
+    for rel in (LOCK_REL, MANIFEST_REL, SCHEMA_REL):
+        if (root / rel).exists():
+            (bdir / "state" / Path(rel).name).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(root / rel, bdir / "state" / Path(rel).name)
+
+    # 2. write
+    for it in plan:
+        a, rel = it["action"], it["rel"]
+        try:
+            if a in ("add", "replace", "merge", "registry"):
+                atomic_write(root / rel, it["data"])
+                (created if a == "add" else changed).append(rel)
+            elif a == "conflict":
+                atomic_write(stage / (rel + ".upstream"), it["data"])
+                if it.get("merged") is not None:
+                    atomic_write(stage / (rel + ".merged"), it["merged"])
+                conflicts.append(rel)
+        except OSError as e:
+            log(f"{rel}: {e}", "err")
+            raise Fatal(f"write failed on {rel}; run --rollback to restore", str(e))
+
+    # 3. pristine base copies for future 3-way merges + new lock
+    files = {}
+    for it in plan:
+        if it.get("strategy") != "managed" or it["action"] == "error":
+            continue
+        files[it["rel"]] = it["up_h"]
+        atomic_write(root / BASE_REL / it["rel"], norm(read_bytes_from_plan(it)))
+    history = (lock or {}).get("history", [])
+    history.append({"date": datetime.datetime.now().isoformat(timespec="seconds"),
+                    "from": (lock or {}).get("version"), "to": manifest.get("version"),
+                    "commit": commit, "changed": len(changed), "added": len(created),
+                    "conflicts": conflicts})
+    write_json(root / LOCK_REL, {
+        "version": manifest.get("version"), "schema": manifest.get("schema"),
+        "commit": commit, "source": source_label,
+        "installed_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "files": files, "history": history[-HISTORY_KEEP:],
+    })
+    write_json(root / MANIFEST_REL, manifest)
+    write_json(bdir / "changes.json", {"changed": changed, "created": created})
+
+    pending = root / STAGE_REL / "pending.json"
+    if conflicts:
+        write_json(pending, {"date": ts, "dir": f"{STAGE_REL}/{ts}", "conflicts": conflicts})
+    elif pending.exists():
+        pending.unlink()
+    for cache in (root / ".control" / ".update_check.json",):
+        if cache.exists():
+            cache.unlink()
+    return bdir, stage, changed, created, conflicts
+
+
+def read_bytes_from_plan(it):
+    # base copy must be the UPSTREAM content (what "installed" means), not a merge result
+    return it["up_data"] if "up_data" in it else it["data"]
+
+
+def rollback(root, assume_yes):
+    bdirs = sorted((root / BACKUPS_REL).glob("update-*"))
+    if not bdirs:
+        raise Fatal("no update backup found to roll back")
+    b = bdirs[-1]
+    changes = read_json(b / "changes.json", {}) or {}
+    print(f"  Rolling back {b.name}: restore {len(changes.get('changed', []))} file(s), "
+          f"remove {len(changes.get('created', []))} file(s) the update created.")
+    if not assume_yes and ask("Proceed? [y/N]", "yn", "n") != "y":
+        print("  Aborted (non-interactive: pass --yes).")
+        return
+    for rel in changes.get("changed", []):
+        src = b / "files" / rel
+        if src.exists():
+            atomic_write(root / rel, src.read_bytes())
+    for rel in changes.get("created", []):
+        p = root / rel
+        if p.exists():
+            p.unlink()
+    for name, rel in (("framework.json", MANIFEST_REL), (".framework_lock.json", LOCK_REL),
+                      (".schema_version", SCHEMA_REL)):
+        src = b / "state" / name
+        if src.exists():
+            atomic_write(root / rel, src.read_bytes())
+    shutil.move(str(b), str(b.with_name(b.name + "-rolledback")))
+    log("rollback complete", "ok")
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
-def _resolve_mode(args):
-    """Resolve the interaction mode from CLI flags (ignoring dry-run)."""
-    if args.accept_all:
-        return "accept"
-    if args.reject_all:
-        return "reject"
-    return "interactive"
+def parse_args(argv):
+    p = argparse.ArgumentParser(description="Install/update ProjectControl safely.",
+                                formatter_class=argparse.RawDescriptionHelpFormatter,
+                                epilog=__doc__.split("USAGE", 1)[1])
+    p.add_argument("--check", action="store_true", help="report whether an update exists and what changed")
+    p.add_argument("--dry-run", action="store_true", help="show the full per-file plan, change nothing")
+    p.add_argument("--yes", "-y", action="store_true", help="apply without asking")
+    p.add_argument("--source", help="upstream git URL or local checkout (default: framework.json upstream)")
+    p.add_argument("--ref", help="upstream branch/tag (default: framework.json upstream ref)")
+    p.add_argument("--target", help="project root to install into (default: this script's project)")
+    p.add_argument("--take-upstream", action="append", default=[], metavar="PATH",
+                   help="replace your edited copy of PATH with upstream (repeatable)")
+    p.add_argument("--resolved", action="store_true", help="mark staged conflicts as resolved")
+    p.add_argument("--rollback", action="store_true", help="undo the last applied update")
+    p.add_argument("--build-manifest", action="store_true", help="(maintainers) regenerate framework.json")
+    p.add_argument("--version", dest="new_version", help="version for --build-manifest")
+    p.add_argument("--no-bootstrap", action="store_true", help=argparse.SUPPRESS)
+    p.add_argument("--no-color", action="store_true")
+    # legacy flags from v4 (accepted, mapped)
+    p.add_argument("--accept-all", action="store_true", help=argparse.SUPPRESS)
+    p.add_argument("--reject-all", action="store_true", help=argparse.SUPPRESS)
+    p.add_argument("--force", action="store_true", help=argparse.SUPPRESS)
+    return p.parse_args(argv)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Update ProjectControlSystem framework from a git remote safely.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Safety notes:
-  - User data (tasks, sessions, docs, roadmaps, etc.) is NEVER touched.
-  - Only framework files listed in FRAMEWORK_GLOBS can be updated.
-  - Existing files are overwritten only after explicit confirmation,
-    unless --accept-all is used.
-  - A full backup of .control/ is created before any change.
-        """,
-    )
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show what would change without modifying any file.")
-    parser.add_argument("--accept-all", action="store_true",
-                        help="Automatically overwrite all differing framework files.")
-    parser.add_argument("--reject-all", action="store_true",
-                        help="Skip all overwrites; only add missing files.")
-    parser.add_argument("--force", action="store_true",
-                        help="Proceed even with uncommitted local changes.")
-    parser.add_argument("--ref", default="origin/main",
-                        help="Remote ref to update from (default: origin/main).")
-    parser.add_argument("--no-color", action="store_true",
-                        help="Disable colored output.")
-    args = parser.parse_args()
-
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    args = parse_args(argv)
     if args.no_color:
-        C._enabled = False
+        _C.on = False
+    if args.accept_all:
+        args.yes = True
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            # pipes (agents, hooks) get UTF-8; real consoles keep their encoding
+            stream.reconfigure(errors="replace", **({} if stream.isatty() else {"encoding": "utf-8"}))
+        except (AttributeError, ValueError):
+            pass
 
-    if args.accept_all and args.reject_all:
-        _fatal("--accept-all and --reject-all are mutually exclusive.")
+    root = Path(args.target).resolve() if args.target else Path(__file__).resolve().parents[2]
+    tmp_holder = []
+    try:
+        if args.build_manifest:
+            if not args.new_version:
+                raise Fatal("--build-manifest needs --version X.Y.Z")
+            build_manifest(root, args.new_version)
+            return 0
+        if args.rollback:
+            rollback(root, args.yes)
+            return 0
+        if args.resolved:
+            pend = root / STAGE_REL / "pending.json"
+            if pend.exists():
+                pend.unlink()
+            log("staged conflicts marked as resolved", "ok")
+            return 0
+        return run(args, argv, root, tmp_holder)
+    except Fatal as e:
+        print()
+        print(red(f"  FATAL: {e}"))
+        if e.hint:
+            print(faint(f"  {e.hint}"))
+        return 1
+    except KeyboardInterrupt:
+        print("\n  Interrupted. Nothing was written unless reported above.")
+        return 130
+    finally:
+        for t in tmp_holder:
+            shutil.rmtree(t, ignore_errors=True)
 
-    mode = _resolve_mode(args)
-    dry_run = args.dry_run
-    ref = args.ref
 
-    _require_git()
-    _require_repo()
+def run(args, argv, root, tmp_holder):
+    local_manifest = read_json(root / MANIFEST_REL, {}) or {}
+    lock = read_json(root / LOCK_REL)
+    up_cfg = local_manifest.get("upstream") or {}
+    ref = args.ref or up_cfg.get("ref") or DEFAULT_REF
+    source = args.source or up_cfg.get("url") or DEFAULT_UPSTREAM
 
-    branch = _current_branch()
-    origin = _origin_url()
+    up_root, commit, label = acquire(source, ref, tmp_holder)
 
-    _print_header("PROJECTCONTROL UPDATE")
-    print(f"  Source ref:       {ref}")
-    print(f"  Current branch:   {branch}")
-    print(f"  Remote origin:    {origin or C.red('(none)')}")
-    print(f"  Interaction mode: {mode}{' (dry-run)' if dry_run else ''}")
+    # Self-bootstrap: the NEWEST update.py performs the update.
+    up_script = up_root / ".control" / "scripts" / "update.py"
+    if not args.no_bootstrap and up_script.exists() and \
+            sha(up_script.read_bytes()) != sha(Path(__file__).read_bytes()):
+        log("running the updater shipped with the new version...")
+        child, skip = [], False
+        for a in argv:
+            if skip:
+                skip = False
+                continue
+            if a in ("--source", "--target"):
+                skip = True
+                continue
+            if a.startswith(("--source=", "--target=")):
+                continue
+            child.append(a)
+        cmd = [sys.executable, str(up_script), "--no-bootstrap", "--source", str(up_root),
+               "--target", str(root)] + child
+        if commit:
+            os.environ["PCTL_UPSTREAM_COMMIT"] = commit
+        os.environ["PCTL_UPSTREAM_LABEL"] = label
+        return subprocess.call(cmd)
+    commit = commit or os.environ.get("PCTL_UPSTREAM_COMMIT")
+    label = os.environ.get("PCTL_UPSTREAM_LABEL", label)
+
+    manifest = read_json(up_root / MANIFEST_REL)
+    if not manifest or "files" not in manifest:
+        raise Fatal("upstream has no .control/framework.json", "That upstream is older than v5 or not ProjectControl.")
+
+    installed_v = (lock or {}).get("version") or local_manifest.get("version") or \
+        str((read_json(root / SCHEMA_REL, {}) or {}).get("version", "0"))
+    plan, dropped = plan_updates(root, up_root, manifest, lock, set(args.take_upstream))
+    for it in plan:
+        if it["action"] in ("merge", "registry"):
+            it["up_data"] = read_bytes(up_root / it["rel"])
+
+    mode = "check" if args.check else ("dry-run" if args.dry_run else "apply")
+    header(f"PROJECTCONTROL {'UPDATE CHECK' if mode == 'check' else 'UPDATE'}")
+    print(f"  Project:    {root}")
+    print(f"  Installed:  v{installed_v}" + (f" ({lock['commit'][:10]})" if lock and lock.get("commit") else
+                                              "  (no install record - first managed update)"))
+    print(f"  Upstream:   v{manifest.get('version')} ({(commit or '?')[:10]}) from {label}")
     print()
 
-    if not origin:
-        _fatal(
-            "No git remote 'origin' configured.",
-            hint="Add a remote pointing to the ProjectControlSystem repository, e.g.:\n"
-                 "  git remote add origin <url>",
-        )
+    pending_work = [i for i in plan if i["action"] in ("add", "replace", "merge", "registry", "conflict")]
+    schema_cur = (read_json(root / SCHEMA_REL, {}) or {}).get("version", 0)
+    needs_migr = schema_cur < manifest.get("schema", 0)
 
-    # Uncommitted changes warning
-    if _has_uncommitted() and not args.force and not dry_run:
-        print(C.yellow("WARNING: You have uncommitted changes."))
-        print(C.faint("Commit or stash them first, or use --force to proceed."))
-        try:
-            yn = input("Continue anyway? [y/N]: ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            print("\nAborted.")
-            sys.exit(0)
-        if yn != "y":
-            print("Aborted.")
-            sys.exit(0)
+    notes = changelog_since(up_root, installed_v)
+    if mode == "check":
+        _write_check_cache(root, lock, commit, manifest, bool(pending_work or needs_migr))
+        if not pending_work and not needs_migr:
+            print(green("  You are up to date."))
+            return 0
+        print(bold(f"  Update available: {counts_line(plan)}"))
+        if notes:
+            print()
+            print(bold("  What's new:"))
+            for line in notes.splitlines():
+                print("    " + line)
+        print()
+        print(faint("  Preview: update.py --dry-run   Apply: update.py"))
+        return 0
 
-    # Fetch
-    if not _fetch(ref):
-        _fatal("Fetch failed.",
-               hint="Check your connection and that the ref name is correct.")
-
-    # Verify ref has .control/
-    if _cat(ref, "SYSTEM.md") is None:
-        print(C.red(f"ERROR: Ref '{ref}' does not exist or has no .control/ directory."))
-        print("Available remote refs:")
-        out, _, _ = _git(["ls-remote", "--heads", "origin"])
-        for line in out.splitlines():
-            print(f"  {line}")
-        sys.exit(1)
-
-    # Build file lists
-    remote_files = _ls_remote(ref)
-    if not remote_files:
-        _fatal(f"No .control/ files found in ref '{ref}'.")
-
-    framework_files, user_files, unknown = _classify_files(remote_files)
-    _log(f"Found {len(framework_files)} framework + {len(user_files)} user files in {ref}")
-
-    if unknown:
-        _log(f"{len(unknown)} remote files are not classified as framework or user data; ignored",
-             level="warn")
-
-    # Compute plan
-    plan = _compute_plan(framework_files, ref)
-
-    # Preview in dry-run mode
+    print_plan(plan, dropped, verbose=(mode == "dry-run"))
+    if needs_migr:
+        print(f"  * schema migrations {schema_cur} -> {manifest.get('schema')}")
     if mode == "dry-run":
-        _print_section("Dry-run preview")
-        for item in plan:
-            rel = item["rel"]
-            if item["action"] == "skip":
+        print()
+        print(yellow("  DRY RUN - nothing was written."))
+        return 0
+    if not pending_work and not needs_migr and lock and lock.get("commit") == commit:
+        print()
+        print(green("  Already up to date."))
+        return 0
+
+    print()
+    if not args.yes:
+        while True:
+            a = ask("Apply this update? [y]es / [n]o / [d]iff of conflicts+merges >", "ynd", "n")
+            if a == "d":
+                for it in plan:
+                    if it["action"] in ("merge", "conflict"):
+                        _show_diff(root, it)
                 continue
-            marker = {
-                "add": C.green("+"),
-                "overwrite": C.yellow("~"),
-                "error": C.red("x"),
-            }.get(item["action"], "?")
-            extra = ""
-            if item["action"] == "overwrite" and item.get("locally_modified"):
-                extra = C.red(" [local changes]")
-            print(f"  {marker} {rel}{extra}")
+            if a != "y":
+                print("  Nothing changed.")
+                return 0
+            break
 
-    # Backup before any mutation (even if plan is empty; cheap)
-    backup_path = None
-    if not dry_run:
-        backup_path = _backup()
-        if backup_path is None:
-            _fatal("Backup failed; aborting to protect your data.",
-                   hint="Check disk space and permissions, then retry.")
+    bdir, stage, changed, created, conflicts = apply_plan(root, plan, dropped, manifest, commit, label, lock)
+    ran = run_migrations(root / ".control", manifest.get("schema", 0))
 
-    # Compute merge base for changelog
-    base = _merge_base(ref)
-    log_lines = _diff_log(base) if base else ""
+    pctl = root / ".control" / "scripts" / "pctl.py"
+    if pctl.exists() and (root / ".control" / "PROJECT.md").exists():
+        r = subprocess.run([sys.executable, str(pctl), "reindex"], cwd=root, capture_output=True, text=True)
+        log("indexes regenerated" if r.returncode == 0 else f"reindex failed: {r.stderr.strip()[:200]}",
+            "ok" if r.returncode == 0 else "warn")
 
-    # Execute plan
-    updated, skipped, errors, local_modified, aborted = _execute_plan(plan, mode, dry_run=dry_run)
+    header("UPDATE COMPLETE")
+    print(f"  {len(created)} added, {len(changed)} updated/merged, {len(ran)} migration(s).")
+    print(faint(f"  Backup: {bdir}   (undo: update.py --rollback)"))
+    if conflicts:
+        print()
+        print(yellow(f"  {len(conflicts)} file(s) need your review. Your versions were NOT changed."))
+        print(f"  Staged in {stage}:")
+        for rel in conflicts:
+            print(f"    {rel}.upstream   <- new version")
+            if (stage / (rel + ".merged")).exists():
+                print(f"    {rel}.merged     <- merge attempt with conflict markers")
+        print(faint("  Merge by hand, or take upstream: update.py --take-upstream <path>. "
+                    "Then: update.py --resolved"))
+    if notes:
+        print()
+        print(bold("  What's new:"))
+        for line in notes.splitlines()[:40]:
+            print("    " + line)
+    return 0
 
-    # Run migrations
-    ran = []
-    if not aborted and not dry_run and not errors:
-        old_schema = _current_schema()
-        try:
-            ran = _run_migrations(old_schema)
-        except Exception:
-            _log("Migrations failed. Framework files were updated, but schema migrations may need manual repair.",
-                 level="err")
-            errors.append("Schema migrations failed - see log above")
 
-    # Update changelog
-    if not aborted and not dry_run and not errors:
-        new_version = _current_schema()
-        _append_changelog(
-            new_version=new_version,
-            migrations_ran=ran,
-            log_lines=log_lines,
-        )
+def _write_check_cache(root, lock, commit, manifest, available):
+    try:
+        write_json(root / ".control" / ".update_check.json", {
+            "status": "available" if available else "up_to_date",
+            "installed": {"version": (lock or {}).get("version"), "commit": (lock or {}).get("commit")},
+            "remote_commit": commit, "latest_version": manifest.get("version"),
+            "checked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "message": "run `python .control/scripts/update.py`" if available else "",
+        })
+    except OSError:
+        pass
 
-    # Report
-    _report(
-        plan=plan,
-        updated=updated,
-        skipped=skipped,
-        errors=errors,
-        local_modified=local_modified,
-        aborted=aborted,
-        dry_run=dry_run,
-        backup_path=backup_path,
-        log_lines=log_lines,
-    )
 
-    if aborted or errors:
-        sys.exit(1)
+def _show_diff(root, it):
+    loc = (read_bytes(root / it["rel"]) or b"").decode("utf-8", "replace").splitlines(True)
+    new = (it.get("merged") or it["data"]).decode("utf-8", "replace").splitlines(True)
+    diff = list(difflib.unified_diff(loc, new, f"yours/{it['rel']}", f"result/{it['rel']}", n=2))
+    print(bold(f"\n  --- {it['rel']} ({it['why']})"))
+    for line in diff[:80]:
+        line = line.rstrip("\n")
+        print(green(line) if line.startswith("+") else red(line) if line.startswith("-") else line)
+    if len(diff) > 80:
+        print(faint(f"  ... {len(diff) - 80} more lines"))
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

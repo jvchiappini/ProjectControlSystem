@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import agent, arch, context, decisions, doc, doctor, docs, flows, git, graph, indexes, migrate, paths, roadmaps, search, sessions, skills_registry, tasks, validate  # noqa: E402
+from lib import agent, arch, brief, context, decisions, doc, doctor, docs, flows, git, graph, indexes, migrate, paths, roadmaps, search, sessions, skills_registry, tasks, updates, validate  # noqa: E402
 
 
 def cmd_task_new(args):
@@ -103,8 +103,17 @@ def cmd_doc_check_refs(args):
 
 
 def cmd_session_start(args):
+    abiertas = sessions.open_sessions()
     sid, fpath = sessions.start_session(agente=args.agente)
     print(f"sesion iniciada {sid} -> {fpath}")
+    if abiertas:
+        print(f"AVISO: sesiones sin cerrar: {', '.join(abiertas)} — revisar con "
+              f"`pctl session-summarize <id>` y cerrar con `pctl session-close`")
+
+
+def cmd_session_current(args):
+    abiertas = sessions.open_sessions()
+    print(abiertas[0] if abiertas else "(ninguna sesion abierta)")
 
 
 def cmd_session_log(args):
@@ -114,7 +123,8 @@ def cmd_session_log(args):
 
 def cmd_session_close(args):
     tocadas = args.tareas.split(",") if args.tareas else []
-    fpath = sessions.close_session(args.id, args.resumen, tareas_tocadas=tocadas)
+    fpath = sessions.close_session(args.id, args.resumen, tareas_tocadas=tocadas,
+                                   siguiente=args.next, pendientes=args.question)
     print(f"sesion cerrada -> {fpath}")
 
 
@@ -169,6 +179,27 @@ def cmd_context_write(args):
     print("CONTEXT.md actualizado")
     if aviso:
         print(f"AVISO: {aviso}")
+
+
+def cmd_context_note(args):
+    line = context.add_note(args.texto, kind=args.tipo)
+    abiertas = sessions.open_sessions()
+    if abiertas:
+        sessions.log_event(abiertas[0], f"nota de contexto: {args.texto}")
+    print(f"nota guardada en CONTEXT.md -> {line}")
+
+
+def cmd_brief(args):
+    print(brief.build(budget=args.budget, check_updates=not args.offline))
+
+
+def cmd_update_check(args):
+    r = updates.check(force=True)
+    inst = r.get("installed") or {}
+    print(f"instalado: v{inst.get('version') or '?'} (commit {(inst.get('commit') or '?')[:10]})")
+    print(f"estado: {r['status']}" + (f" — {r['message']}" if r.get("message") else ""))
+    if r.get("remote_commit"):
+        print(f"upstream: commit {r['remote_commit'][:10]}")
 
 
 def cmd_context_check(args):
@@ -248,12 +279,14 @@ def cmd_git_pr(args):
 
 # ── search ──
 def cmd_search(args):
-    results = search.search(args.query)
-    if not results:
-        print("sin resultados")
-        return
-    for fpath, n, line in results:
-        print(f"{fpath}:{n}: {line}")
+    areas = [a.strip() for a in args.area.split(",")] if args.area else None
+    results = search.find(
+        args.query, areas=areas, estado=args.estado, regex=args.regex,
+        case=args.case, fm_only=args.fm, include_code=args.code,
+        include_generated=args.generated, max_files=args.limit,
+        hits_per_file=args.hits,
+    )
+    print(search.format_results(results, files_only=args.files))
 
 
 # ── graph ──
@@ -282,7 +315,8 @@ def cmd_session_summarize(args):
 
 # ── agent ──
 def cmd_context_init(args):
-    print(agent.context_init())
+    # kept for backward compatibility; `brief` supersedes it
+    print(brief.build())
 
 
 def cmd_session_continue(args):
@@ -440,6 +474,9 @@ def build_parser():
     s_start.add_argument("--agente", default="agente")
     s_start.set_defaults(func=cmd_session_start)
 
+    s_cur = sub.add_parser("session-current", help="id de la sesion abierta (si hay)")
+    s_cur.set_defaults(func=cmd_session_current)
+
     s_log = sub.add_parser("session-log", help="agregar evento a la sesion activa")
     s_log.add_argument("id")
     s_log.add_argument("texto")
@@ -449,6 +486,10 @@ def build_parser():
     s_close.add_argument("id")
     s_close.add_argument("resumen")
     s_close.add_argument("--tareas", default=None, help="ids separados por coma")
+    s_close.add_argument("--next", action="append", default=[], metavar="TEXTO",
+                         help="proximo paso para la siguiente sesion (repetible)")
+    s_close.add_argument("--question", action="append", default=[], metavar="TEXTO",
+                         help="pregunta abierta para el usuario/proxima sesion (repetible)")
     s_close.set_defaults(func=cmd_session_close)
 
     a_touch = sub.add_parser("arch-touch", help="registrar/actualizar estado de un dominio")
@@ -489,6 +530,19 @@ def build_parser():
     c_write.add_argument("--file", default=None, help="leer el cuerpo nuevo desde un archivo")
     c_write.add_argument("--actualizado-por", dest="actualizado_por", default="agente", choices=["agente", "usuario"])
     c_write.set_defaults(func=cmd_context_write)
+
+    c_note = sub.add_parser("context-note", help="guardar un aprendizaje YA en el inbox de CONTEXT.md")
+    c_note.add_argument("texto")
+    c_note.add_argument("--tipo", default="fact", choices=context.NOTE_KINDS)
+    c_note.set_defaults(func=cmd_context_note)
+
+    br = sub.add_parser("brief", help="resumen de inicio de sesion (reemplaza leer 10 archivos)")
+    br.add_argument("--budget", type=int, default=brief.DEFAULT_BUDGET, help="tope en caracteres")
+    br.add_argument("--offline", action="store_true", help="no consultar actualizaciones")
+    br.set_defaults(func=cmd_brief)
+
+    uc = sub.add_parser("update-check", help="consultar si hay version nueva del framework")
+    uc.set_defaults(func=cmd_update_check)
 
     c_check = sub.add_parser("context-check", help="verificar que CONTEXT.md no exceda el presupuesto de tamano")
     c_check.set_defaults(func=cmd_context_check)
@@ -544,8 +598,21 @@ def build_parser():
     gp.set_defaults(func=cmd_git_pr)
 
     # ── search ──
-    sc = sub.add_parser("search", help="buscar en todo .control/")
-    sc.add_argument("query")
+    sc = sub.add_parser(
+        "search", help="buscar en TODO .control/ (ranking por archivo, AND entre palabras)",
+        description="Areas: " + ", ".join(search.AREAS) + ". Ej: pctl search stock redis --area tasks,flows",
+    )
+    sc.add_argument("query", nargs="+", help='palabras (todas deben aparecer) o "frase entre comillas"')
+    sc.add_argument("--area", "--in", dest="area", default=None, help="limitar a areas, separadas por coma")
+    sc.add_argument("--estado", default=None, help="filtrar por estado del frontmatter")
+    sc.add_argument("--regex", action="store_true", help="tratar la consulta como una regex")
+    sc.add_argument("--case", action="store_true", help="distinguir mayusculas")
+    sc.add_argument("--fm", action="store_true", help="buscar solo en frontmatter (id, titulo, estado...)")
+    sc.add_argument("--code", action="store_true", help="incluir scripts/ y frontend/ (.py .js .css .html)")
+    sc.add_argument("--generated", action="store_true", help="incluir indices generados (_index, BACKLOG...)")
+    sc.add_argument("--files", action="store_true", help="solo listar archivos (minimo de tokens)")
+    sc.add_argument("--limit", type=int, default=15, help="max archivos (default 15)")
+    sc.add_argument("--hits", type=int, default=3, help="max lineas por archivo (default 3)")
     sc.set_defaults(func=cmd_search)
 
     # ── graph ──
@@ -705,6 +772,13 @@ def cmd_roadmap_touch(args):
 
 
 def main():
+    # Windows consoles default to cp1252: never crash on non-ASCII output
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            # pipes (agents, hooks) get UTF-8; real consoles keep their encoding
+            stream.reconfigure(errors="replace", **({} if stream.isatty() else {"encoding": "utf-8"}))
+        except (AttributeError, ValueError):
+            pass
     paths.ensure_dirs()
     parser = build_parser()
     args = parser.parse_args()

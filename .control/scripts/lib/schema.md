@@ -28,9 +28,20 @@ id: S-YYYY-MM-DD-NNN
 fecha: YYYY-MM-DD
 agente: string
 tareas_tocadas: []
-resumen: string
+resumen: string             # "(sesion en curso)" while open
 version_schema: 1
 ```
+
+Body: `## Eventos` (timestamped `- HH:MM — text` lines), then optionally
+`## Handoff` with `### Next steps` and `### Open questions` bullet lists
+(written by `pctl session-close --next/--question`, read by `pctl brief`).
+Agents without code execution should write the same structure by hand.
+
+## Context memory (CONTEXT.md)
+
+Frontmatter: `actualizado`, `actualizado_por`, `version_schema`. Body
+keeps the template sections; `## Inbox (unconsolidated notes)` holds
+`- [YYYY-MM-DD] (kind) text` lines added by `pctl context-note`.
 
 ## Decision / ADR (decisions/D-XXXX.md)
 

@@ -1,0 +1,609 @@
+{
+  "name": "ProjectControl",
+  "version": "5.0.0",
+  "schema": 5,
+  "upstream": {
+    "url": "https://github.com/jvchiappini/ProjectControlSystem.git",
+    "ref": "main"
+  },
+  "generated": "2026-10-25",
+  "files": {
+    ".claude/settings.json": {
+      "strategy": "create_only",
+      "sha256": "68c434d0509d8971931525174f73817f822fdeaf2e2e566595d23f303d6d874b",
+      "known": []
+    },
+    ".control/CHANGELOG.md": {
+      "strategy": "managed",
+      "sha256": "3eb33185533615f189ea926f75bce896113e11c15b39441b42134260ae97b3c5",
+      "known": [
+        "fc5173ee0c3a88b08d6baac1009a9c7c25c2fd56b81b6333ce0fa237fddd529f"
+      ]
+    },
+    ".control/CONTEXT.md.template": {
+      "strategy": "managed",
+      "sha256": "5e5719fe3adb24a4dd1a00b36ac1c2c5b5293a09cbaeaeda95f7eadb7479704b",
+      "known": [
+        "5e7925d598a7fa8f1ab0f2d8c2e58c1ef19215dae54502cb937514b8722edc7b",
+        "94f9690f3ce85ab7a2c3b5aa7b787841c975501361b67597f40ff8094e65d886",
+        "f1bb0ef8c71a33c90b7b9953ad181c136cd6b77357a92f997cb5d0643f9ce539"
+      ]
+    },
+    ".control/GOALS.md.template": {
+      "strategy": "managed",
+      "sha256": "5ec51c292a11a67e7870ec3a78cdac70093f3e6b48f216acdc1908d26b7f0e2a",
+      "known": [
+        "d059917deca63e34635db8dfeade5e6f4146e0e05bd588b0c319307cb617d864"
+      ]
+    },
+    ".control/PROJECT.md.template": {
+      "strategy": "managed",
+      "sha256": "87b1323392d97879316d5a35c60e282013f89b954b65fcaa65b106dc109991c0",
+      "known": [
+        "6644be61741fa1946874d441413450c065466084b7b25f635c1e9102c134453a"
+      ]
+    },
+    ".control/ROADMAP.md.template": {
+      "strategy": "managed",
+      "sha256": "2fd3214219418e8e83396176bacdfca440e5571e331664477ad26bbd0f6117bf",
+      "known": [
+        "16d89b6ce6827bd8fb943782fb18f7b68feed5250c1d7ebcc869536c66711ab8",
+        "93bb88ffeb67d4b9d8513d31b53391123602d080e028b9bb9b433baf5fc1c1af"
+      ]
+    },
+    ".control/SYSTEM.md": {
+      "strategy": "managed",
+      "sha256": "678be3edd36bde8bbcc5fc2dc40aa578f58c8824b8b384c7d4bdfac611f94b68",
+      "known": [
+        "213aa5a593d411fbc73e5b18f481a38fd12d623753ab90218adea5bafe35b652",
+        "aabdd91e4de54519017a9fee21edddb693be880fc10f4dfa5e1da2167f976b26",
+        "bb6b11a031cf307b174bdc023467367e20ebbf1eecf1a6ce380f3211e95c94fd",
+        "bda2b82bec763d9b26fbfa0ef9ac04df835ba81ab67c9884089a91dd76c6f096"
+      ]
+    },
+    ".control/decisions/.gitkeep": {
+      "strategy": "create_only",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "known": []
+    },
+    ".control/diagrams/.gitkeep": {
+      "strategy": "create_only",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "known": []
+    },
+    ".control/docs/_index.md": {
+      "strategy": "create_only",
+      "sha256": "6fdbba781679823d5b8d25a3afd71939820410032ff0f3962f9a343d33a7aade",
+      "known": []
+    },
+    ".control/docs/api/_template.md": {
+      "strategy": "managed",
+      "sha256": "c6673d472622da38574db98759c7f60048c84620dcbebaaecbabbf46799d268b",
+      "known": []
+    },
+    ".control/docs/database/_template.md": {
+      "strategy": "managed",
+      "sha256": "581789905d77eca6cff62fbfb852062cf3773273d0d703dadb5343ba21a17283",
+      "known": []
+    },
+    ".control/docs/guides/_template.md": {
+      "strategy": "managed",
+      "sha256": "b8c3e05b0f318ea28d6c58efe4074354063584b03e8159ce0c0602dcc5f3aaea",
+      "known": []
+    },
+    ".control/docs/reference/_template.md": {
+      "strategy": "managed",
+      "sha256": "a36495463990254f7b41987b6d44a5a492ee5339190817a2869fb5760261cb6d",
+      "known": []
+    },
+    ".control/docs/tutorials/_template.md": {
+      "strategy": "managed",
+      "sha256": "8c0212e722eaa6897f8456fe226a5eda0db04591396a21ef4386f5a96030d4f5",
+      "known": []
+    },
+    ".control/flows/_index.md": {
+      "strategy": "create_only",
+      "sha256": "afe4904e3dc8d7abade10bfb4af689fae56acdc2fda4b059ef9b3892e6123724",
+      "known": [
+        "cd11243c70650f0216c84804129ce2653fe02d7c1e8e82cd50b1b1166df6b931"
+      ]
+    },
+    ".control/frontend/server.py": {
+      "strategy": "managed",
+      "sha256": "44829310c1679e80e5bb26a8ff9af4cd2503cb22c250215cfb78f751cb8039a2",
+      "known": [
+        "49e058287723faa8bf44a5532dae7a8a58ab0e077a57f22cabd792b53ac0449c",
+        "555cf126133b3049ac561cfa4439f2da13e24c2b66879d85e8a3e7845a2d6689",
+        "7c8cb25c7950d4a3a730aa491ad4f3e8d6d3e722dabb42267662e28cf7c121bf",
+        "8d08602f1fa8441b2e7ed1d6be91244f8153b841547fa3dcc0ca430aa56e6f38",
+        "9c01725deea26a4bd348932ba4bc5b7817e153b8ad52f17eb9d76b98c4f8179b",
+        "f4565337cecd75e517e3a2fb59a14fb648ddd42453e0070ed700257512e56b57",
+        "f90eb5fdb0f314a88cff16ad8b54912280270a75ad9c893d335dffca4e495d89",
+        "fa1a9dc9dbffedda74f3b771f4d270b0ff5d4df5b77adda694a1ff69429e49b4"
+      ]
+    },
+    ".control/frontend/static/app.js": {
+      "strategy": "managed",
+      "sha256": "4bd41ddcf99552abea57e8c722cd72940e38ee418e5899475ff826b38ab542d1",
+      "known": [
+        "61ac3900d81fbc819e78aa6534304963b51dd846cbdfc61705cc8a074942bef3",
+        "dc04bbfd009d4a57b3595fa7834fa3ca0a832c47177a244fba0634309272da96",
+        "e5bdd217e1962b767917e319047bd3ee61e1281e2852efe785e331254b7a65a8",
+        "f2b75dd3df73088a80396ceed85d8b82ea65411d8a4b722e864cf41f166a19b8"
+      ]
+    },
+    ".control/frontend/static/enhancements.js": {
+      "strategy": "managed",
+      "sha256": "77b07b23aa999932d9e2810d26762d5d272fc956495b6be4a1600bf553f33e7c",
+      "known": [
+        "4f3aa7732bd20ab16e44c1e7d45b17bfddfde36d56c5efe336e957a9fda348a3",
+        "58e3f6513d0abc0b958c8f6130291e9edf55843ab12dddc3377ce743dc775112"
+      ]
+    },
+    ".control/frontend/static/index.html": {
+      "strategy": "managed",
+      "sha256": "84d7aa061314140fbd0b76b51cc47c585a99a9255f1b8963e93bd5c3fd4cab17",
+      "known": [
+        "6589e19b17d17d1d903dab57ac4021ac057e9483de5d4acb3e1e92565a69feea",
+        "80f3a6e278d9921102c40674d9be9f2793fc8ad1203581d4b98c3fe72e544628",
+        "c0e2a33a291d74a584ef41aa619a0fdbabef484646f651e554c8e7159a3117f1",
+        "ff435c0e60a20425b8ab25c0a03cd0e13a0e0546ad3afd4d70a5402035f10c5e"
+      ]
+    },
+    ".control/frontend/static/styles.css": {
+      "strategy": "managed",
+      "sha256": "34eaf92d638c8779256935e601566396f71cff12014403ba0e3d556391056173",
+      "known": [
+        "08a4ebf2d0789a9a4186d8ec7863f7b88ef1b1d2b9bec19288e3396067d583b5",
+        "17fcc8c4d0ca820f830384de3589921d98e8b176ec9cefa0a0d6f13416f8c661",
+        "88ca1e44c5f0d6e578f00c255fae49bb625477ce5279b794e237c12e630e15aa",
+        "e48f7ff10bea8777c0e8b1aa577f94d19e66c5449948980ce2a00b85f3d6b139"
+      ]
+    },
+    ".control/prompts/prompt_existing_project.md": {
+      "strategy": "managed",
+      "sha256": "6e67d8c27b783937951b745b5e7d1787d5ca59d9138c8fa243e7ead719e017ce",
+      "known": [
+        "54cf660392dd2d2dc3d47a24159e0b1cbb968a607e7db42fceb820faa984c625",
+        "846c57a437a8726db751512be9dec0956c50aae3c605a20421bb8b3e407b0644",
+        "c4981d6b74dd886bac055e872daa63e368da4ad43c73191ee6581cdfda6a9bbe",
+        "e904a8d685a1ef2ad3a3798584d022c1cabc2b859ac660d97cf45ddc4330f5a4",
+        "f6eebc21d1b93a18b6a2573809614d4df1dd903c2c6a845b565f2c1f6a3d1fa5"
+      ]
+    },
+    ".control/prompts/prompt_new_project.md": {
+      "strategy": "managed",
+      "sha256": "bf6f9c14afd6d6d776914c52ad50d3470a8cb3e472639025ced6379a781ee36b",
+      "known": [
+        "13865aaa88e318c10427d69f193476f06c101a7cc5490d50303fb487d6c2912d",
+        "618349108724d38d3b3e4480b40db61713844a00f18bb7b5f4142aed777b7a61",
+        "6fd96ddfbe55a7d3452fdcbf957d5dc34b243c8e71936f8bc3d1ff2158a1d664",
+        "9c516ae5e0f3b156106c58db435b4d84b0d7839d2c2e2cde04e7007fbec89317"
+      ]
+    },
+    ".control/roadmaps/_index.md": {
+      "strategy": "create_only",
+      "sha256": "8a9cddfadeb08b0b43606873ad845459ec32cffbdaadf440f84a10ba78f4d3f9",
+      "known": []
+    },
+    ".control/roadmaps/initiatives/INITIATIVE-XXXX.md": {
+      "strategy": "managed",
+      "sha256": "166715ce92eab82c8853c1c4302207f6483bba25c132a77db3c134846dd7e402",
+      "known": []
+    },
+    ".control/roadmaps/milestones/M-XXXX.md": {
+      "strategy": "managed",
+      "sha256": "e649be1f8520e5e708ba6d309f85d67f0dc8616c3d45e93786e6b2c56bd354a6",
+      "known": []
+    },
+    ".control/roadmaps/phases/PHASE-XXXX.md": {
+      "strategy": "managed",
+      "sha256": "8af276b947713aab8116b1a3a86bdf744dfef6f2c32d07f899f6e179aecfbde6",
+      "known": []
+    },
+    ".control/scripts/lib/__init__.py": {
+      "strategy": "managed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "known": []
+    },
+    ".control/scripts/lib/agent.py": {
+      "strategy": "managed",
+      "sha256": "06ea53c3df403b78250bc740f2178dce9fe915f03c024e479d05cafadbff1e55",
+      "known": []
+    },
+    ".control/scripts/lib/arch.py": {
+      "strategy": "managed",
+      "sha256": "b541cf9485465d865ae55bcceb39df25ede0c581104717bc3ea5ea71bdfc9af1",
+      "known": [
+        "46e6fade7899d97e91ce7aa3b21f606d30d8d70ee573e8794539a58f252a091d"
+      ]
+    },
+    ".control/scripts/lib/atomic.py": {
+      "strategy": "managed",
+      "sha256": "a34ffe2061949cd465720f7d4040768873dc8e1da80e59f600722043dab0c6f1",
+      "known": []
+    },
+    ".control/scripts/lib/backups.py": {
+      "strategy": "managed",
+      "sha256": "3d48aaf301ec1478a66e3fe075fa614101ad43a87e87cbdac171c90da393ea7a",
+      "known": []
+    },
+    ".control/scripts/lib/brief.py": {
+      "strategy": "managed",
+      "sha256": "babffcda4c886bc4a94be3b8b0cb3e0ffbe8dc9186879fc669ed08cbe35d8bb0",
+      "known": [
+        "d58e46fec73b15688aebc5a9a85ab30918938e82780f22abe51eea2248c41f7e"
+      ]
+    },
+    ".control/scripts/lib/context.py": {
+      "strategy": "managed",
+      "sha256": "1d9ec79ddef208891e7e807533b276c85ac7019232598208153890f3b26cdc0b",
+      "known": [
+        "09f30daf05d9b43492a989c49ebb0f2e3f87dd41b30016069b7566754d5e0753",
+        "0e5c6c257bd48a81a38db9918c919c915cf0cecfb612104863939e6e4cf4f5bc",
+        "cc7696c364edb0e9a0fedbb411cde9f5466f2918f07d51591a2d5299c7af5766"
+      ]
+    },
+    ".control/scripts/lib/decisions.py": {
+      "strategy": "managed",
+      "sha256": "0bf0abbfd71381b5054e1fb31c1ea6df02c8f359ce61cf88a5d191694c562ebd",
+      "known": [
+        "683b4aef3c2272fa7205fcb7824242b8a5009298dc1a199ab203bd2c2a1b4247"
+      ]
+    },
+    ".control/scripts/lib/doc.py": {
+      "strategy": "managed",
+      "sha256": "ed0f0da5ff3015a98a7468e278031557a77c0730244ef9572e35629cd1aaf6a3",
+      "known": []
+    },
+    ".control/scripts/lib/docs.py": {
+      "strategy": "managed",
+      "sha256": "58cac455dc8dc802c22383106b745caf16b27cb804ed1a7ad8b54f9a5bede989",
+      "known": [
+        "24a06ab9603bf05b05c23b35df59a72bc17f27d00e99551dcccf80b742b5768b"
+      ]
+    },
+    ".control/scripts/lib/doctor.py": {
+      "strategy": "managed",
+      "sha256": "e48c042b39e9a247217e13118503840993bccbca2873ef5f0f03dac8b17af8e2",
+      "known": []
+    },
+    ".control/scripts/lib/event_log.py": {
+      "strategy": "managed",
+      "sha256": "c2c9255432cd183d30355a413ac825278054f67dcd91ddbee75845cbeb431b19",
+      "known": []
+    },
+    ".control/scripts/lib/flows.py": {
+      "strategy": "managed",
+      "sha256": "987f7e1ff4464c585ff76b284c3e54df5b088b06c4d440073542ef7183e3c15a",
+      "known": [
+        "e3d2c28ec9a4f02e04b1c52b0ee5409c5ac6fc5583b8f92dea520e44763bd99c"
+      ]
+    },
+    ".control/scripts/lib/fm.py": {
+      "strategy": "managed",
+      "sha256": "b5ff95e111b48c52de928179ef676fec985fb932da53dfe321597e397ab6ad1a",
+      "known": []
+    },
+    ".control/scripts/lib/git.py": {
+      "strategy": "managed",
+      "sha256": "44873f77e63e8edc985b3b345503cc6304bc1a4b02fa6faf7cf8d985d62536a0",
+      "known": []
+    },
+    ".control/scripts/lib/graph.py": {
+      "strategy": "managed",
+      "sha256": "8f0eae7c2a7c7922f837499a89eab07cc3e6dfe1229d9279c542e11937136947",
+      "known": []
+    },
+    ".control/scripts/lib/indexes.py": {
+      "strategy": "managed",
+      "sha256": "e36c74578f8090a8d99f3dcd883a7b58100dbda6b553ecb7ef136b4b6e69ea8a",
+      "known": [
+        "2d8d40c80106f0ba928761e183bc4e0ef4dd92b9b3e2a188505c56097796f2b9"
+      ]
+    },
+    ".control/scripts/lib/lock.py": {
+      "strategy": "managed",
+      "sha256": "e5e6954fa885e5a83836fea0bc70c0a22a82be43f224b8bfca3ac1cf2a075eb5",
+      "known": []
+    },
+    ".control/scripts/lib/migrate.py": {
+      "strategy": "managed",
+      "sha256": "4cf751c6df26e8e2fe4af37775c3570a12015b82cffa48b29b7ee1910bf8924d",
+      "known": [
+        "622fec90b83b6e089e901466378ed153a52e40bf2da6d9be81f6022a73b76240"
+      ]
+    },
+    ".control/scripts/lib/paths.py": {
+      "strategy": "managed",
+      "sha256": "1b9d067e1981d060d016c71d57973e9c1b584b0a8b8854524567041464c015af",
+      "known": [
+        "132234ee5f1f7317b609f17bdca7ea84edf15cfb4666c6cd9e9aec56ac9d8c74",
+        "c252baadab42380f31d2fbbdd9e31398f1876d0e2e5d5dd65e25cacb6b8e3b62"
+      ]
+    },
+    ".control/scripts/lib/roadmaps.py": {
+      "strategy": "managed",
+      "sha256": "31edcbcfff2c74bc7b521f251f2d7f3d431a1cb7db25e1fff5f44e1a53cace58",
+      "known": []
+    },
+    ".control/scripts/lib/schema.md": {
+      "strategy": "managed",
+      "sha256": "8bdeebc86e53326645b59506cec82af101311a914e6c8d141b9051647a2d2164",
+      "known": [
+        "a39b6588a961dbd0c70387670f46d55431b979afa773b1f27196bf68d4fb2ae9",
+        "fc2f639e18eeb6193a87d2b6b8c23d2b20c6628a088a6a3a730f9a198f37bd38"
+      ]
+    },
+    ".control/scripts/lib/search.py": {
+      "strategy": "managed",
+      "sha256": "8031428eb1c13a3229950a9716b1256e45cd8f523687296e06eed90b3b4415a0",
+      "known": [
+        "8b76bbaad8c184ce1fc9a5359046b167e767dfc58960bda0f292590f1a27d7e0"
+      ]
+    },
+    ".control/scripts/lib/sections.py": {
+      "strategy": "managed",
+      "sha256": "83cdf5824515313cccec32e190cbb635a6f6c8dfe19bf9cbce4ecbdfa6c4bf08",
+      "known": []
+    },
+    ".control/scripts/lib/sessions.py": {
+      "strategy": "managed",
+      "sha256": "552a340a45f4eaa79ddca4169a03e96aa72724d8faab1d4ded69f10b5b4e8022",
+      "known": [
+        "22a708953e127a10c9597f54265351c6287991ea53bf7fcd7f8f93948bf6697f",
+        "46ad514f016fc763aca24f2ae18af8cea3ad6dee902c4a0595f552b4250ce374",
+        "e5d688cbf65a2447245d525cb9df038b8195daeac41dff3c11120d21d19eb1ea"
+      ]
+    },
+    ".control/scripts/lib/skills_registry.py": {
+      "strategy": "managed",
+      "sha256": "f10f70c1a1b84105f35915ed4605efc3b2337d568f03ca2ed9819e66b84108a9",
+      "known": [
+        "5167db7f0b09b8197c37edcf1cbcbd5862eca25111e886a4c9b7bc7623c07fbb",
+        "6110429fccc31232519861924b4ff2f5376e93e23aeed779f9f23671782119a9",
+        "f86e0fb3ee3f525a9eca752dd2bc2662da42ad30bae8b3e6cab1b5008bf8891a"
+      ]
+    },
+    ".control/scripts/lib/tasks.py": {
+      "strategy": "managed",
+      "sha256": "90dd31053710b7fb7153ca2745ee34a8bd3e213c685f88f9880682bc50e9889a",
+      "known": [
+        "3cbfa3713117d1c61fb1abf8f9dd565e689486edff88041f3adc2b0bf92c11bb",
+        "d08304a780120e3967ea65b9142c3b96093b7b30a50b241bd4a32bca53b6059e"
+      ]
+    },
+    ".control/scripts/lib/updates.py": {
+      "strategy": "managed",
+      "sha256": "e2b0b060a8a255cd9850b4596bf5a1db059d5a28eac520a68293e04a7f5d07a6",
+      "known": []
+    },
+    ".control/scripts/lib/validate.py": {
+      "strategy": "managed",
+      "sha256": "7110f0adcf8d93847125df28eb634865a6df9fc27e116c48bcc051a9dfdd0ae2",
+      "known": []
+    },
+    ".control/scripts/pctl.py": {
+      "strategy": "managed",
+      "sha256": "a3ceaefa0d26aa0729efaa0971c095f36db833c30e3ce0b870c6e3e841ea1b09",
+      "known": [
+        "16aab33fa4b314d0ad058a74708e4e567706cc1ce69e23b24bed6c81e5b42272",
+        "3343aa4fd98d73a6d12ccd24a7f2e5b4d19361f706f0476ea4e5971cb34cebe6",
+        "686dfb01bb5a0eb946cc02ea0d54ccb25a49f68451f9047e900c0a4c2955b945",
+        "a7971d715403f1f0ce0ca29209fefe8a6a4ab6a731c4c49afcc3831fd4da7850",
+        "e81744a61a0080aa78c40878a7321a62036316624fbaea048063b336fce0be6d"
+      ]
+    },
+    ".control/scripts/update.py": {
+      "strategy": "managed",
+      "sha256": "69c211fbd9b4d677525efb82e4791a87830054cfa2b01a9840637792faad5be0",
+      "known": [
+        "02c9a3e8f7e2ca0d37a01a480eae016b75b259e8d2ae08bd927c7372168dc4a4",
+        "03771d3480e8b727051f35273ec72c9f61e91bb131ea53868f5a60e5d06c94d7",
+        "217d95655783e7a23023a152b36d15b312d38dbd11cff48b6f023323ec63e64c",
+        "28fe4eac6f106e680134a3f4c5b5626269a81e4c40133729b4d53ca75e853880",
+        "41c64ad1b99c5d7d10cadb18945eccf5d690ff5956be8b816050e75868f860ce",
+        "b4e7658f49d5d04eef09398047ca0cf445984ed1d59bfcba4b13d67fdcbbb814",
+        "cfa482aab5e08c015e401d2e6f5b54ceecc5dcc7af0c3d70bd7773e424a99c85"
+      ]
+    },
+    ".control/skills/_index.md": {
+      "strategy": "skill_registry",
+      "sha256": "5d54433a5175dacea35ad49e10fd665c6ee9a7f487b477748f9832361397f33b",
+      "known": [
+        "a5e010e4c929dfc555355b1e3d8324f3548d925ba580c3ac1f830c5f93841573",
+        "aaf7731acab4867e070465a488e03b525be292d41d401f1887b4d9ceeb1af171",
+        "e29c4c5fc41a59e7d20389da4c5a15905a4eb19bf2b404176e197fd4a711793a"
+      ]
+    },
+    ".control/skills/architecture-update.md": {
+      "strategy": "managed",
+      "sha256": "889c11a78891e6c57a19164caa6c0de826133b9a8a27d9e442a290b5e01ee404",
+      "known": [
+        "516ca484f4fa13a64b37b35bdf7b91af4e1457f1816d7fef4a0bac39465e2bac"
+      ]
+    },
+    ".control/skills/code-review.md": {
+      "strategy": "managed",
+      "sha256": "c6e23ba90d9deb90802d6a66ec6fb69c89d51b38ec5a4b4dba69b4ad83f2360f",
+      "known": [
+        "e8913bcf0676ceb055bc3b4ad2f5f829c5da4df16e1e1c4d268960e25d9e7bdb"
+      ]
+    },
+    ".control/skills/context-budget.md": {
+      "strategy": "managed",
+      "sha256": "8793e1716369eedb67a0a919535ad7b126ab0fd93cab363e3e789e5c73a9947c",
+      "known": [
+        "49f22cf7c2356c25af222bd5e73dfb289478e304d7aedfff8da323bc27be8782",
+        "7246f8303b9388c5d5e1d33ccb379d13b8d007420cafd6d3a6cad98a5d3df71a",
+        "f7dcc71f0c6697a4e837ff6023e25f6178d3c4f83813524eef563bc10037296e"
+      ]
+    },
+    ".control/skills/context-maintenance.md": {
+      "strategy": "managed",
+      "sha256": "8de2b700a56af8093f5abc8974c0cb853f3ded2da57f0e48cb6c9d22208a9bce",
+      "known": [
+        "560a7c25eb85e3c81ad3a0d0b7173bd87781991119578481a9c554688d25d7fb",
+        "a26f9b40be181c0c569f8be8a840a35a9e49297d71d3868751e288cb620c8db7",
+        "be7dc2ccd078ead33264d1486bf03ea9b41dae08ef954a13704dd51ef20d9259"
+      ]
+    },
+    ".control/skills/debug-triage.md": {
+      "strategy": "managed",
+      "sha256": "b70817ca4ca43b59a1aa30d1ba48bf11b32e7ded36e9d91edac00f4a3226a313",
+      "known": [
+        "849338fdf4ad0adc8dca27054c2ddd0fbafdc546ba37762006012e298591612c"
+      ]
+    },
+    ".control/skills/decision-record.md": {
+      "strategy": "managed",
+      "sha256": "1b7714941a5ee2d41ac18f39c3dfb749575b93179427e97ba39327a21963f1c6",
+      "known": [
+        "621d09d02ee1935876c8867dba634d54a5e8eaab0cfa88c055d1b18a1206f4bd"
+      ]
+    },
+    ".control/skills/deprecation-track.md": {
+      "strategy": "managed",
+      "sha256": "855cb30300b75d12750d2b941488b253e941034a0fff6da6bcdfb1cdb6f36d26",
+      "known": [
+        "e2bd63c77e7e3e840d8ed185ba309f14b011a08adacfe6fc8684af4766a0bf81"
+      ]
+    },
+    ".control/skills/doc-concise.md": {
+      "strategy": "managed",
+      "sha256": "22c724bd840c51cd70b264e621e27754038872860be1fa288143d5ceb67db800",
+      "known": [
+        "44a78f4c2e35a0f50c23f3a843f52d4b6ff11b04b927174a7dde805cb63c4855"
+      ]
+    },
+    ".control/skills/doc-drift-check.md": {
+      "strategy": "managed",
+      "sha256": "4cf840644985bd1cfc1a32481dc246918679ddd789399e181062fa0d0db2c8a2",
+      "known": [
+        "a89168ee8b8d3dc1dd075f3e182b62a4052c18c1b2a541da8dd4af5eb6b16995"
+      ]
+    },
+    ".control/skills/docs-management.md": {
+      "strategy": "managed",
+      "sha256": "8fb44850178083cc0b557f4e62f7934ed5c1eabfc459cbcd58074731f7fcd458",
+      "known": []
+    },
+    ".control/skills/domain-scoping.md": {
+      "strategy": "managed",
+      "sha256": "9cb990026124139c8f3d83bfcfb0457e67f60763aef4ee683189a1eb52f8834f",
+      "known": [
+        "94d99c2e0670beb5db2e918e70941ca3c745893fe3610e9cc076e185c17b852f"
+      ]
+    },
+    ".control/skills/flow-mapping.md": {
+      "strategy": "managed",
+      "sha256": "c1cad950c0f8d7afc4be65b1bfabb3555f3eb4e22703101c0f3d970cfdfd0b53",
+      "known": [
+        "1648ab12bfda2fbc802e37d12804ff94a16f2c5d9c1ccf9346b40b1e94d773e5"
+      ]
+    },
+    ".control/skills/goal-check.md": {
+      "strategy": "managed",
+      "sha256": "f3f99c6b20cfccbae0035f28b98be50d4b94da71831778d1e26cc2709b2bd2f1",
+      "known": [
+        "b4c978f3963f66dd39291fdf6312baeecf982a4f47d48222063c895eac543915"
+      ]
+    },
+    ".control/skills/onboarding.md": {
+      "strategy": "managed",
+      "sha256": "1f27da7b1f02734cca996ff26ec99b288a63fcc4568dfee6b50c90135a4a17eb",
+      "known": [
+        "0c18e4b249893402acd5646dfd055c2bbfdcc1e21c01a432c28714490a2b2691"
+      ]
+    },
+    ".control/skills/refactor-plan.md": {
+      "strategy": "managed",
+      "sha256": "2424d5e4110d3f5c09ae2e8d291e56475ee05d3384300d5323ef1e365291b649",
+      "known": [
+        "626048d7d574749c3fbb5babf08c9058c9c8b88230bd077d2fa25d11edbc4deb"
+      ]
+    },
+    ".control/skills/roadmap-management.md": {
+      "strategy": "managed",
+      "sha256": "d69bf378e62ea5179d27f3de500909d516007ebd2bb96d70ff277fdaf909fc3d",
+      "known": []
+    },
+    ".control/skills/session-close.md": {
+      "strategy": "managed",
+      "sha256": "144d552231e5df1d31292f919868bb1edc96aa3dfaf16e8685d8750445027f5b",
+      "known": [
+        "a8dd53447cfd539b937ce94a379a0be882dd2cc83136d9e6044b580a7a894266",
+        "b24bd69e961883a12f9bd8d37373145fcabef4e9955a04713d2d4f7d718d8e82"
+      ]
+    },
+    ".control/skills/skill-authoring.md": {
+      "strategy": "managed",
+      "sha256": "b8472c5080e163ba463983e57a32f093477daa540058bbb929396bf64680bf11",
+      "known": [
+        "9936852a3648d94e18abf36042a7e06b7318b81314fd2934f81b6f1a11de95ea"
+      ]
+    },
+    ".control/skills/task-intake.md": {
+      "strategy": "managed",
+      "sha256": "4321136da38ad0b7dbb9cd455fa57cd74f6eb94e8851cdaf401d1413c0024ce5",
+      "known": [
+        "f96a9791f1cab2dc7a49ae4119d085025dfca519cb5e77aa9ecd741f592fb4e3"
+      ]
+    },
+    ".control/skills/task-promotion.md": {
+      "strategy": "managed",
+      "sha256": "5d3dd39bb0fdca49d14e522a2fd740d50eda1ddab32c4cfe267ea997c329b839",
+      "known": [
+        "fd0c6d2e7d050ea54a0269abde4861272e3defa552644fedf93f793b01476ff2"
+      ]
+    },
+    ".control/skills/test-gap.md": {
+      "strategy": "managed",
+      "sha256": "bb50161d459731b0c79efff894fef8f88b526c0513108599446d8e658cc5d858",
+      "known": [
+        "ac838b10620d45dc60e2a0a448216b8c0fba092bc621cad29defb763c1c72034"
+      ]
+    },
+    ".control/tasks/BACKLOG.md": {
+      "strategy": "create_only",
+      "sha256": "1689691d67316afe1a9ba780b8cc8c4b9827b4e71e823e4f14f255a0be34b569",
+      "known": []
+    },
+    ".control/tasks/DONE.md": {
+      "strategy": "create_only",
+      "sha256": "6c711460caf925889bcbc198344a8f6154d657d942e6584ddfba1498586d767a",
+      "known": []
+    },
+    ".control/tasks/IN_PROGRESS.md": {
+      "strategy": "create_only",
+      "sha256": "94cfc06ad23cc12f67665e9fb5566a7bd9a25c60af80209e77ae8a1277225c02",
+      "known": []
+    },
+    ".opencode/agents/project-control.md": {
+      "strategy": "managed",
+      "sha256": "b762a98b816cf6fc45d98945d9c2d62b1fd0ecbc957d44da106dc7d0410e48bd",
+      "known": [
+        "0a5074c140c83a8c8b55721ef905d6c3284739462c1cbd42f7172a7746955e70",
+        "63c4ba4f71f3219d40bddfd434ccf83e7a5d10706633b90d092d52d85b240ed0",
+        "945b67f9cbd0cc09c7997df7924221942923fa6dd79f7532658d23c555c02bf4"
+      ]
+    },
+    "AGENTS.md": {
+      "strategy": "create_only",
+      "sha256": "21087d872d39708d5e666aa893bdf82347e8e61d0d05796b2adda0446c5e1b16",
+      "known": []
+    },
+    "CLAUDE.md": {
+      "strategy": "create_only",
+      "sha256": "1f2f2161a9010f0086dda5d6a82ae77ecfc871062942fcaf602477258fb8a851",
+      "known": []
+    },
+    "opencode.json": {
+      "strategy": "create_only",
+      "sha256": "8f8bafbc7050de90c7d847409c0b785f6398d9986bb45e76e0809c0dfd727bbb",
+      "known": [
+        "da6624083446882788c5382f12ad5ada23b33dd47d875b53443496bbfd8943c5"
+      ]
+    }
+  }
+}
