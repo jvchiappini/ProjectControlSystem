@@ -1,7 +1,6 @@
-import datetime
 import re
 
-from . import atomic, fm, indexes, paths, event_log
+from . import atomic, event_log, fm, indexes, paths, util
 from .lock import FileLock
 
 TASK_KEY_ORDER = [
@@ -9,10 +8,6 @@ TASK_KEY_ORDER = [
     "asignado_a", "creado", "actualizado", "depende_de",
     "bloqueado_por", "version_schema",
 ]
-
-
-def _today():
-    return datetime.date.today().isoformat()
 
 
 def _all_task_files():
@@ -41,7 +36,7 @@ def new_task(titulo, prioridad="media", tipo="feature", creado_por="usuario",
 
         n = _next_id(prefix)
         tid = f"T-{prefix + '-' if prefix else ''}{n:04d}"
-        today = _today()
+        today = util.today()
         data = {
             "id": tid,
             "titulo": titulo,
@@ -123,7 +118,7 @@ def move_task(tid, nuevo_estado, motivo=None, force=False):
         nota = ""
         if actual == "done" and nuevo_estado == "in_progress":
             nota = (
-                f"\n> reabierta el {_today()}"
+                f"\n> reabierta el {util.today()}"
                 + (f", motivo: {motivo}" if motivo else "")
                 + "\n"
             )
@@ -132,10 +127,10 @@ def move_task(tid, nuevo_estado, motivo=None, force=False):
         if actual == "blocked" and nuevo_estado != "blocked":
             data["bloqueado_por"] = None
         if nuevo_estado == "done" and force and motivo:
-            nota = f"\n> completada con --force el {_today()}, motivo: {motivo}\n"
+            nota = f"\n> completada con --force el {util.today()}, motivo: {motivo}\n"
 
         data["estado"] = nuevo_estado
-        data["actualizado"] = _today()
+        data["actualizado"] = util.today()
         atomic.write_with_backup(fpath, fm.dump(data, body + nota, TASK_KEY_ORDER))
         indexes.update_task_in_index(tid, data)
         event_log.log("task-moved", tid, {
@@ -183,7 +178,7 @@ def list_tasks(estado=None):
 def set_body(tid, new_body):
     with FileLock():
         fpath, data = _find_task_file(tid)
-        data["actualizado"] = _today()
+        data["actualizado"] = util.today()
         atomic.write_with_backup(fpath, fm.dump(data, new_body, TASK_KEY_ORDER))
         indexes.update_task_in_index(tid, data)
         event_log.log("task-body-edited", tid)

@@ -1,7 +1,17 @@
 # Skill: code-review
 
 Trigger: before `git-commit --yes`, or when the user asks for an
-explicit review.
+explicit review or audit.
+
+## Procedure (review of a change)
+
+1. `pctl review-context [--base main]` — the reading list beyond the
+   diff: docs whose `file:line` refs hit changed lines (`*`), callers of
+   touched functions in other files, duplicates, new dependencies. Read
+   those ranges; do not explore further unless they point somewhere.
+2. Run the checklist below on the diff.
+3. New copies of existing logic (`pctl dupes --changed`) are shared
+   instead (see `lean.md`, "Shared utilities").
 
 ## Checklist
 
@@ -23,10 +33,18 @@ explicit review.
    renamed, update `file:line` references in `.control/`.
 8. **New dependencies justified** — `pctl deps-check` lists them; each
    needs a reason (and an ADR in lean `strict`). See `skills/lean.md`.
-9. **Commit message in English** — the commit message must be 100% in
+9. **No duplicated logic** — callers use the shared utility, not a copy.
+10. **Commit message in English** — the commit message must be 100% in
    English, regardless of the language used in the user's conversation.
+
+## Whole-repo audit
+
+`pctl audit-plan [paths]` gives the order (entry points, hotspots,
+largest files, duplication). Apply the checklist file by file in that
+order. Findings too big to fix now become tasks (`pctl task-new`).
 
 ## Output
 
-If issues are found, list them as bullets BEFORE allowing the commit.
-If no issues are found, minimal output: "ok".
+One bullet per finding, most severe first:
+`file:line — what goes wrong — fix — cost if skipped`.
+List them BEFORE allowing the commit. No findings: "ok".

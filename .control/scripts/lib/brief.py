@@ -16,22 +16,12 @@ Sections are emitted in priority order; when the budget runs out, lower
 priority sections are cut and a pointer to the full source is left.
 """
 import datetime
-import subprocess
 
-from . import context, fm, lean, paths, sessions, tasks, updates
+from . import context, fm, lean, paths, sessions, tasks, updates, util
 
 DEFAULT_BUDGET = 8000  # characters (~2k tokens)
 LOCAL_RULES = paths.CONTROL_ROOT / "SYSTEM.local.md"
 PRIORITY_ORDER = {"critica": 0, "alta": 1, "media": 2, "baja": 3}
-
-
-def _git(*args):
-    try:
-        r = subprocess.run(["git", *args], capture_output=True, text=True,
-                           cwd=paths.CONTROL_ROOT.parent, timeout=5)
-        return r.stdout.strip() if r.returncode == 0 else None
-    except (OSError, subprocess.TimeoutExpired):
-        return None
 
 
 def _project_name():
@@ -208,12 +198,12 @@ def _sec_roadmap():
 
 
 def _sec_git():
-    branch = _git("rev-parse", "--abbrev-ref", "HEAD")
+    branch = util.git("rev-parse", "--abbrev-ref", "HEAD", timeout=5)
     if not branch:
         return []
-    dirty = _git("status", "--porcelain") or ""
+    dirty = util.git("status", "--porcelain", timeout=5) or ""
     n = len([l for l in dirty.splitlines() if l.strip()])
-    recent = _git("log", "--oneline", "-3") or ""
+    recent = util.git("log", "--oneline", "-3", timeout=5) or ""
     lines = ["## Git", f"Branch {branch}, {n} uncommitted file(s)."]
     lines += [f"- {l}" for l in recent.splitlines()]
     if n and lean.level() != "off":

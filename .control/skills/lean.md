@@ -30,6 +30,29 @@ and trace its flow first (`pctl search`, the flow/domain `file:line` refs).
 6. One line?
 7. Only then: the minimum new code that works.
 
+## Shared utilities (write once, use everywhere)
+
+- About to write logic that already exists elsewhere (the 2nd copy)? Do
+  not copy it: move it to the shared utility module for its topic and make
+  both places use it.
+- Compare behaviour before merging copies: error handling, timeouts,
+  return values, edge cases. Same name or same text is not proof. If they
+  differ, keep them apart (or make the one difference an explicit
+  parameter).
+- Copies in files the task does not touch: replace them in the same change
+  only when few and mechanical; otherwise create a refactor task
+  (`refactor-plan.md`).
+- Group utilities by topic (`dates`, `git`, `http`...) in the project's
+  existing utils location, or the stack's conventional one. Never one
+  grab-bag file.
+- List each shared module in `architecture/shared-utils.md`
+  (`pctl arch-touch shared-utils --crear-archivo`) with `file:line` per
+  function, so `pctl reuse` finds it first.
+- Files that must run standalone (installers, bootstrap scripts, generated
+  code) never import shared utilities.
+- `pctl dupes [paths] [--changed]` lists repeated function names and
+  copied blocks.
+
 ## Never cut
 
 Validation at trust boundaries, handling that prevents data loss, security,

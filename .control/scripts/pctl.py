@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import agent, arch, brief, context, decisions, doc, doctor, docs, flows, git, graph, indexes, lean, migrate, paths, roadmaps, search, sessions, skills_registry, tasks, updates, validate  # noqa: E402
+from lib import agent, arch, brief, context, decisions, doc, doctor, docs, dupes, flows, git, graph, indexes, lean, migrate, paths, review, roadmaps, search, sessions, skills_registry, tasks, updates, validate  # noqa: E402
 
 
 def cmd_task_new(args):
@@ -212,6 +212,19 @@ def cmd_deps_check(args):
 
 def cmd_debt_scan(args):
     print(lean.debt_scan(args.marker, apply=args.apply))
+
+
+def cmd_dupes(args):
+    only = set(review.changed_hunks(args.base)) if args.changed else None
+    print(dupes.report(include=args.paths or None, only=only, limit=args.limit))
+
+
+def cmd_review_context(args):
+    print(review.review_context(args.base))
+
+
+def cmd_audit_plan(args):
+    print(review.audit_plan(limit=args.limit, include=args.paths or None))
 
 
 def cmd_update_check(args):
@@ -582,6 +595,22 @@ def build_parser():
     ds.add_argument("--marker", help="palabra marcadora (default: lean.json debt_marker o 'shortcut')")
     ds.add_argument("--apply", action="store_true", help="crear tareas para los marcadores nuevos")
     ds.set_defaults(func=cmd_debt_scan)
+
+    du2 = sub.add_parser("dupes", help="codigo repetido que deberia ser una utilidad compartida")
+    du2.add_argument("paths", nargs="*", help="limitar a estas rutas (permite .control/...)")
+    du2.add_argument("--changed", action="store_true", help="solo hallazgos que tocan archivos cambiados")
+    du2.add_argument("--base", default="HEAD")
+    du2.add_argument("--limit", type=int, default=10)
+    du2.set_defaults(func=cmd_dupes)
+
+    rc = sub.add_parser("review-context", help="que leer fuera del diff: docs, usos, duplicados, deps")
+    rc.add_argument("--base", default="HEAD", help="ref de git (ej. main para revisar la rama)")
+    rc.set_defaults(func=cmd_review_context)
+
+    ap = sub.add_parser("audit-plan", help="por donde empezar una auditoria de todo el repo")
+    ap.add_argument("paths", nargs="*", help="limitar a estas rutas (permite .control/...)")
+    ap.add_argument("--limit", type=int, default=10)
+    ap.set_defaults(func=cmd_audit_plan)
 
     uc = sub.add_parser("update-check", help="consultar si hay version nueva del framework")
     uc.set_defaults(func=cmd_update_check)

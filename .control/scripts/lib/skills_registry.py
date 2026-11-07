@@ -1,6 +1,5 @@
-import datetime
 
-from . import atomic, fm, paths, event_log
+from . import atomic, event_log, fm, paths, util
 from .lock import FileLock
 
 _HEADER = [
@@ -11,10 +10,6 @@ _HEADER = [
     "| id | nombre | tipo | estado | disparador | ubicacion | creado_por |",
     "|---|---|---|---|---|---|---|",
 ]
-
-
-def _today():
-    return datetime.date.today().isoformat()
 
 
 def _read_rows():
@@ -108,7 +103,7 @@ def propose(nombre, tipo, disparador, ubicacion, creado_por="agente"):
                 "disparador": disparador,
                 "ubicacion": str(fpath.relative_to(paths.SKILLS_DIR)),
                 "creado_por": creado_por,
-                "creado": _today(),
+                "creado": util.today(),
             }
             _write_skill_file(fpath, data, body)
 

@@ -13,9 +13,8 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 
-from . import fm, indexes, paths, search, tasks
+from . import fm, indexes, paths, search, tasks, util
 
 LEVELS = ["off", "lite", "full", "strict"]
 DEFAULT_LEVEL = "lite"
@@ -53,44 +52,6 @@ def brief_line():
     return f"Lean mode: {lvl} - before writing code follow `.control/skills/lean.md` (`pctl lean <level>` to change)."
 
 
-# ---- project scanning (shared by reuse / deps / debt) ----
-
-ROOT = paths.CONTROL_ROOT.parent
-SKIP_DIRS = {".git", ".control", "node_modules", ".venv", "venv", "__pycache__",
-             "dist", "build", ".next", "target", "vendor"}
-MAX_BYTES = 1_000_000
-
-
-def _git(*args):
-    try:
-        r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
-                           text=True, encoding="utf-8", errors="replace", timeout=20)
-        return r.stdout if r.returncode == 0 else None
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-
-
-def project_files():
-    """Relative posix paths of project files (git-aware: honours .gitignore)."""
-    listed = _git("ls-files", "--cached", "--others", "--exclude-standard")
-    if listed is not None:
-        rels = listed.splitlines()
-    else:
-        rels = [p.relative_to(ROOT).as_posix() for p in ROOT.rglob("*") if p.is_file()]
-    return [r for r in rels if r and not (set(r.split("/")[:-1]) & SKIP_DIRS)]
-
-
-def _lines(rel):
-    p = ROOT / rel
-    try:
-        if p.stat().st_size > MAX_BYTES:
-            return []
-        text = p.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return []
-    return [] if "\0" in text else text.splitlines()
-
-
 # ---- reuse: what already exists before writing new code ----
 
 DEF_RX = re.compile(r"\b(?:def|class|function|func|fn|const|let|var|interface|type|"
@@ -113,9 +74,9 @@ def reuse(words, limit=15):
     if docs:
         out += ["Docs (follow their file:line refs):", search.format_results(docs)]
     defs, deps = [], []
-    for rel in project_files():
+    for rel in util.project_files():
         manifest = is_manifest(rel)
-        for n, line in enumerate(_lines(rel), 1):
+        for n, line in enumerate(util.read_lines(rel), 1):
             if manifest:
                 if any(w in _norm(line) for w in words):
                     deps.append(f"  {rel}:{n}  {line.strip()[:100]}")
@@ -210,10 +171,10 @@ def manifest_deps(rel, text):
 def new_deps(base="HEAD"):
     """{manifest: sorted new dependency names}, working tree vs `base`."""
     found = {}
-    for rel in project_files():
+    for rel in util.project_files():
         if is_manifest(rel):
-            before = manifest_deps(rel, _git("show", f"{base}:{rel}") or "")
-            added = sorted(manifest_deps(rel, "\n".join(_lines(rel))) - before)
+            before = manifest_deps(rel, util.git("show", f"{base}:{rel}", timeout=20) or "")
+            added = sorted(manifest_deps(rel, "\n".join(util.read_lines(rel))) - before)
             if added:
                 found[rel] = added
     return found
@@ -241,10 +202,10 @@ def marker():
 
 def _scan_markers(mark):
     rx = re.compile(rf"(?:#|//|/\*|<!--|--|;|^\s*\*)\s*{re.escape(mark)}:\s*(.+?)\s*(?:\*/|-->)?\s*$", re.I)
-    for rel in project_files():
+    for rel in util.project_files():
         if rel.endswith(PROSE_EXT):
             continue
-        for n, line in enumerate(_lines(rel), 1):
+        for n, line in enumerate(util.read_lines(rel), 1):
             m = rx.search(line)
             if m:
                 text = m.group(1)

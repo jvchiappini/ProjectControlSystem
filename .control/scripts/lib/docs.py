@@ -1,9 +1,7 @@
 """docs -- technical documentation management (guides, api, database, reference, tutorials)."""
 
-import datetime
-import re
 
-from . import atomic, event_log, fm, paths
+from . import atomic, event_log, fm, paths, util
 from .lock import FileLock
 
 DOCS_DIR = paths.CONTROL_ROOT / "docs"
@@ -27,24 +25,8 @@ for cat in CATEGORIES:
         DOC_TEMPLATES[cat] = tmpl.read_text(encoding="utf-8")
 
 
-def _today():
-    return datetime.date.today().isoformat()
-
-
 def _next_id(categoria):
-    prefix = ID_PREFIXES.get(categoria, "DOC")
-    cat_dir = DOCS_DIR / categoria
-    highest = 0
-    if cat_dir.exists():
-        for f in cat_dir.iterdir():
-            if f.suffix != ".md" or f.name.startswith("_"):
-                continue
-            m = re.match(rf"^{prefix}-(\d+)\.md$", f.name)
-            if m:
-                n = int(m.group(1))
-                if n > highest:
-                    highest = n
-    return f"{prefix}-{highest + 1:04d}"
+    return util.next_id(ID_PREFIXES.get(categoria, "DOC"), DOCS_DIR / categoria)
 
 
 def new_doc(titulo, categoria, tags=None):
@@ -60,8 +42,8 @@ id: {doc_id}
 titulo: "{titulo}"
 categoria: {categoria}
 estado: draft
-creado: {_today()}
-actualizado: {_today()}
+creado: {util.today()}
+actualizado: {util.today()}
 autor: agente
 tags: [{tags or ''}]
 ---
@@ -129,7 +111,7 @@ def touch_estado(doc_id, nuevo_estado):
             with FileLock():
                 data, body = fm.parse(fpath.read_text(encoding="utf-8"))
                 data["estado"] = nuevo_estado
-                data["actualizado"] = _today()
+                data["actualizado"] = util.today()
                 atomic.write_with_backup(fpath, fm.dump(data, body, _key_order(data)))
                 reindex()
                 event_log.log("doc-state-changed", doc_id, {"estado": nuevo_estado})

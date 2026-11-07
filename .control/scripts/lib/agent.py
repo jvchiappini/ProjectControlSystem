@@ -2,26 +2,9 @@
 context-init, session-continue, task-intake — todo en un solo lugar
 para ahorrar tokens y comandos repetitivos al iniciar sesion.
 """
-import datetime
 import re
-import subprocess
 
-from . import fm, git, graph, paths, sessions, tasks
-
-
-def _today():
-    return datetime.date.today().isoformat()
-
-
-def _try_git(*args):
-    try:
-        r = subprocess.run(["git", *args], capture_output=True,
-                           cwd=paths.CONTROL_ROOT.parent, check=False)
-        if r.returncode != 0:
-            return None
-        return r.stdout.decode("utf-8", errors="replace").strip()
-    except FileNotFoundError:
-        return None
+from . import fm, git, graph, paths, sessions, tasks, util
 
 
 def _domain_names():
@@ -46,15 +29,15 @@ def _last_session():
 def context_init():
     """Devuelve un resumen compacto (< 150 lineas) para arrancar sesion."""
     lines = []
-    lines.append(f"# Context Init — {_today()}")
+    lines.append(f"# Context Init — {util.today()}")
     lines.append("")
 
     # ── git ──
-    branch = _try_git("rev-parse", "--abbrev-ref")
+    branch = util.git("rev-parse", "--abbrev-ref", "HEAD")
     if branch:
-        dirty = _try_git("status", "--porcelain") or ""
+        dirty = util.git("status", "--porcelain") or ""
         n_changed = len([l for l in dirty.splitlines() if l.strip()])
-        recent = _try_git("log", "--oneline", "-5") or "(sin commits)"
+        recent = util.git("log", "--oneline", "-5") or "(sin commits)"
         lines.append(f"## Git — branch: {branch} · {n_changed} archivo(s) sin commit")
         lines.append(f"   {recent}")
         lines.append("")

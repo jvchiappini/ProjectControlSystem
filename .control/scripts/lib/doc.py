@@ -3,27 +3,15 @@ doc-update: actualiza architecture/<dominio>.md desde git diff.
 ref-add: agrega referencias estructuradas a tasks o dominios.
 """
 import re
-import subprocess
 
-from . import arch, fm, graph, paths, tasks
+from . import arch, fm, graph, paths, sections, tasks, util
 
 _REF_PATTERN = re.compile(r"`([\w./-]+:\d+(?:-\d+)?)`")
 
 
-def _try_git(*args):
-    try:
-        r = subprocess.run(["git", *args], capture_output=True,
-                           cwd=paths.CONTROL_ROOT.parent, check=False)
-        if r.returncode != 0:
-            return None
-        return r.stdout.decode("utf-8", errors="replace").strip()
-    except FileNotFoundError:
-        return None
-
-
 def _extract_changed_refs():
     """Extrae referencias archivo:linea del git diff sin commit."""
-    diff = _try_git("diff", "-U0")
+    diff = util.git("diff", "-U0")
     if not diff:
         return []
 
@@ -74,7 +62,7 @@ def update(dominio):
         body = (paths.ARCH_DIR / f"{dominio}.md").read_text(encoding="utf-8")
 
     # parsear secciones existentes
-    secciones = _parse_sections(body)
+    secciones = sections.split_sections(body)
     existing = secciones.get("Componentes clave", "")
     existing_lines = set()
     for m in _REF_PATTERN.finditer(existing or ""):
@@ -115,19 +103,6 @@ def update(dominio):
         "nuevas": nuevas,
         "flujos_marcados": flujos_marcados,
     }
-
-
-def _parse_sections(body):
-    """Parse sections from markdown body."""
-    sections = {}
-    m_iter = re.finditer(r"^##\s+(.+?)\s*$", body, re.MULTILINE)
-    matches = list(m_iter)
-    for i, m in enumerate(matches):
-        title = m.group(1).strip()
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
-        sections[title] = body[start:end].strip("\n")
-    return sections
 
 
 def ref_add(ref_text, task_id=None, dominio=None):

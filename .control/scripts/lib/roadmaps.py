@@ -1,9 +1,7 @@
 """roadmaps -- phase/initiative/milestone hierarchy management."""
 
-import datetime
-import re
 
-from . import atomic, event_log, fm, paths
+from . import atomic, event_log, fm, paths, util
 from .lock import FileLock
 
 PHASES_DIR = paths.CONTROL_ROOT / "roadmaps" / "phases"
@@ -152,26 +150,10 @@ creado: {fecha}
 """
 
 
-def _today():
-    return datetime.date.today().isoformat()
-
-
-def _next_id(prefix, directory):
-    highest = 0
-    if directory.exists():
-        for f in directory.iterdir():
-            m = re.match(rf"^{prefix}-(\d+)\.md$", f.name)
-            if m:
-                n = int(m.group(1))
-                if n > highest:
-                    highest = n
-    return f"{prefix}-{highest + 1:04d}"
-
-
 def new_phase(nombre, orden=1):
-    pid = _next_id("PHASE", PHASES_DIR)
+    pid = util.next_id("PHASE", PHASES_DIR)
     fpath = PHASES_DIR / f"{pid}.md"
-    content = PHASE_TEMPLATE.format(id=pid, nombre=nombre, orden=orden, fecha=_today())
+    content = PHASE_TEMPLATE.format(id=pid, nombre=nombre, orden=orden, fecha=util.today())
     atomic.write_with_backup(fpath, content)
     reindex()
     event_log.log("phase-created", pid, {"nombre": nombre})
@@ -179,9 +161,9 @@ def new_phase(nombre, orden=1):
 
 
 def new_initiative(nombre, phase):
-    iid = _next_id("INITIATIVE", INITIATIVES_DIR)
+    iid = util.next_id("INITIATIVE", INITIATIVES_DIR)
     fpath = INITIATIVES_DIR / f"{iid}.md"
-    content = INITIATIVE_TEMPLATE.format(id=iid, nombre=nombre, phase=phase, fecha=_today())
+    content = INITIATIVE_TEMPLATE.format(id=iid, nombre=nombre, phase=phase, fecha=util.today())
     atomic.write_with_backup(fpath, content)
     reindex()
     event_log.log("initiative-created", iid, {"nombre": nombre, "phase": phase})
@@ -189,9 +171,9 @@ def new_initiative(nombre, phase):
 
 
 def new_milestone(nombre, initiative, phase):
-    mid = _next_id("M", MILESTONES_DIR)
+    mid = util.next_id("M", MILESTONES_DIR)
     fpath = MILESTONES_DIR / f"{mid}.md"
-    content = MILESTONE_TEMPLATE.format(id=mid, nombre=nombre, initiative=initiative, phase=phase, fecha=_today())
+    content = MILESTONE_TEMPLATE.format(id=mid, nombre=nombre, initiative=initiative, phase=phase, fecha=util.today())
     atomic.write_with_backup(fpath, content)
     reindex()
     event_log.log("milestone-created", mid, {"nombre": nombre, "initiative": initiative})

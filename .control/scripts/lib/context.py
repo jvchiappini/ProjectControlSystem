@@ -1,12 +1,8 @@
-import datetime
 
-from . import atomic, fm, paths
+from . import atomic, fm, paths, util
 
 CONTEXT_MD = paths.CONTROL_ROOT / "CONTEXT.md"
 CONTEXT_KEY_ORDER = ["actualizado", "actualizado_por", "version_schema"]
-def _today():
-    return datetime.date.today().isoformat()
-
 
 def read():
     if not CONTEXT_MD.exists():
@@ -16,7 +12,7 @@ def read():
 
 def write(body, actualizado_por="agente"):
     data = {
-        "actualizado": _today(),
+        "actualizado": util.today(),
         "actualizado_por": actualizado_por,
         "version_schema": 1,
     }
@@ -60,7 +56,7 @@ def add_note(text, kind="fact"):
         if not data and not body:
             tpl = paths.CONTROL_ROOT / "CONTEXT.md.template"
             _, body = fm.parse(tpl.read_text(encoding="utf-8")) if tpl.exists() else ({}, "# Context memory\n")
-        line = f"- [{_today()}] ({kind}) {text}"
+        line = f"- [{util.today()}] ({kind}) {text}"
         if INBOX_HEADING in body:
             head, tail = body.split(INBOX_HEADING, 1)
             rest = tail.split("\n## ", 1)

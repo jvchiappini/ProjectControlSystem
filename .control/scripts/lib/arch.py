@@ -1,6 +1,5 @@
-import datetime
 
-from . import atomic, paths, event_log
+from . import atomic, event_log, paths, util
 from .lock import FileLock
 
 ESTADOS = ["sin_documentar", "parcial", "documentado"]
@@ -22,10 +21,6 @@ _DOMAIN_TEMPLATE = """# Dominio: {dominio}
 ## Estado de documentacion
 parcial — ultima verificacion: {fecha}
 """
-
-
-def _today():
-    return datetime.date.today().isoformat()
 
 
 def _read_index_rows():
@@ -67,9 +62,9 @@ def touch(dominio, estado="sin_documentar", crear_archivo=False):
             fpath = paths.ARCH_DIR / f"{dominio}.md"
             if not fpath.exists():
                 atomic.write_with_backup(fpath,
-                    _DOMAIN_TEMPLATE.format(dominio=dominio, fecha=_today()))
+                    _DOMAIN_TEMPLATE.format(dominio=dominio, fecha=util.today()))
             archivo = fpath.name
-        rows[dominio] = {"estado": estado, "actualizado": _today(), "archivo": archivo}
+        rows[dominio] = {"estado": estado, "actualizado": util.today(), "archivo": archivo}
         _write_index(rows)
         event_log.log("arch-touched", dominio, {"estado": estado})
         return rows[dominio]
@@ -93,6 +88,6 @@ def set_body(dominio, content):
         atomic.write_with_backup(fpath, content)
         rows = _read_index_rows()
         estado = rows.get(dominio, {}).get("estado", "parcial")
-        rows[dominio] = {"estado": estado, "actualizado": _today(), "archivo": fpath.name}
+        rows[dominio] = {"estado": estado, "actualizado": util.today(), "archivo": fpath.name}
         _write_index(rows)
         event_log.log("arch-body-edited", dominio)

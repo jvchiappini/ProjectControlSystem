@@ -283,7 +283,7 @@ Refer to them when the corresponding trigger occurs:
 | `doc-drift-check` | Session close or refactor of referenced code | `skills/doc-drift-check.md` |
 | `flow-mapping` | Behavior that crosses domains | `skills/flow-mapping.md` |
 | `context-maintenance` | Session start/close | `skills/context-maintenance.md` |
-| `code-review` | Before git-commit or when user asks | `skills/code-review.md` |
+| `code-review` | Before git-commit, or user asks for review/audit | `skills/code-review.md` |
 | `debug-triage` | User reports bug without root cause | `skills/debug-triage.md` |
 | `refactor-plan` | Refactor task or 2+ duplication | `skills/refactor-plan.md` |
 | `deprecation-track` | Something marked obsolete | `skills/deprecation-track.md` |
@@ -354,4 +354,6 @@ change follows `skills/lean.md`: reuse before writing (codebase, stdlib,
 platform, installed deps), the minimum that works, never cutting
 validation, data-loss handling, security or accessibility. Output is lean
 too: no reprinted code, no recaps. Level: `pctl lean [off|lite|full|strict]`;
-helpers: `pctl reuse <words>`, `pctl deps-check`, `pctl debt-scan`.
+repeated logic becomes one shared utility. Helpers: `pctl reuse <words>`,
+`pctl dupes`, `pctl deps-check`, `pctl debt-scan`; reviews start with
+`pctl review-context`, audits with `pctl audit-plan`.

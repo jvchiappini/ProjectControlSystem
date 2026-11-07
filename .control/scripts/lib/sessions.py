@@ -1,6 +1,6 @@
 import datetime
 
-from . import atomic, fm, paths, event_log
+from . import atomic, event_log, fm, paths, util
 from .lock import FileLock
 
 OPEN_MARKER = "(sesion en curso)"
@@ -9,12 +9,8 @@ HANDOFF_HEADING = "## Handoff"
 SESSION_KEY_ORDER = ["id", "fecha", "agente", "tareas_tocadas", "resumen", "version_schema"]
 
 
-def _today():
-    return datetime.date.today().isoformat()
-
-
 def _next_seq_today():
-    today = _today()
+    today = util.today()
     n = 0
     for f in paths.SESSIONS_DIR.glob(f"S-{today}-*.md"):
         n += 1
@@ -24,7 +20,7 @@ def _next_seq_today():
 def start_session(agente="agente"):
     with FileLock():
         paths.ensure_dirs()
-        today = _today()
+        today = util.today()
         seq = _next_seq_today()
         sid = f"S-{today}-{seq:03d}"
         data = {

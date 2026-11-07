@@ -1,7 +1,6 @@
-import datetime
 import re
 
-from . import atomic, fm, paths, event_log
+from . import atomic, event_log, fm, paths, util
 from .lock import FileLock
 from .indexes import reindex as _reindex_tasks
 
@@ -31,10 +30,6 @@ _TEMPLATE_BODY = """
 """
 
 
-def _today():
-    return datetime.date.today().isoformat()
-
-
 def _all_flow_files():
     paths.FLOWS_DIR.mkdir(parents=True, exist_ok=True)
     return sorted(paths.FLOWS_DIR.glob("F-*.md"))
@@ -55,7 +50,7 @@ def new_flow(nombre, dominios=None, disparador="", padre=None):
         dominios = dominios or []
         n = _next_id()
         fid = f"F-{n:04d}"
-        today = _today()
+        today = util.today()
         data = {
             "id": fid, "nombre": nombre, "estado": "borrador",
             "dominios": dominios, "disparador": disparador, "padre": padre,
@@ -91,7 +86,7 @@ def get_data(fid):
 def set_body(fid, new_body):
     with FileLock():
         fpath, data = _find_flow_file(fid)
-        data["actualizado"] = _today()
+        data["actualizado"] = util.today()
         atomic.write_with_backup(fpath, fm.dump(data, new_body, FLOW_KEY_ORDER))
         event_log.log("flow-body-edited", fid)
 
@@ -103,7 +98,7 @@ def touch_estado(fid, estado):
         fpath, data = _find_flow_file(fid)
         _, body = fm.parse(fpath.read_text(encoding="utf-8"))
         data["estado"] = estado
-        data["actualizado"] = _today()
+        data["actualizado"] = util.today()
         atomic.write_with_backup(fpath, fm.dump(data, body, FLOW_KEY_ORDER))
         reindex()
         event_log.log("flow-status-changed", fid, {"estado": estado})

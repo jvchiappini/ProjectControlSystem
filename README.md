@@ -201,6 +201,9 @@ python3 .control/scripts/pctl.py <comando>
 | `reuse <palabras> [--limit N]` | qué ya existe: docs, definiciones en el código, dependencias instaladas |
 | `deps-check [--base REF]` | dependencias nuevas en manifests (package.json, requirements, pyproject, Cargo, go.mod...) |
 | `debt-scan [--marker M] [--apply]` | comentarios `shortcut:` en el código -> tareas de deuda en backlog |
+| `dupes [rutas] [--changed]` | funciones con el mismo nombre y bloques copiados (candidatos a utilidad compartida) |
+| `review-context [--base REF]` | qué leer fuera del diff: docs que apuntan a las líneas cambiadas, usos, duplicados, deps |
+| `audit-plan [rutas]` | orden para auditar el repo: entry points, hotspots, archivos grandes, duplicación |
 
 ## Estructura
 

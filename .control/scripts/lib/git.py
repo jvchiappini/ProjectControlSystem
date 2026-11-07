@@ -6,7 +6,7 @@ Always ask before committing (print message, require --yes).
 import re
 import subprocess
 
-from . import paths, tasks
+from . import paths, tasks, util
 
 TYPE_MAP = {
     "feature": "feat", "bug": "fix", "refactor": "refactor",
@@ -19,29 +19,15 @@ BRANCH_PREFIX = {
 }
 
 
-def _git(*args, check=True):
-    cwd = paths.CONTROL_ROOT.parent
-    try:
-        r = subprocess.run(["git", *args], capture_output=True, cwd=cwd, check=check)
-        stdout = r.stdout.decode("utf-8", errors="replace").strip()
-        return stdout
-    except subprocess.CalledProcessError:
-        if check:
-            raise
-        return None
-    except FileNotFoundError:
-        raise ValueError("git no está disponible")
-
-
 def status_line():
-    branch = _git("rev-parse", "--abbrev-ref", check=False) or "(no git)"
-    dirty = _git("status", "--porcelain", check=False) or ""
+    branch = util.git("rev-parse", "--abbrev-ref", "HEAD") or "(no git)"
+    dirty = util.git("status", "--porcelain") or ""
     n = len([l for l in dirty.splitlines() if l.strip()])
     return f"branch: {branch} · {n} archivo(s) sin commit"
 
 
 def recent_commits(n=5):
-    out = _git("log", f"--max-count={n}", "--oneline", check=False)
+    out = util.git("log", f"--max-count={n}", "--oneline")
     return out or "(sin commits)"
 
 
@@ -76,21 +62,21 @@ def commit(tid, yes=False, push=False):
         return msg
 
     branch = branch_name(tid)
-    current = _git("rev-parse", "--abbrev-ref", check=False) or ""
+    current = util.git("rev-parse", "--abbrev-ref", "HEAD") or ""
 
     if current != branch:
-        _git("checkout", "-b", branch)
+        util.git("checkout", "-b", branch, check=True)
 
-    _git("commit", "-m", msg)
+    util.git("commit", "-m", msg, check=True)
 
     if push:
-        _git("push", "-u", "origin", branch)
+        util.git("push", "-u", "origin", branch, check=True)
 
     return msg
 
 
 def detect_drift():
-    diff = _git("diff", "--name-only", check=False)
+    diff = util.git("diff", "--name-only")
     if not diff:
         return []
 
@@ -128,7 +114,7 @@ def create_pr(tid, yes=False):
     if not yes:
         return f"gh pr create --title \"{title}\" --body \"{body}\""
 
-    _git("push")
+    util.git("push", check=True)
     try:
         r = subprocess.run(["gh", "pr", "create", "--title", title, "--body", body], capture_output=True, cwd=paths.CONTROL_ROOT.parent, check=True)
         return r.stdout.decode("utf-8", errors="replace").strip() or "PR creado"

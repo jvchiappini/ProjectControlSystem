@@ -1,7 +1,6 @@
-import datetime
 import re
 
-from . import atomic, fm, paths, event_log
+from . import atomic, event_log, fm, paths, util
 from .lock import FileLock
 
 DECISION_KEY_ORDER = ["id", "titulo", "fecha", "estado", "reemplaza", "version_schema"]
@@ -17,10 +16,6 @@ _TEMPLATE_BODY = """
 ## Consecuencias
 (que se gana, que se pierde, que queda pendiente de revisar)
 """
-
-
-def _today():
-    return datetime.date.today().isoformat()
 
 
 def _all_files():
@@ -45,7 +40,7 @@ def new_decision(titulo, estado="aceptada", reemplaza=None):
         n = _next_id()
         did = f"D-{n:04d}"
         data = {
-            "id": did, "titulo": titulo, "fecha": _today(), "estado": estado,
+            "id": did, "titulo": titulo, "fecha": util.today(), "estado": estado,
             "reemplaza": reemplaza or [], "version_schema": 1,
         }
         fpath = paths.DECISIONS_DIR / f"{did}.md"
