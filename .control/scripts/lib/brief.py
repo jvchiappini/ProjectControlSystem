@@ -216,6 +216,10 @@ def _sec_git():
     recent = _git("log", "--oneline", "-3") or ""
     lines = ["## Git", f"Branch {branch}, {n} uncommitted file(s)."]
     lines += [f"- {l}" for l in recent.splitlines()]
+    if n and lean.level() != "off":
+        deps = lean.deps_report()
+        if deps:
+            lines.append(deps)
     return lines
 
 

@@ -21,7 +21,9 @@ explicit review.
    tokens, passwords.
 7. **Documentation references updated** — if a file was moved or
    renamed, update `file:line` references in `.control/`.
-8. **Commit message in English** — the commit message must be 100% in
+8. **New dependencies justified** — `pctl deps-check` lists them; each
+   needs a reason (and an ADR in lean `strict`). See `skills/lean.md`.
+9. **Commit message in English** — the commit message must be 100% in
    English, regardless of the language used in the user's conversation.
 
 ## Output

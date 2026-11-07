@@ -198,6 +198,9 @@ python3 .control/scripts/pctl.py <comando>
 | `skill-promote <id>` | activa una skill propuesta (requiere confirmación humana) |
 | `skill-list [--estado]` | lista skills registradas |
 | `lean [off\|lite\|full\|strict]` | ver o cambiar el nivel de lean mode (`skills/lean.md`) |
+| `reuse <palabras> [--limit N]` | qué ya existe: docs, definiciones en el código, dependencias instaladas |
+| `deps-check [--base REF]` | dependencias nuevas en manifests (package.json, requirements, pyproject, Cargo, go.mod...) |
+| `debt-scan [--marker M] [--apply]` | comentarios `shortcut:` en el código -> tareas de deuda en backlog |
 
 ## Estructura
 

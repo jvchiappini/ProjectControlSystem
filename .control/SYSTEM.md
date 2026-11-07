@@ -353,4 +353,5 @@ Unless `pctl brief` shows no "Lean mode" line (level `off`), every code
 change follows `skills/lean.md`: reuse before writing (codebase, stdlib,
 platform, installed deps), the minimum that works, never cutting
 validation, data-loss handling, security or accessibility. Output is lean
-too: no reprinted code, no recaps. Level: `pctl lean [off|lite|full|strict]`.
+too: no reprinted code, no recaps. Level: `pctl lean [off|lite|full|strict]`;
+helpers: `pctl reuse <words>`, `pctl deps-check`, `pctl debt-scan`.

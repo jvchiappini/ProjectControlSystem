@@ -20,12 +20,13 @@ and trace its flow first (`pctl search`, the flow/domain `file:line` refs).
 
 1. Does it need to exist? Check the task's acceptance criteria. Not asked
    for = not built.
-2. Already in this codebase? `pctl search <words> --code`, then the domain
-   and flow docs for that area. Reuse or extend; never write a twin.
+2. Already in this codebase? `pctl reuse <words>` lists matching docs,
+   code definitions and installed dependencies as `file:line`. Reuse or
+   extend; never write a twin.
 3. Standard library?
 4. Native platform feature (HTML input types, DB constraints, framework
    built-ins)?
-5. Dependency already installed?
+5. Dependency already installed? (also shown by `pctl reuse`)
 6. One line?
 7. Only then: the minimum new code that works.
 
@@ -38,7 +39,8 @@ small test (see `test-gap.md`).
 ## Levels (`pctl lean`)
 
 - `lite` (default): the ladder and "never cut". A new dependency needs a
-  one-line reason given to the user.
+  one-line reason given to the user (`pctl deps-check` lists them; the
+  brief and `git-commit` show them too).
 - `full`: lite + no speculative options, config, abstractions or files
   nobody asked for; edit existing files before creating new ones.
 - `strict`: full + every new file, abstraction or dependency is justified
@@ -60,4 +62,6 @@ line to the task body under `## Skipped / risks` so the next session sees
 it. If nothing was skipped, write nothing.
 
 A deliberate shortcut left in code is marked `shortcut: <what and why>`
-in a comment, so it can be found later.
+in a comment. When you add or remove one, run `pctl debt-scan --apply`:
+new markers become backlog tasks, removed ones are reported for closing.
+Marker word: `debt_marker` in `.control/lean.json`.

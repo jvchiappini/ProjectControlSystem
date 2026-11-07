@@ -202,6 +202,18 @@ def cmd_lean(args):
     print(f"lean: {lean.level()}")
 
 
+def cmd_reuse(args):
+    print(lean.reuse(args.palabras, limit=args.limit))
+
+
+def cmd_deps_check(args):
+    print(lean.deps_report(args.base) or f"no new dependencies vs {args.base}")
+
+
+def cmd_debt_scan(args):
+    print(lean.debt_scan(args.marker, apply=args.apply))
+
+
 def cmd_update_check(args):
     r = updates.check(force=True)
     inst = r.get("installed") or {}
@@ -260,6 +272,9 @@ def cmd_git_commit(args):
         print(git.commit(args.id))
         print(f"\n---\n{git.status_line()}\n")
         print(f"Commits recientes:\n{git.recent_commits()}")
+        deps = lean.deps_report() if lean.level() != "off" else None
+        if deps:
+            print(f"\n{deps}")
         print("\nEjecuta 'pctl git-commit <id> --yes' para confirmar.")
         return
     msg = git.commit(args.id, yes=True, push=args.push)
@@ -553,6 +568,20 @@ def build_parser():
     ln = sub.add_parser("lean", help="ver o cambiar el nivel de lean mode")
     ln.add_argument("nivel", nargs="?", choices=lean.LEVELS)
     ln.set_defaults(func=cmd_lean)
+
+    ru = sub.add_parser("reuse", help="que ya existe (docs, definiciones, dependencias) antes de escribir codigo")
+    ru.add_argument("palabras", nargs="+")
+    ru.add_argument("--limit", type=int, default=15)
+    ru.set_defaults(func=cmd_reuse)
+
+    dk = sub.add_parser("deps-check", help="dependencias nuevas en manifests vs un ref de git")
+    dk.add_argument("--base", default="HEAD")
+    dk.set_defaults(func=cmd_deps_check)
+
+    ds = sub.add_parser("debt-scan", help="marcadores shortcut: en el codigo -> tareas de deuda")
+    ds.add_argument("--marker", help="palabra marcadora (default: lean.json debt_marker o 'shortcut')")
+    ds.add_argument("--apply", action="store_true", help="crear tareas para los marcadores nuevos")
+    ds.set_defaults(func=cmd_debt_scan)
 
     uc = sub.add_parser("update-check", help="consultar si hay version nueva del framework")
     uc.set_defaults(func=cmd_update_check)
