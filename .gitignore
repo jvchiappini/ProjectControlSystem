@@ -25,3 +25,4 @@ Thumbs.db
 .control/.tasks_index.json
 .control/.update/
 .control/.update_check.json
+.control/.update_skip.json

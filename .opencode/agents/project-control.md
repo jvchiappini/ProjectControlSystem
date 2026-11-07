@@ -73,6 +73,8 @@ the corresponding skill file first. The full list with triggers is in
 - `pctl session-current`, `pctl session-close <sid> "..." --next "..."`
 
 ### Updates (only with the user's consent)
+- When the brief announces a new version: ask the user whether to update now;
+  if not, `pctl update-check --skip`
 - `python .control/scripts/update.py --check` — is there a new version, what changed
 - `--dry-run` full plan, no args to apply, `--rollback` to undo
 - Only files in `.control/framework.json` are touched; user edits are

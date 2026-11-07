@@ -119,15 +119,28 @@ def _sec_alerts(check_updates):
     except Exception:
         pass
     if check_updates:
-        u = updates.check()
-        if u.get("status") == "available":
-            v = u["installed"].get("version") or "?"
-            lines.append(f"- ProjectControl update available (installed v{v}). Tell the user; "
-                         f"preview with `python .control/scripts/update.py --check`.")
+        line = _update_line()
+        if line:
+            lines.append(line)
     inbox = context.inbox_items()
     if len(inbox) >= 10:
         lines.append(f"- CONTEXT.md inbox has {len(inbox)} unconsolidated notes - consolidate at session close.")
     return (["## Alerts"] + lines) if lines else []
+
+
+def _update_line():
+    u = updates.check()
+    if u.get("status") != "available":
+        return None
+    new = u.get("remote_version")
+    if updates.skipped() == (new or u.get("remote_commit")):
+        return None
+    inst = u["installed"].get("version") or "?"
+    what = f"v{new}" if new else "update"
+    summary = f" - {u['summary']}" if u.get("summary") else ""
+    return (f"- ProjectControl {what} is available (installed v{inst}){summary}. ASK the user whether "
+            f"to update now. Yes: `python .control/scripts/update.py` (preview: `--check`). "
+            f"Not now: `pctl update-check --skip`. Never update without their consent.")
 
 
 def _sec_local_rules():
@@ -228,12 +241,13 @@ def build(budget=DEFAULT_BUDGET, check_updates=True):
     if lean_line:
         header += "\n" + lean_line
     if not (paths.CONTROL_ROOT / "PROJECT.md").exists():
+        update = _update_line() if check_updates else None
         return "\n".join([
             header, "",
             "No .control/PROJECT.md yet: ProjectControl is installed but the project is not set up.",
             "If the user wants to set it up (or asks what this project is), follow",
             "`.control/prompts/prompt_new_project.md` (skill `onboarding`). Otherwise just help with the request.",
-        ])
+        ] + ([update[2:]] if update else []))
 
     builders = [
         ("alerts", lambda: _sec_alerts(check_updates)),

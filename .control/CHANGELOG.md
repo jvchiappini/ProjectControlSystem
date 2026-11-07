@@ -3,6 +3,50 @@
 Written by the framework maintainers, shipped with each release.
 `update.py --check` shows the entries newer than your installed version.
 
+## v5.1.0 (2026-11-07)
+
+### Lean mode
+- New skill `skills/lean.md` (inspired by Ponytail): reuse ladder (codebase,
+  stdlib, platform, installed deps) before new code; never cuts validation,
+  data-loss handling, security or accessibility; lean output (no reprinted
+  code, no recaps); `Skipped/risks` line only when something was skipped.
+- `pctl lean [off|lite|full|strict]` (default `lite`, stored in
+  `.control/lean.json`); one line in `pctl brief`, nothing when off.
+- `pctl reuse <words>`: matching docs, code definitions and installed deps.
+- `pctl deps-check`: new dependencies per manifest vs a git ref (package.json,
+  composer, requirements, pyproject, Pipfile, Cargo, go.mod, Gemfile); also
+  shown in the brief and `pctl git-commit`.
+- `pctl debt-scan [--apply]`: `shortcut:` markers in code become backlog tasks.
+
+### Shared utilities
+- Lean rule: the 2nd copy of logic becomes one shared utility, after
+  comparing behaviour. `pctl dupes [paths] [--changed]` finds repeated
+  function names and identical blocks.
+- Framework code now uses `scripts/lib/util.py` (removed 10 copies of
+  `_today`, 5 git wrappers and other duplicates).
+
+### Review and audit
+- `pctl review-context [--base REF]`: docs whose refs hit changed lines,
+  callers of touched functions, duplicates, new deps.
+- `pctl audit-plan [paths]`: entry points, hotspots, largest files.
+- `skills/code-review.md`: review/audit procedure and finding format.
+
+### Update notifier
+- The brief announces only published versions (version + summary) and tells
+  the agent to ask the user before updating; `pctl update-check --skip`
+  silences one version.
+
+### Portable skills
+- `skills/project-control/SKILL.md` and `skills/lean/SKILL.md` for any agent
+  with skill support; Claude Code plugin + marketplace (`.claude-plugin/`).
+- New project adapters (created only if missing): `GEMINI.md`,
+  `.github/copilot-instructions.md`.
+
+### Fixes
+- `pctl skill-list` printed column names instead of values.
+- Branch shown as "(no git)": `git rev-parse --abbrev-ref` lacked `HEAD`.
+- Wrong `doc-new` / `roadmap-*-new` syntax in the opencode agent.
+
 ## v5.0.0 (2026-10-25)
 
 ### Context management

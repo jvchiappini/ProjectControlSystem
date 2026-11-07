@@ -65,10 +65,37 @@ git clone --depth 1 https://github.com/jvchiappini/ProjectControlSystem.git /tmp
 python /tmp/pc/.control/scripts/update.py --source /tmp/pc --target .
 ```
 
-Instala `.control/` y crea `AGENTS.md`, `CLAUDE.md`, `opencode.json` y
-`.claude/settings.json` **solo si no existen** (si ya tenés los tuyos, no
+Instala `.control/` y crea `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `opencode.json`,
+`.github/copilot-instructions.md` y `.claude/settings.json` **solo si no existen** (si ya tenés los tuyos, no
 se tocan y el instalador te dice qué línea agregar). Después, el agente
 completa `PROJECT.md`/`GOALS.md` siguiendo `prompts/prompt_new_project.md`.
+
+### Como skill o plugin (cualquier LLM)
+
+Las skills `skills/project-control/SKILL.md` (usar/instalar ProjectControl) y
+`skills/lean/SKILL.md` (código mínimo, utilidades compartidas, salida sin
+tokens basura) siguen el formato estándar `SKILL.md`:
+
+- Claude Code: `/plugin marketplace add jvchiappini/ProjectControlSystem` y luego
+  `/plugin install project-control@project-control` (o en un paso:
+  `/plugin install project-control --marketplace jvchiappini/ProjectControlSystem`).
+- Otros agentes con soporte de skills: copiar `skills/<nombre>/` a su carpeta de
+  skills. Sin soporte de skills: `AGENTS.md` (Codex, Cursor, opencode...),
+  `GEMINI.md`, `.github/copilot-instructions.md`.
+
+`skills/lean/SKILL.md` y `.github/copilot-instructions.md` se generan con
+`update.py --build-manifest` desde `.control/skills/lean.md` y `AGENTS.md`:
+editar esos originales.
+
+## Lean mode
+
+Inspirado en [Ponytail](https://github.com/dietrichgebert/ponytail), integrado con
+la documentación de ProjectControl. Antes de escribir código el agente busca qué
+ya existe (`pctl reuse`), usa stdlib/plataforma/dependencias instaladas, y si
+algo se repite lo mueve a una utilidad compartida (`pctl dupes`). Nunca recorta
+validación, seguridad ni accesibilidad, y no reimprime código ni hace resúmenes
+innecesarios. Niveles `off | lite | full | strict` (por defecto `lite`):
+`pctl lean <nivel>`. Detalle en `.control/skills/lean.md`.
 
 ## Contexto y memoria entre sesiones
 
@@ -143,8 +170,12 @@ Garantías:
 - Backup de todo lo que cambia y `--rollback`.
 - El `update.py` más nuevo es el que ejecuta la actualización (bootstrap),
   así las migraciones nuevas siempre corren.
-- `pctl brief` avisa cuando hay versión nueva (como mucho un
-  `git ls-remote` por día; `PCTL_NO_UPDATE_CHECK=1` lo desactiva).
+- `pctl brief` avisa cuando hay una **versión publicada** nueva (versión + resumen
+  del CHANGELOG) y le indica al agente que **pregunte al usuario** si quiere
+  actualizar; nunca actualiza solo. Commits sin versión nueva no generan aviso.
+  `pctl update-check --skip` silencia esa versión. Como mucho un `git ls-remote`
+  por día (+ una lectura de `framework.json` remoto si hay cambios);
+  `PCTL_NO_UPDATE_CHECK=1` lo desactiva.
 
 ### Publicar una versión (mantenedores)
 
@@ -183,7 +214,7 @@ python3 .control/scripts/pctl.py <comando>
 | `context-note "texto" [--tipo]` | guardar un aprendizaje ya en `CONTEXT.md` |
 | `search <palabras> [--area] [--estado] [--fm] [--regex] [--files] [--code]` | búsqueda en todo `.control/` |
 | `session-current` | id de la sesión abierta |
-| `update-check` | ¿hay versión nueva del framework? |
+| `update-check [--skip]` | ¿hay versión nueva del framework? (`--skip`: no volver a avisar de esa versión) |
 | `status` | resumen corto del proyecto (incluye flujos desactualizados) |
 | `reindex` | regenera BACKLOG/IN_PROGRESS/DONE/arch index/flows index |
 | `validate` | valida schema + referencias `archivo:línea` |

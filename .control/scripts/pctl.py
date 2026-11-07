@@ -229,11 +229,20 @@ def cmd_audit_plan(args):
 
 def cmd_update_check(args):
     r = updates.check(force=True)
+    if args.skip:
+        v = r.get("remote_version") or r.get("remote_commit")
+        if r.get("status") != "available" or not v:
+            print("nothing to skip: no update available")
+            return
+        updates.skip(v)
+        print(f"{v[:10]} will not be announced again; a later version will be")
+        return
     inst = r.get("installed") or {}
     print(f"instalado: v{inst.get('version') or '?'} (commit {(inst.get('commit') or '?')[:10]})")
     print(f"estado: {r['status']}" + (f" — {r['message']}" if r.get("message") else ""))
     if r.get("remote_commit"):
-        print(f"upstream: commit {r['remote_commit'][:10]}")
+        v = f"v{r['remote_version']} " if r.get("remote_version") else ""
+        print(f"upstream: {v}commit {r['remote_commit'][:10]}" + (f" - {r['summary']}" if r.get("summary") else ""))
 
 
 def cmd_context_check(args):
@@ -613,6 +622,7 @@ def build_parser():
     ap.set_defaults(func=cmd_audit_plan)
 
     uc = sub.add_parser("update-check", help="consultar si hay version nueva del framework")
+    uc.add_argument("--skip", action="store_true", help="no volver a avisar de la version disponible")
     uc.set_defaults(func=cmd_update_check)
 
     c_check = sub.add_parser("context-check", help="verificar que CONTEXT.md no exceda el presupuesto de tamano")

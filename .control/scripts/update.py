@@ -85,6 +85,7 @@ SPEC = [
     ("skill_registry", [".control/skills/_index.md"]),
     ("create_only", [
         "opencode.json", "AGENTS.md", "CLAUDE.md", ".claude/settings.json",
+        "GEMINI.md", ".github/copilot-instructions.md",
         ".control/**/.gitkeep",
         ".control/docs/_index.md", ".control/roadmaps/_index.md", ".control/flows/_index.md",
         ".control/tasks/BACKLOG.md", ".control/tasks/IN_PROGRESS.md", ".control/tasks/DONE.md",
@@ -110,6 +111,9 @@ INTEGRATION_HINTS = {
     ".claude/settings.json": "add a SessionStart hook with command "
                              "`python .control/scripts/pctl.py brief` (see README, 'Claude Code')",
     "opencode.json": "make sure 'instructions' includes '.control/SYSTEM.md'",
+    "GEMINI.md": "add a line '@AGENTS.md' so Gemini CLI loads the ProjectControl instructions",
+    ".github/copilot-instructions.md": "add: 'Session start: run `python .control/scripts/pctl.py brief`; "
+                                       "rules in .control/SYSTEM.md'",
 }
 
 
@@ -258,7 +262,47 @@ def ask(prompt, choices, default):
 # Maintainer: build framework.json from the framework repo
 # ---------------------------------------------------------------------------
 
+def release_summary(root, version):
+    """Headings of the CHANGELOG entry for `version`, one line (shown by update notices)."""
+    p = root / ".control" / "CHANGELOG.md"
+    if not p.exists():
+        return ""
+    for part in re.split(r"(?m)^(?=## v)", p.read_text(encoding="utf-8"))[1:]:
+        if re.match(rf"## v{re.escape(version)}\b", part):
+            return "; ".join(re.findall(r"(?m)^### (.+?)\s*$", part))[:160]
+    return ""
+
+
+# distributable skills generated from their .control/ source (one source of truth)
+GENERATED_SKILLS = {
+    "skills/lean/SKILL.md": (".control/skills/lean.md", (
+        "---\n"
+        "name: lean\n"
+        "description: Write the smallest correct change. Before writing or changing code, reuse what "
+        "exists (codebase, standard library, platform features, installed dependencies), share repeated "
+        "logic as one utility, never cut validation/security/accessibility, and keep output tokens lean.\n"
+        "---\n\n"
+        "<!-- generated from .control/skills/lean.md by `update.py --build-manifest`; edit that file -->\n\n"
+        "Without ProjectControl (no `.control/`), apply the same steps with your own search tools and "
+        "skip the `pctl` commands; the level is `lite`.\n\n")),
+    # Copilot cannot import files, so it gets a copy of AGENTS.md
+    ".github/copilot-instructions.md": ("AGENTS.md", "<!-- generated from AGENTS.md by `update.py --build-manifest` -->\n\n"),
+}
+
+
+def build_skills(root):
+    for out_rel, (src_rel, header) in GENERATED_SKILLS.items():
+        text = (root / src_rel).read_text(encoding="utf-8")
+        body = re.sub(r"\A---\n.*?\n---\n+", "", text, flags=re.S)  # drop the .control frontmatter
+        out = root / out_rel
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with open(out, "w", encoding="utf-8", newline="\n") as f:
+            f.write(header + body)
+        log(f"generated {out_rel} from {src_rel}", "ok")
+
+
 def build_manifest(root, version):
+    build_skills(root)
     # tracked + new (untracked, not ignored) files, so a release can be built before committing
     out, err, rc = git(["ls-files", "-z", "--cached", "--others", "--exclude-standard"], cwd=root)
     if rc != 0:
@@ -284,6 +328,7 @@ def build_manifest(root, version):
     manifest = {
         "name": "ProjectControl",
         "version": version,
+        "summary": release_summary(root, version),
         "schema": max(m[0] for m in MIGRATIONS),
         "upstream": existing.get("upstream") or {"url": DEFAULT_UPSTREAM, "ref": DEFAULT_REF},
         "generated": datetime.date.today().isoformat(),

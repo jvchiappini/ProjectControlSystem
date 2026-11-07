@@ -1,0 +1,8 @@
+{
+  "name": "project-control",
+  "description": "Persistent project memory and control for coding agents, plus lean mode: reuse before writing, shared utilities, lean output.",
+  "version": "5.1.0",
+  "author": { "name": "jvchiappini" },
+  "repository": "https://github.com/jvchiappini/ProjectControlSystem",
+  "keywords": ["memory", "tasks", "handoff", "documentation", "lean"]
+}

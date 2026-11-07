@@ -1,12 +1,13 @@
 {
   "name": "ProjectControl",
-  "version": "5.0.0",
+  "version": "5.1.0",
+  "summary": "Lean mode; Shared utilities; Review and audit; Update notifier; Portable skills; Fixes",
   "schema": 5,
   "upstream": {
     "url": "https://github.com/jvchiappini/ProjectControlSystem.git",
     "ref": "main"
   },
-  "generated": "2026-10-25",
+  "generated": "2026-11-07",
   "files": {
     ".claude/settings.json": {
       "strategy": "create_only",
@@ -15,8 +16,9 @@
     },
     ".control/CHANGELOG.md": {
       "strategy": "managed",
-      "sha256": "3eb33185533615f189ea926f75bce896113e11c15b39441b42134260ae97b3c5",
+      "sha256": "73df857c949171d207d1af514e2a56f1ff27dfa3193df3fb4246966229c8537c",
       "known": [
+        "3eb33185533615f189ea926f75bce896113e11c15b39441b42134260ae97b3c5",
         "fc5173ee0c3a88b08d6baac1009a9c7c25c2fd56b81b6333ce0fa237fddd529f"
       ]
     },
@@ -53,12 +55,16 @@
     },
     ".control/SYSTEM.md": {
       "strategy": "managed",
-      "sha256": "678be3edd36bde8bbcc5fc2dc40aa578f58c8824b8b384c7d4bdfac611f94b68",
+      "sha256": "95ff6009878bdea0ed87c6a6ebb04e8927c9a4d7f3962ae907b2c66f3d12452b",
       "known": [
         "213aa5a593d411fbc73e5b18f481a38fd12d623753ab90218adea5bafe35b652",
+        "678be3edd36bde8bbcc5fc2dc40aa578f58c8824b8b384c7d4bdfac611f94b68",
+        "9acc936c1d1dff1a2a7d2b0de42b2e4fffac7a4526b5be681ae248fd56466fee",
         "aabdd91e4de54519017a9fee21edddb693be880fc10f4dfa5e1da2167f976b26",
         "bb6b11a031cf307b174bdc023467367e20ebbf1eecf1a6ce380f3211e95c94fd",
-        "bda2b82bec763d9b26fbfa0ef9ac04df835ba81ab67c9884089a91dd76c6f096"
+        "bda2b82bec763d9b26fbfa0ef9ac04df835ba81ab67c9884089a91dd76c6f096",
+        "c6834d71e2957aa8a125e882c2daf9745f8599a55db25113cb08ef33b57420ad",
+        "cd42a66363047e8007132c6c6e92731468f67071290f497b7a0b4b9d37ada764"
       ]
     },
     ".control/decisions/.gitkeep": {
@@ -208,14 +214,17 @@
     },
     ".control/scripts/lib/agent.py": {
       "strategy": "managed",
-      "sha256": "06ea53c3df403b78250bc740f2178dce9fe915f03c024e479d05cafadbff1e55",
-      "known": []
+      "sha256": "cb9a87250f26c20c122b9a2714c1cf101b299328ffa85695a6bccc781a2e26b3",
+      "known": [
+        "06ea53c3df403b78250bc740f2178dce9fe915f03c024e479d05cafadbff1e55"
+      ]
     },
     ".control/scripts/lib/arch.py": {
       "strategy": "managed",
-      "sha256": "b541cf9485465d865ae55bcceb39df25ede0c581104717bc3ea5ea71bdfc9af1",
+      "sha256": "fbee04750a842b88ce4a9963610424189d2351eca2ad54a34660a96c1387b866",
       "known": [
-        "46e6fade7899d97e91ce7aa3b21f606d30d8d70ee573e8794539a58f252a091d"
+        "46e6fade7899d97e91ce7aa3b21f606d30d8d70ee573e8794539a58f252a091d",
+        "b541cf9485465d865ae55bcceb39df25ede0c581104717bc3ea5ea71bdfc9af1"
       ]
     },
     ".control/scripts/lib/atomic.py": {
@@ -230,42 +239,56 @@
     },
     ".control/scripts/lib/brief.py": {
       "strategy": "managed",
-      "sha256": "babffcda4c886bc4a94be3b8b0cb3e0ffbe8dc9186879fc669ed08cbe35d8bb0",
+      "sha256": "c21f3bd2c9e5074304fa7045126b77cd4773796448d400ab1febf9f2ffbf93de",
       "known": [
-        "d58e46fec73b15688aebc5a9a85ab30918938e82780f22abe51eea2248c41f7e"
+        "3d19d281a9fbb67a66827b8ece1e229cec55436272abad101c3716c3a42d091b",
+        "a7d81c6ecf0a6d7e59d1088d936705c2f54297bd52d868f5b163014a87b3d264",
+        "babffcda4c886bc4a94be3b8b0cb3e0ffbe8dc9186879fc669ed08cbe35d8bb0",
+        "d58e46fec73b15688aebc5a9a85ab30918938e82780f22abe51eea2248c41f7e",
+        "ef379249990d36c686c291ee8e19a0842a13eac6d02c8031f67defcbcecf6f9d"
       ]
     },
     ".control/scripts/lib/context.py": {
       "strategy": "managed",
-      "sha256": "1d9ec79ddef208891e7e807533b276c85ac7019232598208153890f3b26cdc0b",
+      "sha256": "0e224b3773cba1fa29f148109bd4d7398087f10c7e1867a43ccd3fd372c9f232",
       "known": [
         "09f30daf05d9b43492a989c49ebb0f2e3f87dd41b30016069b7566754d5e0753",
         "0e5c6c257bd48a81a38db9918c919c915cf0cecfb612104863939e6e4cf4f5bc",
+        "1d9ec79ddef208891e7e807533b276c85ac7019232598208153890f3b26cdc0b",
         "cc7696c364edb0e9a0fedbb411cde9f5466f2918f07d51591a2d5299c7af5766"
       ]
     },
     ".control/scripts/lib/decisions.py": {
       "strategy": "managed",
-      "sha256": "0bf0abbfd71381b5054e1fb31c1ea6df02c8f359ce61cf88a5d191694c562ebd",
+      "sha256": "9c1bd2e4576e2f13f960b0d5d08b0e1a12262c0c5e80b2e97c24d87396b083ff",
       "known": [
+        "0bf0abbfd71381b5054e1fb31c1ea6df02c8f359ce61cf88a5d191694c562ebd",
         "683b4aef3c2272fa7205fcb7824242b8a5009298dc1a199ab203bd2c2a1b4247"
       ]
     },
     ".control/scripts/lib/doc.py": {
       "strategy": "managed",
-      "sha256": "ed0f0da5ff3015a98a7468e278031557a77c0730244ef9572e35629cd1aaf6a3",
-      "known": []
+      "sha256": "c84cc8841845e841cb49cf654ecc90a1a9b1f51030e4a18c2697fac37f4120c9",
+      "known": [
+        "ed0f0da5ff3015a98a7468e278031557a77c0730244ef9572e35629cd1aaf6a3"
+      ]
     },
     ".control/scripts/lib/docs.py": {
       "strategy": "managed",
-      "sha256": "58cac455dc8dc802c22383106b745caf16b27cb804ed1a7ad8b54f9a5bede989",
+      "sha256": "04cb12c5caa9ff3008a15f764ab315c503b0d8533b16edae340c10887c1e2ed6",
       "known": [
-        "24a06ab9603bf05b05c23b35df59a72bc17f27d00e99551dcccf80b742b5768b"
+        "24a06ab9603bf05b05c23b35df59a72bc17f27d00e99551dcccf80b742b5768b",
+        "58cac455dc8dc802c22383106b745caf16b27cb804ed1a7ad8b54f9a5bede989"
       ]
     },
     ".control/scripts/lib/doctor.py": {
       "strategy": "managed",
       "sha256": "e48c042b39e9a247217e13118503840993bccbca2873ef5f0f03dac8b17af8e2",
+      "known": []
+    },
+    ".control/scripts/lib/dupes.py": {
+      "strategy": "managed",
+      "sha256": "d7e49ee3093dfc860f9fa4304408249be8e227ef8355c2cca6d71d82fcab76cc",
       "known": []
     },
     ".control/scripts/lib/event_log.py": {
@@ -275,8 +298,9 @@
     },
     ".control/scripts/lib/flows.py": {
       "strategy": "managed",
-      "sha256": "987f7e1ff4464c585ff76b284c3e54df5b088b06c4d440073542ef7183e3c15a",
+      "sha256": "9e32f7272a9ae2a4f290f1eea3f604a985ddf9b5910cf5907bd5de941a8db380",
       "known": [
+        "987f7e1ff4464c585ff76b284c3e54df5b088b06c4d440073542ef7183e3c15a",
         "e3d2c28ec9a4f02e04b1c52b0ee5409c5ac6fc5583b8f92dea520e44763bd99c"
       ]
     },
@@ -287,8 +311,10 @@
     },
     ".control/scripts/lib/git.py": {
       "strategy": "managed",
-      "sha256": "44873f77e63e8edc985b3b345503cc6304bc1a4b02fa6faf7cf8d985d62536a0",
-      "known": []
+      "sha256": "40c817a3ef19a9e0b2ff85e4ba6cf2a54cef9424bb7d93d412701a1627e42c06",
+      "known": [
+        "44873f77e63e8edc985b3b345503cc6304bc1a4b02fa6faf7cf8d985d62536a0"
+      ]
     },
     ".control/scripts/lib/graph.py": {
       "strategy": "managed",
@@ -300,6 +326,14 @@
       "sha256": "e36c74578f8090a8d99f3dcd883a7b58100dbda6b553ecb7ef136b4b6e69ea8a",
       "known": [
         "2d8d40c80106f0ba928761e183bc4e0ef4dd92b9b3e2a188505c56097796f2b9"
+      ]
+    },
+    ".control/scripts/lib/lean.py": {
+      "strategy": "managed",
+      "sha256": "299e396c83af952f2cacbdc83de26d2bcfbdc11003cb86d3b3bfbe0031f5e964",
+      "known": [
+        "a6014adb7834511112bdde1810c68f1434f41f53d64429b2297beef8969d1a20",
+        "b7072fbfae470e820cdb3775537c1b1feb85841f7674c82cb2b9f590b2fd43ee"
       ]
     },
     ".control/scripts/lib/lock.py": {
@@ -322,10 +356,17 @@
         "c252baadab42380f31d2fbbdd9e31398f1876d0e2e5d5dd65e25cacb6b8e3b62"
       ]
     },
+    ".control/scripts/lib/review.py": {
+      "strategy": "managed",
+      "sha256": "03f035017dca8701a01eaa1ad3271e487b3b0295d775ba2c492d98c308344e5c",
+      "known": []
+    },
     ".control/scripts/lib/roadmaps.py": {
       "strategy": "managed",
-      "sha256": "31edcbcfff2c74bc7b521f251f2d7f3d431a1cb7db25e1fff5f44e1a53cace58",
-      "known": []
+      "sha256": "54d3b58ae73126c4f4d90e861e93f8aae228dac5cb64c968642bc303987d07f1",
+      "known": [
+        "31edcbcfff2c74bc7b521f251f2d7f3d431a1cb7db25e1fff5f44e1a53cace58"
+      ]
     },
     ".control/scripts/lib/schema.md": {
       "strategy": "managed",
@@ -349,33 +390,43 @@
     },
     ".control/scripts/lib/sessions.py": {
       "strategy": "managed",
-      "sha256": "552a340a45f4eaa79ddca4169a03e96aa72724d8faab1d4ded69f10b5b4e8022",
+      "sha256": "aa8f0e468b632ca8c412279571651b6f1ff390ae7b3501d7167e04859766b5f2",
       "known": [
         "22a708953e127a10c9597f54265351c6287991ea53bf7fcd7f8f93948bf6697f",
         "46ad514f016fc763aca24f2ae18af8cea3ad6dee902c4a0595f552b4250ce374",
+        "552a340a45f4eaa79ddca4169a03e96aa72724d8faab1d4ded69f10b5b4e8022",
         "e5d688cbf65a2447245d525cb9df038b8195daeac41dff3c11120d21d19eb1ea"
       ]
     },
     ".control/scripts/lib/skills_registry.py": {
       "strategy": "managed",
-      "sha256": "f10f70c1a1b84105f35915ed4605efc3b2337d568f03ca2ed9819e66b84108a9",
+      "sha256": "9457081c255adbe9b8effc282475b4596b94f03218195f4bb232e1ec40219897",
       "known": [
         "5167db7f0b09b8197c37edcf1cbcbd5862eca25111e886a4c9b7bc7623c07fbb",
         "6110429fccc31232519861924b4ff2f5376e93e23aeed779f9f23671782119a9",
+        "f10f70c1a1b84105f35915ed4605efc3b2337d568f03ca2ed9819e66b84108a9",
         "f86e0fb3ee3f525a9eca752dd2bc2662da42ad30bae8b3e6cab1b5008bf8891a"
       ]
     },
     ".control/scripts/lib/tasks.py": {
       "strategy": "managed",
-      "sha256": "90dd31053710b7fb7153ca2745ee34a8bd3e213c685f88f9880682bc50e9889a",
+      "sha256": "c497fe09664a0daecd792dd9be24ccad3f9446fa6c4a74954dd2fff039ec0715",
       "known": [
         "3cbfa3713117d1c61fb1abf8f9dd565e689486edff88041f3adc2b0bf92c11bb",
+        "90dd31053710b7fb7153ca2745ee34a8bd3e213c685f88f9880682bc50e9889a",
         "d08304a780120e3967ea65b9142c3b96093b7b30a50b241bd4a32bca53b6059e"
       ]
     },
     ".control/scripts/lib/updates.py": {
       "strategy": "managed",
-      "sha256": "e2b0b060a8a255cd9850b4596bf5a1db059d5a28eac520a68293e04a7f5d07a6",
+      "sha256": "6fbc9d7b1d27c24c605f36f1c299248e625610c946e12ee8385b5d54da1597aa",
+      "known": [
+        "e2b0b060a8a255cd9850b4596bf5a1db059d5a28eac520a68293e04a7f5d07a6"
+      ]
+    },
+    ".control/scripts/lib/util.py": {
+      "strategy": "managed",
+      "sha256": "60dd48dba7ddae7b42884ba647d5e1888b38b50db61db451d11f96529133a4a8",
       "known": []
     },
     ".control/scripts/lib/validate.py": {
@@ -385,32 +436,38 @@
     },
     ".control/scripts/pctl.py": {
       "strategy": "managed",
-      "sha256": "a3ceaefa0d26aa0729efaa0971c095f36db833c30e3ce0b870c6e3e841ea1b09",
+      "sha256": "539d2f4014bfe9fb81103731e0bdeaaf5a3e7307da84384962581117ffbfc708",
       "known": [
         "16aab33fa4b314d0ad058a74708e4e567706cc1ce69e23b24bed6c81e5b42272",
         "3343aa4fd98d73a6d12ccd24a7f2e5b4d19361f706f0476ea4e5971cb34cebe6",
+        "359c7dadf588596d605102acc66b893f7aee09d15ffdf1d25041bcf4f5edb603",
+        "5deef425cd24fd7c9821b80c2b3b89a822b7a20ea9b8e9ce707c67a1b5c357be",
         "686dfb01bb5a0eb946cc02ea0d54ccb25a49f68451f9047e900c0a4c2955b945",
+        "75e08bd4cca4a199a6f2390d76abb532e744a8bac5eee566b4e4a2f419599a2e",
+        "a3ceaefa0d26aa0729efaa0971c095f36db833c30e3ce0b870c6e3e841ea1b09",
         "a7971d715403f1f0ce0ca29209fefe8a6a4ab6a731c4c49afcc3831fd4da7850",
         "e81744a61a0080aa78c40878a7321a62036316624fbaea048063b336fce0be6d"
       ]
     },
     ".control/scripts/update.py": {
       "strategy": "managed",
-      "sha256": "69c211fbd9b4d677525efb82e4791a87830054cfa2b01a9840637792faad5be0",
+      "sha256": "0cd37d75e2f528ff6abde19216ae3da3a9a95f55cbb48efac8e5c287ee848120",
       "known": [
         "02c9a3e8f7e2ca0d37a01a480eae016b75b259e8d2ae08bd927c7372168dc4a4",
         "03771d3480e8b727051f35273ec72c9f61e91bb131ea53868f5a60e5d06c94d7",
         "217d95655783e7a23023a152b36d15b312d38dbd11cff48b6f023323ec63e64c",
         "28fe4eac6f106e680134a3f4c5b5626269a81e4c40133729b4d53ca75e853880",
         "41c64ad1b99c5d7d10cadb18945eccf5d690ff5956be8b816050e75868f860ce",
+        "69c211fbd9b4d677525efb82e4791a87830054cfa2b01a9840637792faad5be0",
         "b4e7658f49d5d04eef09398047ca0cf445984ed1d59bfcba4b13d67fdcbbb814",
         "cfa482aab5e08c015e401d2e6f5b54ceecc5dcc7af0c3d70bd7773e424a99c85"
       ]
     },
     ".control/skills/_index.md": {
       "strategy": "skill_registry",
-      "sha256": "5d54433a5175dacea35ad49e10fd665c6ee9a7f487b477748f9832361397f33b",
+      "sha256": "fdc2ef1c5bb4227264b2ba80797aa2807f4413bfd607bd897ed78f68a12082d5",
       "known": [
+        "5d54433a5175dacea35ad49e10fd665c6ee9a7f487b477748f9832361397f33b",
         "a5e010e4c929dfc555355b1e3d8324f3548d925ba580c3ac1f830c5f93841573",
         "aaf7731acab4867e070465a488e03b525be292d41d401f1887b4d9ceeb1af171",
         "e29c4c5fc41a59e7d20389da4c5a15905a4eb19bf2b404176e197fd4a711793a"
@@ -425,8 +482,10 @@
     },
     ".control/skills/code-review.md": {
       "strategy": "managed",
-      "sha256": "c6e23ba90d9deb90802d6a66ec6fb69c89d51b38ec5a4b4dba69b4ad83f2360f",
+      "sha256": "bdbaae9b1876b34f06d02dfc93a82bca624dca65e13ab5f1e6ae50b924f7556a",
       "known": [
+        "643491eb7be87f3057bd2e864c028ffeb2b27108fcf874912fb7a5410fe45c77",
+        "c6e23ba90d9deb90802d6a66ec6fb69c89d51b38ec5a4b4dba69b4ad83f2360f",
         "e8913bcf0676ceb055bc3b4ad2f5f829c5da4df16e1e1c4d268960e25d9e7bdb"
       ]
     },
@@ -509,6 +568,14 @@
         "b4c978f3963f66dd39291fdf6312baeecf982a4f47d48222063c895eac543915"
       ]
     },
+    ".control/skills/lean.md": {
+      "strategy": "managed",
+      "sha256": "2204539a41abd36ac52e2da6c69dc65396abf7ffbcf7a8c2817b9e3e2b769cc1",
+      "known": [
+        "6a1aea0fce4e1ddbf8bbddc33af1cf7dba697f4059eb3993f1d142dd4750d495",
+        "81587247b63c92874e170d01fab6a0aa8cf436c51fa182cc5f426fd1b469fcb7"
+      ]
+    },
     ".control/skills/onboarding.md": {
       "strategy": "managed",
       "sha256": "1f27da7b1f02734cca996ff26ec99b288a63fcc4568dfee6b50c90135a4a17eb",
@@ -579,13 +646,22 @@
       "sha256": "94cfc06ad23cc12f67665e9fb5566a7bd9a25c60af80209e77ae8a1277225c02",
       "known": []
     },
+    ".github/copilot-instructions.md": {
+      "strategy": "create_only",
+      "sha256": "5f0fc1345fc3a0e464abfbcb0af50605b65dbe7745b809ff26ea272a6e66e440",
+      "known": []
+    },
     ".opencode/agents/project-control.md": {
       "strategy": "managed",
-      "sha256": "b762a98b816cf6fc45d98945d9c2d62b1fd0ecbc957d44da106dc7d0410e48bd",
+      "sha256": "3ab94f09cbc6c02ccf78c05c4c76e31c747923186bdc1985b4c37c09316c7b12",
       "known": [
         "0a5074c140c83a8c8b55721ef905d6c3284739462c1cbd42f7172a7746955e70",
+        "5c73b6db90ed6d6c1e4c7f648758a37289aac769a3197b210619a7c5c17e8ca4",
         "63c4ba4f71f3219d40bddfd434ccf83e7a5d10706633b90d092d52d85b240ed0",
-        "945b67f9cbd0cc09c7997df7924221942923fa6dd79f7532658d23c555c02bf4"
+        "945b67f9cbd0cc09c7997df7924221942923fa6dd79f7532658d23c555c02bf4",
+        "ad0181e4356da65eea3ef6e20477ed02121f95560880d5182c648891ae1bf815",
+        "b762a98b816cf6fc45d98945d9c2d62b1fd0ecbc957d44da106dc7d0410e48bd",
+        "ccdb06ed0af384254df9591eef78134ee85fe5ed7e7a821293e5a3f14250faf5"
       ]
     },
     "AGENTS.md": {
@@ -596,6 +672,11 @@
     "CLAUDE.md": {
       "strategy": "create_only",
       "sha256": "1f2f2161a9010f0086dda5d6a82ae77ecfc871062942fcaf602477258fb8a851",
+      "known": []
+    },
+    "GEMINI.md": {
+      "strategy": "create_only",
+      "sha256": "5e66168df2d1116ac6f21fab1240e6885342b44327840e247bb3f67244a96bf7",
       "known": []
     },
     "opencode.json": {

@@ -11,12 +11,17 @@ Files involved:
   .update/pending.json    conflicts left by the last update (gitignored)
 
 Network: one `git ls-remote` with a short timeout, at most once every
-CHECK_INTERVAL_H hours. Disable with env PCTL_NO_UPDATE_CHECK=1.
+CHECK_INTERVAL_H hours; when the remote commit differs, one small GET of
+the remote framework.json (GitHub upstreams) to read its version and
+summary, so only published versions are announced. Disable with env
+PCTL_NO_UPDATE_CHECK=1. `pctl update-check --skip` silences one version.
 """
 import datetime
 import json
 import os
+import re
 import subprocess
+import urllib.request
 
 from . import paths
 
@@ -24,6 +29,8 @@ MANIFEST = paths.CONTROL_ROOT / "framework.json"
 LOCK = paths.CONTROL_ROOT / ".framework_lock.json"
 CACHE = paths.CONTROL_ROOT / ".update_check.json"
 PENDING = paths.CONTROL_ROOT / ".update" / "pending.json"
+SKIP = paths.CONTROL_ROOT / ".update_skip.json"
+GITHUB_RX = re.compile(r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?/?$")
 CHECK_INTERVAL_H = 24
 
 
@@ -73,6 +80,33 @@ def _ls_remote(url, ref, timeout):
     return r.stdout.split()[0]
 
 
+def version_tuple(v):
+    return tuple(int(x) for x in re.findall(r"\d+", v or ""))
+
+
+def _remote_manifest(url, commit, timeout):
+    """{"version", "summary"} of upstream's framework.json at `commit`, or {} if unreachable."""
+    m = GITHUB_RX.search(url or "")
+    if not m:
+        return {}
+    raw = f"https://raw.githubusercontent.com/{m.group(1)}/{m.group(2)}/{commit}/.control/framework.json"
+    try:
+        with urllib.request.urlopen(raw, timeout=timeout) as r:
+            data = json.loads(r.read(2_000_000).decode("utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {"version": data.get("version"), "summary": data.get("summary") or ""}
+
+
+def skip(version):
+    """Stop announcing `version` (the user declined it)."""
+    SKIP.write_text(json.dumps({"version": version}) + "\n", encoding="utf-8")
+
+
+def skipped():
+    return (_read_json(SKIP) or {}).get("version")
+
+
 def check(force=False, timeout=4):
     """Return {"status", "installed", "remote_commit", "checked_at", "message"}.
 
@@ -106,8 +140,12 @@ def check(force=False, timeout=4):
         status, msg = "up_to_date", ""
     else:
         status, msg = "available", "run `python .control/scripts/update.py --check` to see what changed"
+    rman = _remote_manifest(url, remote, timeout) if status == "available" else {}
+    if rman.get("version") and version_tuple(rman["version"]) <= version_tuple(inst["version"]):
+        status, msg = "up_to_date", ""  # unreleased commits upstream: nothing to announce
 
     result = {**base, "status": status, "remote_commit": remote,
+              "remote_version": rman.get("version"), "summary": rman.get("summary", ""),
               "checked_at": _now().isoformat(), "message": msg}
     try:
         CACHE.write_text(json.dumps(result, indent=2), encoding="utf-8")

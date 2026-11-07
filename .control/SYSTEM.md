@@ -333,8 +333,9 @@ merged 3-way or kept, never silently overwritten.
   shown in every `pctl brief`, overrides this file where they conflict).
   Do not customize `SYSTEM.md` or shipped skills: that creates merge work
   on every update.
-- When `pctl brief` reports an available update or staged conflicts, tell
-  the user. Never run the updater without the user's explicit consent.
+- When `pctl brief` reports an available update, ask the user whether to
+  update now; if they decline, `pctl update-check --skip`. Report staged
+  conflicts too. Never run the updater without the user's explicit consent.
 
 ## 18. Language
 
