@@ -52,10 +52,11 @@ with `pctl context-note --tipo fact`.
 Before proposing anything new, list what the existing UI already gets
 wrong, with `file:line`:
 
+- `pctl ui-scan [paths]`: accessibility issues, generic-AI patterns and
+  how many distinct colors, font sizes and radii are in use (many
+  near-duplicates = no system).
 - Duplicated components (two buttons, three modals): `pctl dupes`,
   `pctl reuse <component>`.
-- Ad-hoc values: how many distinct colors, font sizes, radii, shadows
-  and spacings are in use (many near-duplicates = no system).
 - Hierarchy breaks, missing states (empty, loading, error), overlays
   used for the wrong job, accessibility gaps, render bottlenecks.
 
@@ -106,6 +107,12 @@ store, a SaaS, a dashboard... must have) and the question bank.
    - Components: inventory with status (exists `file:line` / to build).
    - Pages: list with the primary action of each.
    - Rules: project-specific dos and don'ts.
+
+   `pctl ui-scan` reads this doc: every hex color in it is an allowed
+   color, and backticked names on lines that mention "font" are the
+   allowed fonts (e.g. "Fonts: `Fraunces` display, `Source Sans 3`
+   text"). A line `ui-scan-allow: rule-a, rule-b` turns rules off for
+   the project; each one needs an ADR saying why.
 3. Record the direction as an ADR (`decision-record.md`): the chosen
    direction, the rejected ones and why. Later decisions (brand font,
    an intentional exception to a rule below) also get an ADR, so no
@@ -213,7 +220,14 @@ doc chooses it on purpose (with an ADR):
 
 ## 6. Verify: critique and audit
 
-Look at the result, not only the code. If a browser or screenshot tool
+Run `pctl ui-scan --changed` first: P1 findings in lines the task
+touched are fixed before anything else. A deliberate exception is
+silenced on its line with a `ui-scan-disable <rule>` comment (or
+`ui-scan-disable-file <rule>`) plus the reason. `--apply` turns
+findings into one task per rule; `--fail` exits 2 for CI. The scan reads
+code only; real contrast and overflow need the rendered page.
+
+Then look at the result, not only the code. If a browser or screenshot tool
 is available, capture the key pages at ~375, ~768 and ~1440px wide, in
 light and dark if both exist, and review the images.
 

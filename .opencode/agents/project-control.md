@@ -68,7 +68,7 @@ the corresponding skill file first. The full list with triggers is in
 - `pctl brief` (session start), `pctl context-note "..." --tipo <kind>`
 - `pctl search <words> [--area tasks,flows] [--fm] [--files] [--code]`
 - `pctl lean [off|lite|full|strict]` (code changes follow `skills/lean.md`)
-- UI work (new interface, redesign, critique, audit) follows `skills/ui-design.md`
+- UI work (new interface, redesign, critique, audit) follows `skills/ui-design.md`; `pctl ui-scan [--changed] [--apply]`
 - `pctl reuse <words>`, `pctl dupes [--changed]`, `pctl deps-check`, `pctl debt-scan [--apply]`
 - Review: `pctl review-context [--base main]`; audit: `pctl audit-plan`
 - `pctl session-current`, `pctl session-close <sid> "..." --next "..."`

@@ -108,6 +108,8 @@ defecto propuestos, ofrece 2-3 direcciones visuales y guarda la elegida en
 con tokens evitando los patrones genéricos de IA, y verifica con una crítica
 puntuada y una auditoría P0-P3 cuyos hallazgos quedan como tareas. Detalle en
 `.control/skills/ui-design.md` y `.control/prompts/ui-discovery.md`.
+`pctl ui-scan` revisa el código sin navegador ni dependencias (`--changed` solo
+lo nuevo, `--apply` crea tareas, `--fail` para CI).
 
 ## Contexto y memoria entre sesiones
 
@@ -251,6 +253,7 @@ python3 .control/scripts/pctl.py <comando>
 | `deps-check [--base REF]` | dependencias nuevas en manifests (package.json, requirements, pyproject, Cargo, go.mod...) |
 | `debt-scan [--marker M] [--apply]` | comentarios `shortcut:` en el código -> tareas de deuda en backlog |
 | `dupes [rutas] [--changed]` | funciones con el mismo nombre y bloques copiados (candidatos a utilidad compartida) |
+| `ui-scan [rutas] [--changed] [--apply] [--fail]` | UI: accesibilidad, patrones genéricos de IA, colores/fuentes fuera de `design-system.md`, conteo de valores sueltos |
 | `review-context [--base REF]` | qué leer fuera del diff: docs que apuntan a las líneas cambiadas, usos, duplicados, deps |
 | `audit-plan [rutas]` | orden para auditar el repo: entry points, hotspots, archivos grandes, duplicación |
 

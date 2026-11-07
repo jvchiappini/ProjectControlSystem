@@ -213,12 +213,12 @@ def _scan_markers(mark):
                 yield {"rel": rel, "line": n, "text": text, "key": key}
 
 
-def _tracked_debt():
-    """{debt-key: (task id, estado)} read from task bodies."""
+def tracked_keys(key_rx=DEBT_KEY_RX):
+    """{key: (task id, estado)} for task bodies matching `key_rx` (one group: the key)."""
     out = {}
     for f in paths.TASKS_DIR.rglob("T-*.md"):
         text = f.read_text(encoding="utf-8")
-        m = DEBT_KEY_RX.search(text)
+        m = key_rx.search(text)
         if m:
             data, _ = fm.parse(text)
             out[m.group(1)] = (data.get("id"), data.get("estado"))
@@ -228,7 +228,7 @@ def _tracked_debt():
 def debt_scan(mark=None, apply=False):
     mark = mark or marker()
     found = list(_scan_markers(mark))
-    tracked = _tracked_debt()
+    tracked = tracked_keys()
     present = {d["key"] for d in found}
     new = [d for d in found if d["key"] not in tracked]
     gone = [f"{tid} [{est}]" for key, (tid, est) in tracked.items() if key not in present and est != "done"]

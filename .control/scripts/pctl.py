@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import agent, arch, brief, context, decisions, doc, doctor, docs, dupes, flows, git, graph, indexes, lean, migrate, paths, review, roadmaps, search, sessions, skills_registry, tasks, updates, validate  # noqa: E402
+from lib import agent, arch, brief, context, decisions, doc, doctor, docs, dupes, flows, git, graph, indexes, lean, migrate, paths, review, roadmaps, search, sessions, skills_registry, tasks, ui_scan, updates, validate  # noqa: E402
 
 
 def cmd_task_new(args):
@@ -217,6 +217,14 @@ def cmd_debt_scan(args):
 def cmd_dupes(args):
     only = set(review.changed_hunks(args.base)) if args.changed else None
     print(dupes.report(include=args.paths or None, only=only, limit=args.limit))
+
+
+def cmd_ui_scan(args):
+    text, n = ui_scan.report(include=args.paths or None, changed_base=args.base if args.changed else None,
+                             apply=args.apply, limit=args.limit)
+    print(text)
+    if args.fail and n:
+        sys.exit(2)
 
 
 def cmd_review_context(args):
@@ -611,6 +619,15 @@ def build_parser():
     du2.add_argument("--base", default="HEAD")
     du2.add_argument("--limit", type=int, default=10)
     du2.set_defaults(func=cmd_dupes)
+
+    us = sub.add_parser("ui-scan", help="UI: accesibilidad, patrones genericos de IA, valores fuera del design system")
+    us.add_argument("paths", nargs="*", help="limitar a estas rutas")
+    us.add_argument("--changed", action="store_true", help="solo lineas cambiadas vs --base")
+    us.add_argument("--base", default="HEAD")
+    us.add_argument("--apply", action="store_true", help="crear una tarea por regla (sin duplicar)")
+    us.add_argument("--fail", action="store_true", help="salir con codigo 2 si hay hallazgos (CI)")
+    us.add_argument("--limit", type=int, default=8, help="ubicaciones por regla")
+    us.set_defaults(func=cmd_ui_scan)
 
     rc = sub.add_parser("review-context", help="que leer fuera del diff: docs, usos, duplicados, deps")
     rc.add_argument("--base", default="HEAD", help="ref de git (ej. main para revisar la rama)")
