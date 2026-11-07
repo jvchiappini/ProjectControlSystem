@@ -303,6 +303,13 @@ def build_skills(root):
 
 def build_manifest(root, version):
     build_skills(root)
+    plugin = root / ".claude-plugin" / "plugin.json"
+    if plugin.exists():
+        data = read_json(plugin, {}) or {}
+        if data.get("version") != version:
+            data["version"] = version
+            write_json(plugin, data)
+            log(f"plugin.json version -> {version}", "ok")
     # tracked + new (untracked, not ignored) files, so a release can be built before committing
     out, err, rc = git(["ls-files", "-z", "--cached", "--others", "--exclude-standard"], cwd=root)
     if rc != 0:

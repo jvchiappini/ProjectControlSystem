@@ -179,11 +179,17 @@ Garantías:
 
 ### Publicar una versión (mantenedores)
 
-1. Agregar la entrada `## vX.Y.Z (fecha)` arriba en `.control/CHANGELOG.md`.
+1. Agregar la entrada `## vX.Y.Z (fecha)` arriba en `.control/CHANGELOG.md`,
+   agrupada con títulos `### ...`: esos títulos forman el resumen de una línea
+   que ven los proyectos en el aviso de actualización.
 2. Si cambia el formato de datos, agregar una migración en `MIGRATIONS`
    de `update.py` (idempotente, solo toca lo que nombra).
-3. `python .control/scripts/update.py --build-manifest --version X.Y.Z`
-4. Commit + push a `main`. Los proyectos lo ven en su próximo `pctl brief`.
+3. `python .control/scripts/update.py --build-manifest --version X.Y.Z`. Además
+   del manifiesto, regenera `skills/lean/SKILL.md` (desde `.control/skills/lean.md`)
+   y `.github/copilot-instructions.md` (desde `AGENTS.md`), y pone la versión en
+   `.claude-plugin/plugin.json`. Esos archivos no se editan a mano.
+4. Commit + push a `main`. Los proyectos lo ven en su próximo `pctl brief`
+   (como mucho un día después). Un push sin subir la versión no genera aviso.
 
 ## Los tres prompts
 
