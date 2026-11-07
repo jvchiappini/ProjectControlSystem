@@ -292,6 +292,7 @@ Refer to them when the corresponding trigger occurs:
 | `doc-concise` | Post-edit of any `.md` in `.control/` | `skills/doc-concise.md` |
 | `roadmap-management` | Creating, updating, or discussing the roadmap | `skills/roadmap-management.md` |
 | `docs-management` | Creating, updating, or browsing technical docs | `skills/docs-management.md` |
+| `lean` | Before writing or changing code (lean mode not off) | `skills/lean.md` |
 
 ## 16. Context discipline (mandatory)
 
@@ -345,3 +346,11 @@ The conversation with the user is conducted in the user's language. If
 the user writes in Spanish, respond in Spanish. If the user writes in
 English, respond in English. Never switch the `.control/` content to
 the user's language — it stays in English regardless.
+
+## 19. Lean code
+
+Unless `pctl brief` shows no "Lean mode" line (level `off`), every code
+change follows `skills/lean.md`: reuse before writing (codebase, stdlib,
+platform, installed deps), the minimum that works, never cutting
+validation, data-loss handling, security or accessibility. Output is lean
+too: no reprinted code, no recaps. Level: `pctl lean [off|lite|full|strict]`.

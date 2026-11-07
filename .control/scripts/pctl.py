@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from lib import agent, arch, brief, context, decisions, doc, doctor, docs, flows, git, graph, indexes, migrate, paths, roadmaps, search, sessions, skills_registry, tasks, updates, validate  # noqa: E402
+from lib import agent, arch, brief, context, decisions, doc, doctor, docs, flows, git, graph, indexes, lean, migrate, paths, roadmaps, search, sessions, skills_registry, tasks, updates, validate  # noqa: E402
 
 
 def cmd_task_new(args):
@@ -193,6 +193,15 @@ def cmd_brief(args):
     print(brief.build(budget=args.budget, check_updates=not args.offline))
 
 
+def cmd_lean(args):
+    if args.nivel:
+        lean.set_level(args.nivel)
+        abiertas = sessions.open_sessions()
+        if abiertas:
+            sessions.log_event(abiertas[0], f"lean mode -> {args.nivel}")
+    print(f"lean: {lean.level()}")
+
+
 def cmd_update_check(args):
     r = updates.check(force=True)
     inst = r.get("installed") or {}
@@ -237,7 +246,7 @@ def cmd_skill_promote(args):
 
 def cmd_skill_list(args):
     for r in skills_registry.list_skills(estado=args.estado):
-        print(" | ".join(r))
+        print(" | ".join(r.values()))
 
 
 # ── git ──
@@ -540,6 +549,10 @@ def build_parser():
     br.add_argument("--budget", type=int, default=brief.DEFAULT_BUDGET, help="tope en caracteres")
     br.add_argument("--offline", action="store_true", help="no consultar actualizaciones")
     br.set_defaults(func=cmd_brief)
+
+    ln = sub.add_parser("lean", help="ver o cambiar el nivel de lean mode")
+    ln.add_argument("nivel", nargs="?", choices=lean.LEVELS)
+    ln.set_defaults(func=cmd_lean)
 
     uc = sub.add_parser("update-check", help="consultar si hay version nueva del framework")
     uc.set_defaults(func=cmd_update_check)

@@ -67,6 +67,7 @@ the corresponding skill file first. The full list with triggers is in
 ### Context & search
 - `pctl brief` (session start), `pctl context-note "..." --tipo <kind>`
 - `pctl search <words> [--area tasks,flows] [--fm] [--files] [--code]`
+- `pctl lean [off|lite|full|strict]` (code changes follow `skills/lean.md`)
 - `pctl session-current`, `pctl session-close <sid> "..." --next "..."`
 
 ### Updates (only with the user's consent)

@@ -197,6 +197,7 @@ python3 .control/scripts/pctl.py <comando>
 | `skill-propose <nombre> --tipo --disparador --ubicacion` | propone skill/script nuevo (no lo activa) |
 | `skill-promote <id>` | activa una skill propuesta (requiere confirmación humana) |
 | `skill-list [--estado]` | lista skills registradas |
+| `lean [off\|lite\|full\|strict]` | ver o cambiar el nivel de lean mode (`skills/lean.md`) |
 
 ## Estructura
 
